@@ -1,0 +1,48 @@
+{
+  "name": "@cocapn/protocols",
+  "version": "0.1.0",
+  "description": "Shared MCP and A2A protocol implementations for Cocapn — works in both Node.js (local bridge) and Cloudflare Workers",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.cjs"
+    },
+    "./mcp": {
+      "import": "./dist/esm/mcp/index.js",
+      "require": "./dist/cjs/mcp/index.cjs"
+    },
+    "./a2a": {
+      "import": "./dist/esm/a2a/index.js",
+      "require": "./dist/cjs/a2a/index.cjs"
+    }
+  },
+  "main": "./dist/cjs/index.cjs",
+  "module": "./dist/esm/index.js",
+  "types": "./dist/types/index.d.ts",
+  "typesVersions": {
+    "*": {
+      ".": ["./dist/types/index.d.ts"],
+      "mcp": ["./dist/types/mcp/index.d.ts"],
+      "a2a": ["./dist/types/a2a/index.d.ts"]
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "npm run build:esm && npm run build:cjs && npm run build:types",
+    "build:esm": "tsc -p tsconfig.esm.json",
+    "build:cjs": "tsc -p tsconfig.cjs.json && node scripts/fix-cjs.js",
+    "build:types": "tsc -p tsconfig.types.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.4.0",
+    "vitest": "^1.6.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

@@ -1,0 +1,58 @@
+# Cocapn public repository configuration
+# Validated against: schemas/cocapn-public.schema.json
+#
+# Replace {{username}} with your GitHub username.
+# Replace {{domain}} with your chosen domain (see enum below).
+
+version: "0.1.0"
+
+domain: makerlog
+
+skin:
+  colors:
+    primary:      "#00ff88"
+    secondary:    "#00cc6a"
+    accent:       "#ff6b35"
+    background:   "#0a0a0a"
+    surface:      "#111111"
+    surface-2:    "#1a1a1a"
+    text:         "#e8e8e8"
+    text-muted:   "#6b7280"
+    border:       "#2a2a2a"
+    danger:       "#ff4444"
+    success:      "#00ff88"
+  layout:
+    sidebar: true
+    terminal: true
+    header: minimal
+
+modules:
+  - terminal
+  - chat
+  - wiki
+  - tasks
+  - memory-graph
+
+agents:
+  available:
+    - claude
+    - pi
+  default: claude
+  fallback: pi
+
+orchestrator:
+  strategy: first-match
+  rules:
+    - match: code
+      agent: claude
+      priority: 10
+    - match: file
+      agent: claude
+      priority: 10
+    - match: search
+      agent: pi
+      priority: 5
+    - match: web
+      agent: pi
+      priority: 5
+

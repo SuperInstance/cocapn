@@ -1,0 +1,46 @@
+{
+  "$schema": "https://cocapn.io/schemas/module-manifest.schema.json",
+  "name": "makerlog-layout",
+  "version": "0.1.0",
+  "description": "Makerlog default layout — sidebar left, terminal bottom, chat main.",
+
+  "panels": {
+    "sidebar": {
+      "position": "left",
+      "width": "220px",
+      "collapsible": true,
+      "defaultOpen": true,
+      "sections": ["nav", "agents", "sync-status"]
+    },
+    "main": {
+      "position": "center",
+      "flex": 1,
+      "tabs": ["chat", "wiki", "tasks"]
+    },
+    "terminal": {
+      "position": "bottom",
+      "height": "280px",
+      "collapsible": true,
+      "defaultOpen": false
+    }
+  },
+
+  "header": {
+    "style": "minimal",
+    "items": ["logo", "breadcrumb", "spacer", "sync-badge", "agent-status"]
+  },
+
+  "navigation": [
+    { "id": "chat",     "label": "Chat",     "icon": "MessageSquare", "hotkey": "g c" },
+    { "id": "wiki",     "label": "Wiki",     "icon": "BookOpen",      "hotkey": "g w" },
+    { "id": "tasks",    "label": "Tasks",    "icon": "CheckSquare",   "hotkey": "g t" },
+    { "id": "memory",   "label": "Memory",   "icon": "Brain",         "hotkey": "g m" },
+    { "id": "terminal", "label": "Terminal", "icon": "Terminal",      "hotkey": "g x" }
+  ],
+
+  "breakpoints": {
+    "mobile":  { "sidebar": false, "terminal": false, "header": "minimal" },
+    "tablet":  { "sidebar": false, "terminal": false, "header": "minimal" },
+    "desktop": { "sidebar": true,  "terminal": true,  "header": "minimal" }
+  }
+}

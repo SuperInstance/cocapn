@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cocapn.io/schemas/module-manifest.schema.json",
+  "title": "Module Manifest",
+  "description": "Validates module.yml files that declare a module's identity, type, dependencies, and exported capabilities.",
+  "type": "object",
+  "required": ["name", "version", "type", "entry"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Human-readable name of the module, used for display and referenced in public config module lists.",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "version": {
+      "type": "string",
+      "description": "Semantic version of the module.",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "type": {
+      "type": "string",
+      "description": "Module category. 'skin' provides UI theming, 'agent' wraps an agent, 'tool' adds CLI/MCP tools, 'integration' connects external services.",
+      "enum": ["skin", "agent", "tool", "integration"]
+    },
+    "requires": {
+      "type": "array",
+      "description": "List of module names or capabilities this module depends on.",
+      "items": {
+        "type": "string",
+        "description": "A module name or capability identifier that must be present for this module to load."
+      },
+      "uniqueItems": true
+    },
+    "provides": {
+      "type": "object",
+      "description": "Declarations of what this module exports to the system.",
+      "properties": {
+        "capabilities": {
+          "type": "array",
+          "description": "Capability identifiers this module makes available to the system.",
+          "items": {
+            "type": "string",
+            "description": "A capability identifier."
+          },
+          "uniqueItems": true
+        },
+        "agents": {
+          "type": "array",
+          "description": "Agent IDs this module registers with the system.",
+          "items": {
+            "type": "string",
+            "description": "An agent identifier matching an agent definition id."
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "entry": {
+      "type": "string",
+      "description": "Relative path to the module's main entry file (e.g., 'index.ts', 'skin.css', 'agent.yml')."
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,170 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cocapn.io/schemas/cocapn-public.schema.json",
+  "title": "Cocapn Public Repository Configuration",
+  "description": "Validates the public repo config file (cocapn.yml) that defines domain skinning, modules, agents, and orchestration rules.",
+  "type": "object",
+  "required": ["version", "domain"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Schema version for the public configuration file.",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "domain": {
+      "type": "string",
+      "description": "The domain brand this configuration targets. Determines default skin, terminology, and available modules.",
+      "enum": [
+        "makerlog",
+        "studylog",
+        "businesslog",
+        "activelog",
+        "fishinglog",
+        "playerlog",
+        "reallog",
+        "personallog",
+        "deckboss",
+        "cocapn"
+      ]
+    },
+    "skin": {
+      "type": "object",
+      "description": "Visual theming and layout configuration for the domain-branded UI.",
+      "properties": {
+        "colors": {
+          "type": "object",
+          "description": "Color palette for the UI theme.",
+          "properties": {
+            "primary": {
+              "type": "string",
+              "description": "Primary brand color in CSS-compatible format (hex, rgb, hsl)."
+            },
+            "secondary": {
+              "type": "string",
+              "description": "Secondary accent color in CSS-compatible format."
+            },
+            "background": {
+              "type": "string",
+              "description": "Default background color for the application."
+            },
+            "surface": {
+              "type": "string",
+              "description": "Surface color for cards, panels, and elevated elements."
+            },
+            "text": {
+              "type": "string",
+              "description": "Default text color."
+            }
+          },
+          "additionalProperties": {
+            "type": "string",
+            "description": "Additional custom color tokens."
+          }
+        },
+        "layout": {
+          "type": "object",
+          "description": "Layout configuration for the UI shell.",
+          "properties": {
+            "sidebar": {
+              "type": "boolean",
+              "description": "Whether to show the sidebar navigation."
+            },
+            "terminal": {
+              "type": "boolean",
+              "description": "Whether to show the embedded terminal panel."
+            },
+            "header": {
+              "type": "string",
+              "description": "Header style variant.",
+              "enum": ["full", "minimal", "hidden"]
+            }
+          }
+        }
+      }
+    },
+    "modules": {
+      "type": "array",
+      "description": "List of module identifiers to load for this domain configuration.",
+      "items": {
+        "type": "string",
+        "description": "Module identifier matching a module.yml name field."
+      },
+      "uniqueItems": true
+    },
+    "agents": {
+      "type": "object",
+      "description": "Agent availability and configuration for this domain.",
+      "properties": {
+        "available": {
+          "type": "array",
+          "description": "List of agent IDs available in this domain.",
+          "items": {
+            "type": "string",
+            "description": "Agent identifier matching an agent definition id."
+          },
+          "uniqueItems": true
+        },
+        "default": {
+          "type": "string",
+          "description": "Default agent ID to use when no specific agent is requested."
+        },
+        "fallback": {
+          "type": "string",
+          "description": "Fallback agent ID when the default or requested agent is unavailable."
+        }
+      }
+    },
+    "orchestrator": {
+      "type": "object",
+      "description": "Routing rules that determine how tasks are assigned to agents.",
+      "properties": {
+        "rules": {
+          "type": "array",
+          "description": "Ordered list of routing rules evaluated top-to-bottom.",
+          "items": {
+            "type": "object",
+            "description": "A single routing rule mapping patterns to agents.",
+            "properties": {
+              "match": {
+                "type": "string",
+                "description": "Pattern or keyword to match against incoming task descriptions."
+              },
+              "agent": {
+                "type": "string",
+                "description": "Agent ID to route matching tasks to."
+              },
+              "priority": {
+                "type": "integer",
+                "description": "Priority weight for this rule (higher values take precedence).",
+                "minimum": 0
+              }
+            },
+            "required": ["match", "agent"]
+          }
+        },
+        "strategy": {
+          "type": "string",
+          "description": "Strategy for resolving conflicts when multiple rules match.",
+          "enum": ["first-match", "highest-priority", "cost-optimized"]
+        }
+      }
+    },
+    "fleet": {
+      "type": "object",
+      "description": "Fleet configuration for multi-domain deployments.",
+      "properties": {
+        "domains": {
+          "type": "array",
+          "description": "List of domain URLs in this fleet.",
+          "items": {
+            "type": "string",
+            "description": "Fully qualified domain URL (e.g., user.makerlog.ai).",
+            "format": "hostname"
+          },
+          "uniqueItems": true
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cocapn.io/schemas/memory-fact.schema.json",
+  "title": "Memory Fact",
+  "description": "Validates entries in the facts.json file within the private repository. Each fact represents a piece of verified knowledge stored in the agent's memory system.",
+  "type": "object",
+  "required": ["fact", "confidence", "source", "date"],
+  "properties": {
+    "fact": {
+      "type": "string",
+      "description": "The factual statement or piece of knowledge to be stored in memory."
+    },
+    "confidence": {
+      "type": "number",
+      "description": "Confidence score for this fact, where 0 means unverified speculation and 1 means fully confirmed.",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "source": {
+      "type": "string",
+      "description": "Origin of this fact (e.g., 'user-stated', 'observed', 'inferred', 'external-api', or a specific URL/reference)."
+    },
+    "date": {
+      "type": "string",
+      "description": "ISO 8601 date when this fact was recorded or last verified.",
+      "format": "date"
+    },
+    "verified": {
+      "type": "boolean",
+      "description": "Whether this fact has been explicitly verified by the user or a trusted source.",
+      "default": false
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,23 @@
+name            = "cocapn-agent"
+main            = "src/worker.ts"
+compatibility_date = "2024-12-05"
+compatibility_flags = ["nodejs_compat"]
+
+# Durable Objects — Admiral handles cross-device session persistence
+[[durable_objects.bindings]]
+name       = "ADMIRAL"
+class_name = "AdmiralDO"
+
+[[migrations]]
+tag = "v1"
+new_classes = ["AdmiralDO"]
+
+# Secrets (set via `wrangler secret put`):
+#   GITHUB_PAT    — GitHub PAT with repo:read scope
+#   CF_API_TOKEN  — Cloudflare API token (for self-referential calls)
+#
+# Environment variables (non-secret):
+[vars]
+PRIVATE_REPO  = ""   # e.g. alice/alice-brain
+PUBLIC_REPO   = ""   # e.g. alice/alice.makerlog.ai
+BRIDGE_MODE   = "cloud"

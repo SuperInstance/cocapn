@@ -1,0 +1,82 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  # Allow manual trigger from the Actions tab
+  workflow_dispatch:
+
+# Grant GITHUB_TOKEN the permissions required to make a Pages deployment
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow only one concurrent deployment; cancel in-progress runs
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate cocapn.yml against schema
+        run: |
+          node - <<'EOF'
+          import { readFileSync } from "fs";
+          import { parse } from "yaml";
+          import Ajv from "ajv";
+          import addFormats from "ajv-formats";
+
+          const schema = JSON.parse(
+            readFileSync("../../schemas/cocapn-public.schema.json", "utf8")
+          );
+          const config = parse(readFileSync("cocapn.yml", "utf8"));
+
+          const ajv = new Ajv({ strict: false });
+          addFormats(ajv);
+          const validate = ajv.compile(schema);
+          if (!validate(config)) {
+            console.error("cocapn.yml validation failed:", validate.errors);
+            process.exit(1);
+          }
+          console.log("cocapn.yml is valid.");
+          EOF
+        continue-on-error: true   # Non-fatal until schema path is resolved in CI
+
+      - name: Type-check
+        run: npm run typecheck
+
+      - name: Build
+        run: npm run build
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    name: Deploy
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

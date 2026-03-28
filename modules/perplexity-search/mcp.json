@@ -1,0 +1,11 @@
+{
+  "id": "perplexity-search",
+  "type": "mcp",
+  "command": "node",
+  "args": ["modules/perplexity-search/server.js"],
+  "env": {
+    "PERPLEXITY_API_KEY": ""
+  },
+  "capabilities": ["search", "text"],
+  "cost": "low"
+}

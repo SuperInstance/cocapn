@@ -1,0 +1,15 @@
+name: habit-tracker
+version: 1.0.0
+type: agent
+description: Tracks daily habits and writes progress to the wiki
+cocapn: ">=0.1.0"
+dependencies: []
+
+hooks:
+  install: hooks/install.js
+  enable: hooks/enable.js
+  disable: hooks/disable.js
+  update: hooks/install.js
+
+agent:
+  file: agent.yml

@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cocapn.io/schemas/agent-definition.schema.json",
+  "title": "Agent Definition",
+  "description": "Validates agent configuration files ([name].agent.ts or [name].agent.yml) that define how an agent is spawned, connected, and what it can do.",
+  "type": "object",
+  "required": ["id", "type"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique identifier for this agent, used in orchestrator routing rules and domain agent lists.",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "type": {
+      "type": "string",
+      "description": "Agent execution type. 'local' spawns a CLI process, 'mcp' connects via Model Context Protocol, 'remote' calls an HTTP/WebSocket endpoint.",
+      "enum": ["local", "mcp", "remote"]
+    },
+    "command": {
+      "type": "string",
+      "description": "CLI command to execute for local agents (e.g., 'claude', 'pi', 'gh copilot'). Required when type is 'local'."
+    },
+    "args": {
+      "type": "array",
+      "description": "Command-line arguments passed to the agent process.",
+      "items": {
+        "type": "string",
+        "description": "A single command-line argument."
+      }
+    },
+    "env": {
+      "type": "object",
+      "description": "Environment variables to set when spawning the agent process.",
+      "additionalProperties": {
+        "type": "string",
+        "description": "Environment variable value. Use 'age:...' prefix to reference encrypted values."
+      }
+    },
+    "capabilities": {
+      "type": "array",
+      "description": "List of capability identifiers this agent provides (e.g., 'code-generation', 'web-search', 'file-edit').",
+      "items": {
+        "type": "string",
+        "description": "A capability identifier."
+      },
+      "uniqueItems": true
+    },
+    "cost": {
+      "type": "string",
+      "description": "Relative cost tier for using this agent. Used by the cost-optimized orchestration strategy.",
+      "enum": ["low", "medium", "high"]
+    }
+  },
+  "if": {
+    "properties": {
+      "type": { "const": "local" }
+    }
+  },
+  "then": {
+    "required": ["command"]
+  },
+  "additionalProperties": false
+}

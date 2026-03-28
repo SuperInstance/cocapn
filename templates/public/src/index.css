@@ -1,0 +1,4 @@
+/* Skin CSS is loaded via index.html <link> before this bundle */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;

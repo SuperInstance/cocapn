@@ -1,0 +1,22 @@
+# Never commit plaintext secrets
+secrets/*.txt
+secrets/*.env
+secrets/*.key
+secrets/*.pem
+secrets/*.p12
+secrets/*.pfx
+
+# age identity files (keep only the public key in config.yml)
+*.age.key
+identity.age
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Editor directories
+.idea/
+.vscode/
+
+# Node (if any scripts run in this repo)
+node_modules/

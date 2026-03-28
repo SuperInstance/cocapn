@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cocapn.io/schemas/cocapn-private.schema.json",
+  "title": "Cocapn Private Repository Configuration",
+  "description": "Validates the private repo structure (cocapn/config.yml) that defines soul, memory paths, encryption, and sync settings.",
+  "type": "object",
+  "required": ["soul", "encryption"],
+  "properties": {
+    "soul": {
+      "type": "string",
+      "description": "Relative path to the soul.md file that defines the agent's personality, values, and behavioral guidelines."
+    },
+    "config": {
+      "type": "object",
+      "description": "Backend configuration for the private repository.",
+      "properties": {
+        "mode": {
+          "type": "string",
+          "description": "Operating mode for the backend. 'local' runs entirely on the bridge, 'hybrid' adds cloud sync, 'cloud' delegates to Cloudflare Workers.",
+          "enum": ["local", "hybrid", "cloud"]
+        },
+        "port": {
+          "type": "integer",
+          "description": "WebSocket port for the local bridge server.",
+          "default": 8787,
+          "minimum": 1024,
+          "maximum": 65535
+        },
+        "tunnel": {
+          "type": "string",
+          "description": "Optional Cloudflare tunnel URL for remote access to the local bridge.",
+          "format": "uri"
+        }
+      }
+    },
+    "memory": {
+      "type": "object",
+      "description": "Paths to memory storage files within the private repository.",
+      "properties": {
+        "facts": {
+          "type": "string",
+          "description": "Relative path to the facts.json file containing verified knowledge."
+        },
+        "procedures": {
+          "type": "string",
+          "description": "Relative path to the procedures directory or file containing learned workflows."
+        },
+        "relationships": {
+          "type": "string",
+          "description": "Relative path to the relationships file mapping entity connections and context."
+        }
+      }
+    },
+    "encryption": {
+      "type": "object",
+      "description": "Encryption configuration for secrets stored in the private Git repository.",
+      "required": ["publicKey"],
+      "properties": {
+        "publicKey": {
+          "type": "string",
+          "description": "age public key used to encrypt secrets before committing to Git."
+        },
+        "recipients": {
+          "type": "array",
+          "description": "Additional age public keys that can decrypt secrets (for multi-device or team access).",
+          "items": {
+            "type": "string",
+            "description": "An age public key string."
+          },
+          "uniqueItems": true
+        },
+        "encryptedPaths": {
+          "type": "array",
+          "description": "Glob patterns for files that must be encrypted before commit.",
+          "items": {
+            "type": "string",
+            "description": "Glob pattern matching files requiring encryption (e.g., 'secrets/**', '*.secret.yml')."
+          }
+        }
+      }
+    },
+    "sync": {
+      "type": "object",
+      "description": "Synchronization intervals and settings for keeping local and remote state aligned.",
+      "properties": {
+        "interval": {
+          "type": "integer",
+          "description": "Default sync interval in seconds between local bridge and Git remote.",
+          "minimum": 10,
+          "default": 300
+        },
+        "memoryInterval": {
+          "type": "integer",
+          "description": "Sync interval in seconds specifically for memory files (can be more frequent).",
+          "minimum": 10,
+          "default": 60
+        },
+        "autoCommit": {
+          "type": "boolean",
+          "description": "Whether the bridge should automatically commit changes to the private repo.",
+          "default": true
+        },
+        "autoPush": {
+          "type": "boolean",
+          "description": "Whether the bridge should automatically push commits to the remote.",
+          "default": false
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

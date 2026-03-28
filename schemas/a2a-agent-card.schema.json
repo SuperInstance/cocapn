@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cocapn.io/schemas/a2a-agent-card.schema.json",
+  "title": "A2A Agent Card",
+  "description": "Validates Agent-to-Agent (A2A) protocol agent cards that advertise an agent's identity, endpoint, and skills to other agents in the system.",
+  "type": "object",
+  "required": ["name", "description", "url", "version", "capabilities", "skills"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Display name of the agent as advertised to other agents in the A2A network."
+    },
+    "description": {
+      "type": "string",
+      "description": "Human-readable description of what this agent does, used by orchestrators for routing decisions."
+    },
+    "url": {
+      "type": "string",
+      "description": "Endpoint URL where this agent can be reached (HTTP, WebSocket, or local bridge address).",
+      "format": "uri"
+    },
+    "version": {
+      "type": "string",
+      "description": "Version of this agent card, following semantic versioning.",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "capabilities": {
+      "type": "object",
+      "description": "Structured declaration of what this agent can do, used for capability-based routing.",
+      "properties": {
+        "streaming": {
+          "type": "boolean",
+          "description": "Whether this agent supports streaming responses."
+        },
+        "pushNotifications": {
+          "type": "boolean",
+          "description": "Whether this agent can send push notifications for async task completion."
+        },
+        "stateTransitionHistory": {
+          "type": "boolean",
+          "description": "Whether this agent exposes a history of task state transitions."
+        },
+        "multimodal": {
+          "type": "boolean",
+          "description": "Whether this agent can process multiple input modalities (text, image, audio)."
+        }
+      },
+      "additionalProperties": {
+        "type": "boolean",
+        "description": "Additional capability flags."
+      }
+    },
+    "skills": {
+      "type": "array",
+      "description": "List of discrete skills this agent can perform, enabling fine-grained task routing.",
+      "items": {
+        "type": "object",
+        "description": "A single skill offered by this agent.",
+        "required": ["id", "name"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for this skill within the agent.",
+            "pattern": "^[a-z][a-z0-9-]*$"
+          },
+          "name": {
+            "type": "string",
+            "description": "Human-readable name of the skill."
+          },
+          "tags": {
+            "type": "array",
+            "description": "Tags for categorizing and discovering this skill.",
+            "items": {
+              "type": "string",
+              "description": "A tag keyword."
+            },
+            "uniqueItems": true
+          },
+          "examples": {
+            "type": "array",
+            "description": "Example prompts or task descriptions that this skill can handle, used for intent matching.",
+            "items": {
+              "type": "string",
+              "description": "An example input that would trigger this skill."
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

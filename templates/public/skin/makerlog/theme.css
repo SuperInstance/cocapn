@@ -1,0 +1,102 @@
+/**
+ * Makerlog skin — dark theme with neon green accent.
+ *
+ * All values map to Tailwind utility classes via tailwind.config.js.
+ * Override any variable in your own skin by creating skin/<name>/theme.css
+ * and updating cocapn.yml `skin.colors`.
+ */
+
+:root {
+  /* Brand */
+  --color-primary:     #00ff88;
+  --color-secondary:   #00cc6a;
+  --color-accent:      #ff6b35;
+
+  /* Surfaces */
+  --color-background:  #0a0a0a;
+  --color-surface:     #111111;
+  --color-surface-2:   #1a1a1a;
+
+  /* Text */
+  --color-text:        #e8e8e8;
+  --color-text-muted:  #6b7280;
+
+  /* Utility */
+  --color-border:      #2a2a2a;
+  --color-danger:      #ff4444;
+  --color-success:     #00ff88;
+
+  /* Typography */
+  --font-sans: "Inter", "Geist", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono", "JetBrains Mono", "Fira Code", ui-monospace, monospace;
+
+  /* Shape */
+  --radius: 6px;
+}
+
+/* ─── Base resets ─────────────────────────────────────────────────────────── */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 14px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  min-height: 100dvh;
+}
+
+/* ─── Scrollbar ───────────────────────────────────────────────────────────── */
+
+::-webkit-scrollbar        { width: 6px; height: 6px; }
+::-webkit-scrollbar-track  { background: var(--color-background); }
+::-webkit-scrollbar-thumb  { background: var(--color-border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-text-muted); }
+
+/* ─── Selection ───────────────────────────────────────────────────────────── */
+
+::selection {
+  background: color-mix(in srgb, var(--color-primary) 25%, transparent);
+  color: var(--color-text);
+}
+
+/* ─── Focus ring ──────────────────────────────────────────────────────────── */
+
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: var(--radius);
+}
+
+/* ─── Terminal overrides (xterm.js) ───────────────────────────────────────── */
+
+.xterm {
+  font-family: var(--font-mono) !important;
+  padding: 8px;
+}
+
+.xterm-viewport {
+  background-color: var(--color-background) !important;
+}
+
+/* ─── Glow effects ────────────────────────────────────────────────────────── */
+
+.glow-primary {
+  box-shadow: 0 0 12px color-mix(in srgb, var(--color-primary) 40%, transparent);
+}
+
+.text-glow-primary {
+  text-shadow: 0 0 8px color-mix(in srgb, var(--color-primary) 60%, transparent);
+}

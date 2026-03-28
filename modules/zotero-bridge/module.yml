@@ -1,0 +1,15 @@
+name: zotero-bridge
+version: 1.0.0
+type: integration
+description: Citation management integration — syncs Zotero library to wiki/references/
+cocapn: ">=0.1.0"
+dependencies: []
+
+hooks:
+  install: hooks/install.js
+  enable: hooks/enable.js
+  disable: hooks/disable.js
+  update: hooks/install.js
+
+integration:
+  webhooks: []

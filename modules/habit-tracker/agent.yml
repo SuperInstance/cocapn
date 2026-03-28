@@ -1,0 +1,10 @@
+id: habit-tracker
+type: local
+command: node
+args:
+  - modules/habit-tracker/agent.js
+env: {}
+capabilities:
+  - text
+  - habit-tracking
+cost: low

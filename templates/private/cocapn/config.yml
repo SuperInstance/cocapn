@@ -1,0 +1,21 @@
+soul: cocapn/soul.md
+
+config:
+  mode: local
+  port: 8787
+
+sync:
+  interval: 30
+  memoryInterval: 60
+  autoCommit: true
+  autoPush: false
+
+memory:
+  facts: cocapn/memory/facts.json
+  procedures: cocapn/memory/procedures.json
+  relationships: cocapn/memory/relationships.json
+
+encryption:
+  publicKey: ""        # Fill in your age public key (age-keygen -y ~/.config/cocapn/identity.age)
+  encryptedPaths:
+    - secrets/

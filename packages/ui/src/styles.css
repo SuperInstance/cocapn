@@ -1,0 +1,42 @@
+/* Skin CSS variables are injected at runtime by DomainSkin.tsx */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  body {
+    background-color: var(--color-bg, #0a0a0a);
+    color: var(--color-text, #e8e8e8);
+    font-family: var(--font-sans, system-ui, sans-serif);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Scrollbars */
+  ::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-border, #2a2a2a);
+    border-radius: 2px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-text-muted, #6b7280);
+  }
+}

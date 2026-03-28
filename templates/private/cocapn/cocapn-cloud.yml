@@ -1,0 +1,36 @@
+# Cocapn cloud credentials and worker endpoints
+# Store this file as cocapn/cocapn-cloud.yml in your private repo.
+#
+# Sensitive fields (apiToken, githubPat) must be age-encrypted.
+# Run: age -R ~/.config/cocapn/identity.age.pub -o secrets/cloud.age cocapn/cocapn-cloud.yml
+# Then delete this plaintext file and commit secrets/cloud.age instead.
+
+cloudflare:
+  accountId: ""              # Cloudflare account ID (from dashboard)
+  apiToken: ""               # Cloudflare API token (Workers:Edit scope) — ENCRYPT THIS
+
+  workers:
+    # Each entry maps an agent id to its deployed Worker URL.
+    # The bridge will register these as type=remote AgentDefinitions.
+    - agentId: claude
+      workerUrl: https://claude.YOUR_SUBDOMAIN.workers.dev
+
+    - agentId: pi
+      workerUrl: https://pi.YOUR_SUBDOMAIN.workers.dev
+
+    - agentId: harbor-master
+      workerUrl: https://harbor-master.YOUR_SUBDOMAIN.workers.dev
+
+  # Admiral Durable Object base URL for cross-device session persistence.
+  # Leave empty to disable cloud session sync.
+  admiralUrl: https://admiral.YOUR_SUBDOMAIN.workers.dev
+
+github:
+  # PAT used by cloud Workers to read soul.md and memory from the private repo.
+  # Needs scopes: repo (read), contents (read).
+  # Must match the user who owns the private repo.
+  # ENCRYPT THIS — never commit plaintext.
+  pat: ""
+
+  privateRepo: ""            # e.g. alice/alice-brain
+  publicRepo:  ""            # e.g. alice/alice.makerlog.ai

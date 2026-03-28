@@ -1,0 +1,52 @@
+{
+  "name": "@cocapn/local-bridge",
+  "version": "0.1.0",
+  "description": "Local Node.js bridge — WebSocket server, Git sync, and agent spawner for the Cocapn hybrid OS",
+  "type": "module",
+  "bin": {
+    "cocapn-bridge": "./dist/esm/main.js"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.cjs"
+    }
+  },
+  "main": "./dist/cjs/index.cjs",
+  "module": "./dist/esm/index.js",
+  "types": "./dist/types/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.esm.json && tsc -p tsconfig.types.json",
+    "start": "node --experimental-vm-modules dist/esm/main.js",
+    "dev": "tsx src/main.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@cocapn/protocols": "file:../protocols",
+    "age-encryption": "^0.1.0",
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1",
+    "chokidar": "^3.6.0",
+    "commander": "^12.1.0",
+    "keytar": "^7.9.0",
+    "simple-git": "^3.25.0",
+    "ws": "^8.17.0",
+    "yaml": "^2.4.0"
+  },
+  "devDependencies": {
+    "@types/keytar": "^4.4.2",
+    "@types/node": "^20.0.0",
+    "@types/ws": "^8.5.10",
+    "tsx": "^4.16.0",
+    "typescript": "^5.4.0",
+    "vitest": "^1.6.0"
+  },
+  "optionalDependencies": {
+    "keytar": "^7.9.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
