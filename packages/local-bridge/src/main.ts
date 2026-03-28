@@ -17,6 +17,7 @@ import { buildModuleCommand } from "./cli/module.js";
 import { buildSecretCommand } from "./cli/secret.js";
 import { buildTokenCommand }  from "./cli/token.js";
 import { buildInitCommand }   from "./cli/init.js";
+import { buildBrainCommand }  from "./cli/brain.js";
 
 const program = new Command();
 
@@ -101,6 +102,7 @@ program.addCommand(buildInitCommand());
 program.addCommand(buildModuleCommand());
 program.addCommand(buildSecretCommand());
 program.addCommand(buildTokenCommand());
+program.addCommand(buildBrainCommand());
 
 program.parse();
 

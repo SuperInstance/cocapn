@@ -5,3 +5,7 @@ export * from "./ws/server.js";
 export { Bridge } from "./bridge.js";
 export { SecretManager } from "./secret-manager.js";
 export { SchemaValidator } from "./schema-validator.js";
+export { Brain } from "./brain/index.js";
+export type { WikiPage, Task } from "./brain/index.js";
+export { ChatRouter } from "./ws/chat-router.js";
+export type { ParsedMessage, RoutingRule as ChatRoutingRule } from "./ws/chat-router.js";

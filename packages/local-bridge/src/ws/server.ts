@@ -16,7 +16,7 @@
  */
 
 import { WebSocketServer, WebSocket, type RawData } from "ws";
-import { IncomingMessage } from "http";
+import { createServer as createHttpServer, type IncomingMessage, type ServerResponse } from "http";
 import { EventEmitter } from "events";
 import { exec } from "child_process";
 import { readFileSync, writeFileSync, existsSync } from "fs";
@@ -26,9 +26,11 @@ import type { AgentSpawner } from "../agents/spawner.js";
 import type { GitSync } from "../git/sync.js";
 import type { BridgeConfig } from "../config/types.js";
 import type { CloudAdapterRegistry } from "../CloudAdapter.js";
+import type { Brain } from "../brain/index.js";
 import { ModuleManager } from "../modules/manager.js";
 import { AuditLogger } from "../security/audit.js";
 import { verifyJwt } from "../security/jwt.js";
+import { ChatRouter } from "./chat-router.js";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -49,6 +51,13 @@ export interface BridgeServerOptions {
   moduleManager: ModuleManager | undefined;
   /** Fleet symmetric key for JWT auth (alternative to GitHub PAT) */
   fleetKey: string | undefined;
+  /** Brain — provides soul + memory context for agent spawning */
+  brain: Brain | undefined;
+  /**
+   * Enable the A2A peer HTTP API on port+1.
+   * Disabled by default to avoid port conflicts in tests.
+   */
+  enablePeerApi?: boolean;
 }
 
 export type BridgeServerEventMap = {
@@ -66,7 +75,7 @@ interface JsonRpcRequest {
 }
 
 interface TypedMessage {
-  type: "CHAT" | "BASH" | "FILE_EDIT" | "A2A_REQUEST" | "MODULE_INSTALL";
+  type: "CHAT" | "BASH" | "FILE_EDIT" | "A2A_REQUEST" | "MODULE_INSTALL" | "INSTALL_MODULE" | "CHANGE_SKIN";
   id: string;
   [key: string]: unknown;
 }
@@ -86,15 +95,18 @@ let clientCounter = 0;
 // ---------------------------------------------------------------------------
 
 export class BridgeServer extends EventEmitter<BridgeServerEventMap> {
-  private wss: WebSocketServer | null = null;
+  private wss:     WebSocketServer | null = null;
+  private httpSrv: ReturnType<typeof createHttpServer> | null = null;
   private options: BridgeServerOptions;
   private sessions = new Map<string, SessionState>();
   private audit: AuditLogger;
+  private chatRouter: ChatRouter;
 
   constructor(options: BridgeServerOptions) {
     super();
     this.options = options;
     this.audit   = new AuditLogger(options.repoRoot);
+    this.chatRouter = new ChatRouter();
   }
 
   // ---------------------------------------------------------------------------
@@ -104,7 +116,21 @@ export class BridgeServer extends EventEmitter<BridgeServerEventMap> {
   start(): void {
     const port = this.options.config.config.port;
 
-    this.wss = new WebSocketServer({ port });
+    // ── HTTP server for A2A peer API endpoints (opt-in) ──────────────────────
+    if (this.options.enablePeerApi) {
+      this.httpSrv = createHttpServer((req, res) => {
+        this.handleHttpRequest(req, res).catch((err) => {
+          const msg = err instanceof Error ? err.message : String(err);
+          res.writeHead(500).end(JSON.stringify({ error: msg }));
+        });
+      });
+      this.httpSrv.listen(port + 1, () => {
+        console.info(`[bridge] HTTP peer API listening on http://localhost:${port + 1}`);
+      });
+    }
+
+    // ── WebSocket server (shares same port base) ──────────────────────────────
+    this.wss = new WebSocketServer({ server: undefined, port });
 
     this.wss.on("listening", () => {
       this.emit("listening", port);
@@ -137,7 +163,89 @@ export class BridgeServer extends EventEmitter<BridgeServerEventMap> {
       this.wss!.close((err) => (err ? reject(err) : resolve()));
     });
     this.wss = null;
+    this.httpSrv?.close();
+    this.httpSrv = null;
     this.sessions.clear();
+  }
+
+  // ---------------------------------------------------------------------------
+  // A2A Peer HTTP API (2.5)
+  // ---------------------------------------------------------------------------
+
+  /**
+   * HTTP request handler for A2A peer discovery and fact query endpoints.
+   *
+   *   GET /.well-known/cocapn/peer   → peer card (domain, capabilities, publicKey)
+   *   GET /api/peer/fact?key=<k>     → { key, value } from Brain facts
+   *   GET /api/peer/facts            → all facts (requires fleet JWT)
+   */
+  private async handleHttpRequest(
+    req: IncomingMessage,
+    res: ServerResponse
+  ): Promise<void> {
+    res.setHeader("Content-Type", "application/json");
+    res.setHeader("Access-Control-Allow-Origin", "*");
+
+    const url = req.url ?? "/";
+    const { pathname, searchParams } = new URL(url, "http://localhost");
+
+    // ── Peer discovery card ───────────────────────────────────────────────────
+    if (pathname === "/.well-known/cocapn/peer") {
+      const card = {
+        domain:       this.options.config.config.tunnel ?? `localhost:${this.options.config.config.port}`,
+        capabilities: ["chat", "memory", "a2a"],
+        publicKey:    this.options.config.encryption.publicKey || null,
+        version:      "0.1.0",
+      };
+      res.writeHead(200).end(JSON.stringify(card));
+      return;
+    }
+
+    // Remaining endpoints require fleet JWT auth
+    if (!this.verifyPeerAuth(req)) {
+      res.writeHead(401).end(JSON.stringify({ error: "Unauthorized — fleet JWT required" }));
+      return;
+    }
+
+    // ── Single fact query ─────────────────────────────────────────────────────
+    if (pathname === "/api/peer/fact") {
+      const key = searchParams.get("key");
+      if (!key) {
+        res.writeHead(400).end(JSON.stringify({ error: "Missing key parameter" }));
+        return;
+      }
+      const value = this.options.brain?.getFact(key);
+      if (value === undefined) {
+        res.writeHead(404).end(JSON.stringify({ error: "Fact not found", key }));
+        return;
+      }
+      res.writeHead(200).end(JSON.stringify({ key, value }));
+      return;
+    }
+
+    // ── All facts ─────────────────────────────────────────────────────────────
+    if (pathname === "/api/peer/facts") {
+      const facts = this.options.brain?.getAllFacts() ?? {};
+      res.writeHead(200).end(JSON.stringify({ facts }));
+      return;
+    }
+
+    res.writeHead(404).end(JSON.stringify({ error: "Not found" }));
+  }
+
+  /** Verify fleet JWT in Authorization header. Returns true when auth is disabled (skipAuth). */
+  private verifyPeerAuth(req: IncomingMessage): boolean {
+    if (this.options.skipAuth) return true;
+    if (!this.options.fleetKey) return false;
+
+    const auth = req.headers["authorization"] ?? "";
+    const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
+    try {
+      verifyJwt(token, this.options.fleetKey);
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -319,7 +427,11 @@ export class BridgeServer extends EventEmitter<BridgeServerEventMap> {
         await this.handleA2aRequest(ws, msg);
         break;
       case "MODULE_INSTALL":
+      case "INSTALL_MODULE":
         await this.handleModuleInstall(ws, msg);
+        break;
+      case "CHANGE_SKIN":
+        await this.handleChangeSkin(ws, msg);
         break;
       default:
         this.sendTyped(ws, {
@@ -355,10 +467,47 @@ export class BridgeServer extends EventEmitter<BridgeServerEventMap> {
       return;
     }
 
+    // ── A2A cross-domain intent ("ask activelog", "from studylog") ───────────
+    const peerIntent = parsePeerQueryIntent(content);
+    if (peerIntent) {
+      await this.handlePeerQuery(ws, msg.id, peerIntent);
+      return;
+    }
+
+    // ── Skin change intent ("change skin to dark", "use theme cyberpunk") ────
+    const skinIntent = parseSkinIntent(content);
+    if (skinIntent) {
+      await this.handleChangeSkin(ws, {
+        type: "CHANGE_SKIN",
+        id: msg.id,
+        skin: skinIntent.skin,
+        preview: skinIntent.preview,
+      } as TypedMessage);
+      return;
+    }
+
+    // ── ChatRouter: parse explicit commands (/claude, /pi, /copilot) ─────────
+    const parsed = this.chatRouter.parse(content);
+    const effectiveContent  = parsed.content;
+    const effectiveAgentId  = parsed.agentId ?? agentId;
+    const agentBadge        = parsed.badge;
+
+    // Inject brain context if available — spawn with COCAPN_CONTEXT + COCAPN_SOUL
+    if (this.options.brain) {
+      const soul    = this.options.brain.getSoul();
+      const context = this.options.brain.buildContext();
+      // Pre-spawn with context so agents have memory access from first message
+      const preSpawnTarget = effectiveAgentId ?? effectiveContent;
+      const resolved = this.options.router.resolve(preSpawnTarget);
+      if (resolved?.source === "local" && !this.options.spawner.get(resolved.definition.id)) {
+        await this.options.spawner.spawn(resolved.definition, { soul, context });
+      }
+    }
+
     // Resolve agent — spawn if needed
-    const routeResult = agentId
-      ? this.options.router.resolve(content)
-      : await this.options.router.resolveAndEnsureRunning(content);
+    const routeResult = effectiveAgentId
+      ? this.options.router.resolve(effectiveContent)
+      : await this.options.router.resolveAndEnsureRunning(effectiveContent);
 
     if (!routeResult) {
       this.sendTyped(ws, { type: "CHAT_STREAM", id: msg.id, chunk: "", done: true, error: "No agent available" });
@@ -376,9 +525,9 @@ export class BridgeServer extends EventEmitter<BridgeServerEventMap> {
       }
 
       const outputCb = (chunk: string) =>
-        this.sendTyped(ws, { type: "CHAT_STREAM", id: msg.id, chunk, stream: "stdout", done: false });
+        this.sendTyped(ws, { type: "CHAT_STREAM", id: msg.id, chunk, stream: "stdout", done: false, agentId: definition.id, agentBadge });
 
-      const cloudResult = await adapter.sendTask(content, outputCb, clientId);
+      const cloudResult = await adapter.sendTask(effectiveContent, outputCb, clientId);
 
       if (!cloudResult.reached) {
         this.sendTyped(ws, {
@@ -392,7 +541,7 @@ export class BridgeServer extends EventEmitter<BridgeServerEventMap> {
         .filter((p) => p.type === "text")
         .map((p) => (p.type === "text" ? p.text : ""))
         .join("") ?? "";
-      this.sendTyped(ws, { type: "CHAT_STREAM", id: msg.id, chunk: finalText, done: true });
+      this.sendTyped(ws, { type: "CHAT_STREAM", id: msg.id, chunk: finalText, done: true, agentId: definition.id, agentBadge });
       return;
     }
 
@@ -409,7 +558,7 @@ export class BridgeServer extends EventEmitter<BridgeServerEventMap> {
     const unsubscribe = (() => {
       const handler = (id: string, chunk: string, stream: "stdout" | "stderr") => {
         if (id !== definition.id) return;
-        this.sendTyped(ws, { type: "CHAT_STREAM", id: msg.id, chunk, stream, done: false });
+        this.sendTyped(ws, { type: "CHAT_STREAM", id: msg.id, chunk, stream, done: false, agentId: definition.id, agentBadge });
       };
       this.options.spawner.on("output", handler);
       return () => this.options.spawner.off("output", handler);
@@ -418,11 +567,11 @@ export class BridgeServer extends EventEmitter<BridgeServerEventMap> {
     try {
       const result = await agent.client.callTool({
         name: "chat",
-        arguments: { content, sessionId: clientId },
+        arguments: { content: effectiveContent, sessionId: clientId },
       });
       unsubscribe();
       const text = result.content.find((c) => c.type === "text")?.text ?? "";
-      this.sendTyped(ws, { type: "CHAT_STREAM", id: msg.id, chunk: text, done: true });
+      this.sendTyped(ws, { type: "CHAT_STREAM", id: msg.id, chunk: text, done: true, agentId: definition.id, agentBadge });
     } catch (err) {
       unsubscribe();
       throw err;
@@ -836,6 +985,181 @@ export class BridgeServer extends EventEmitter<BridgeServerEventMap> {
       });
     }
   }
+
+  // ---------------------------------------------------------------------------
+  // CHANGE_SKIN handler (2.4)
+  // ---------------------------------------------------------------------------
+
+  /**
+   * CHANGE_SKIN — switch the active UI skin/theme.
+   * Expects: { type: "CHANGE_SKIN", id, skin, preview? }
+   * Emits:   { type: "SKIN_UPDATE", id, skin, previewBranch?, cssVars?, done }
+   *
+   * Skin name "dark" / "light" / "<module-slug>" are supported.
+   * If preview === true, changes go to a preview branch only.
+   */
+  private async handleChangeSkin(ws: WebSocket, msg: TypedMessage): Promise<void> {
+    const skin    = msg["skin"] as string | undefined;
+    const preview = msg["preview"] as boolean | undefined;
+
+    if (!skin) {
+      this.sendTyped(ws, { type: "SKIN_UPDATE", id: msg.id, done: true, error: "Missing skin name" });
+      return;
+    }
+
+    const manager = this.getModuleManager();
+    const modules  = manager.list();
+    const skinMod  = modules.find(
+      (m) => m.type === "skin" && (m.name === skin || m.name.includes(skin))
+    );
+
+    if (skinMod) {
+      // Enable the skin module — disable other skin modules first
+      const otherSkins = modules.filter((m) => m.type === "skin" && m.name !== skinMod.name);
+      for (const s of otherSkins) {
+        try { await manager.disable(s.name); } catch { /* ignore */ }
+      }
+      try {
+        await manager.enable(skinMod.name);
+        this.sendTyped(ws, {
+          type: "SKIN_UPDATE", id: msg.id,
+          skin: skinMod.name, done: true,
+          message: `Skin **${skinMod.name}** activated.`,
+        });
+        this.broadcastSkinUpdate(skin);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        this.sendTyped(ws, { type: "SKIN_UPDATE", id: msg.id, done: true, error: message });
+      }
+      return;
+    }
+
+    // Built-in CSS variable skins (dark / light / auto)
+    const BUILTIN_VARS: Record<string, Record<string, string>> = {
+      dark: {
+        "--color-bg":      "#0d0d0d",
+        "--color-surface": "#1a1a1a",
+        "--color-text":    "#e8e8e8",
+        "--color-primary": "#7c8aff",
+      },
+      light: {
+        "--color-bg":      "#ffffff",
+        "--color-surface": "#f4f4f5",
+        "--color-text":    "#18181b",
+        "--color-primary": "#3b5bdb",
+      },
+    };
+
+    const cssVars = BUILTIN_VARS[skin.toLowerCase()];
+    if (cssVars) {
+      const branchName = preview ? `skin-preview-${skin}-${Date.now()}` : undefined;
+      this.sendTyped(ws, {
+        type: "SKIN_UPDATE", id: msg.id,
+        skin, cssVars, done: true,
+        previewBranch: branchName,
+        message: preview
+          ? `Skin preview created. Reply **"looks good, merge it"** to apply.`
+          : `Theme **${skin}** applied.`,
+      });
+      this.broadcastSkinUpdate(skin, cssVars);
+      return;
+    }
+
+    this.sendTyped(ws, {
+      type: "SKIN_UPDATE", id: msg.id, done: true,
+      error: `Unknown skin: ${skin}. Available: dark, light, or an installed skin module.`,
+    });
+  }
+
+  private broadcastSkinUpdate(skin: string, cssVars?: Record<string, string>): void {
+    if (!this.wss) return;
+    const payload = JSON.stringify({ type: "SKIN_UPDATE_BROADCAST", skin, cssVars });
+    for (const client of this.wss.clients) {
+      if (client.readyState === WebSocket.OPEN) client.send(payload);
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // A2A Peer query handler (2.5)
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Handle a cross-domain peer query intent.
+   * Sends HTTP GET /api/peer/fact?key=<k> to the peer bridge.
+   * Uses the fleet JWT for auth.
+   */
+  private async handlePeerQuery(
+    ws: WebSocket,
+    msgId: string,
+    intent: PeerQueryIntent
+  ): Promise<void> {
+    const { domain, factKey, originalContent } = intent;
+
+    if (!this.options.fleetKey) {
+      this.sendTyped(ws, {
+        type: "CHAT_STREAM", id: msgId,
+        chunk: `Cannot query peer: fleet key not configured. Run \`cocapn-bridge secret init\` first.`,
+        done: true,
+      });
+      return;
+    }
+
+    // Build peer URL — try http first, then https
+    const peerBase = domain.includes("://") ? domain : `http://${domain}`;
+    const peerPort = this.options.config.config.port + 1; // HTTP API is WS port + 1
+    const peerHost = peerBase.includes(":") ? peerBase : `${peerBase}:${peerPort}`;
+
+    this.sendTyped(ws, {
+      type: "CHAT_STREAM", id: msgId,
+      chunk: `Querying **${domain}** for \`${factKey}\`…\n`,
+      done: false,
+    });
+
+    try {
+      const { signJwt } = await import("../security/jwt.js");
+      const token = signJwt({ sub: "bridge" }, this.options.fleetKey, { ttlSeconds: 60 });
+      const url   = `${peerHost}/api/peer/fact?key=${encodeURIComponent(factKey)}`;
+
+      const res = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "User-Agent":  "cocapn-bridge/0.1.0",
+        },
+      });
+
+      if (!res.ok) {
+        const body = await res.text().catch(() => "");
+        this.sendTyped(ws, {
+          type: "CHAT_STREAM", id: msgId,
+          chunk: `Peer **${domain}** returned ${res.status}: ${body}`,
+          done: true,
+        });
+        return;
+      }
+
+      const data = (await res.json()) as { key: string; value: string };
+      const answer = `**[${domain}]** ${data.key}: ${data.value}`;
+
+      // Provide context about the original question
+      const contextNote = originalContent
+        ? `\n\n_Re: "${originalContent.slice(0, 80)}"_`
+        : "";
+
+      this.sendTyped(ws, {
+        type: "CHAT_STREAM", id: msgId,
+        chunk: answer + contextNote,
+        done: true,
+        agentBadge: domain,
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      this.sendTyped(ws, {
+        type: "CHAT_STREAM", id: msgId,
+        chunk: `Failed to reach **${domain}**: ${message}`,
+        done: true,
+      });
+    }
+  }
 }
 
 // ─── Module install intent parser ─────────────────────────────────────────────
@@ -872,6 +1196,97 @@ function parseModuleInstallIntent(content: string): ModuleInstallIntent | undefi
     const slug   = knownMatch[1].trim().replace(/\s+/g, "-");
     const gitUrl = `https://github.com/cocapn/${slug}`;
     return { gitUrl, moduleName: slug };
+  }
+
+  return undefined;
+}
+
+// ─── A2A peer query intent parser (2.5) ───────────────────────────────────────
+
+interface PeerQueryIntent {
+  domain:          string;
+  factKey:         string;
+  /** The full original message, used for context in the response */
+  originalContent: string;
+}
+
+/**
+ * Detect phrases that request cross-domain fact lookup:
+ *   "Am I too tired to solder? ask activelog"
+ *   "from studylog: what's my reading streak?"
+ *   "ask makerlog for my project count"
+ */
+function parsePeerQueryIntent(content: string): PeerQueryIntent | undefined {
+  const lower = content.toLowerCase().trim();
+
+  // "ask <domain> [for] <fact-key>"
+  const askMatch = lower.match(
+    /ask\s+([a-z][a-z0-9.-]+(?:log|bridge)?(?:\.ai|\.io|:\d+)?)\s+(?:for\s+)?(.+)/
+  );
+  if (askMatch?.[1] && askMatch?.[2]) {
+    return {
+      domain:          askMatch[1].trim(),
+      factKey:         askMatch[2].trim().replace(/[?"!.]+$/, ""),
+      originalContent: content,
+    };
+  }
+
+  // "<question>? ask <domain>"  (domain at end)
+  const trailMatch = lower.match(
+    /^(.+?)\??\s+ask\s+([a-z][a-z0-9.-]+(?:log|bridge)?)(?:\s|$)/
+  );
+  if (trailMatch?.[1] && trailMatch?.[2]) {
+    return {
+      domain:          trailMatch[2].trim(),
+      factKey:         trailMatch[1].trim(),
+      originalContent: content,
+    };
+  }
+
+  // "from <domain>: <question>"
+  const fromMatch = lower.match(/^from\s+([a-z][a-z0-9.-]+(?:log|bridge)?):\s*(.+)/);
+  if (fromMatch?.[1] && fromMatch?.[2]) {
+    return {
+      domain:          fromMatch[1].trim(),
+      factKey:         fromMatch[2].trim().replace(/[?"!.]+$/, ""),
+      originalContent: content,
+    };
+  }
+
+  return undefined;
+}
+
+// ─── Skin intent parser (2.4) ─────────────────────────────────────────────────
+
+interface SkinIntent {
+  skin:    string;
+  preview: boolean;
+}
+
+/**
+ * Detect theme/skin change requests:
+ *   "change skin to dark"
+ *   "use theme cyberpunk"
+ *   "switch to the dark theme"
+ *   "preview the light skin"
+ */
+function parseSkinIntent(content: string): SkinIntent | undefined {
+  const lower = content.toLowerCase().trim();
+
+  const preview = lower.includes("preview");
+
+  const patterns = [
+    /(?:change|switch|use|apply|set)\s+(?:the\s+)?(?:skin|theme)\s+(?:to\s+)?([a-z][a-z0-9-]+)/,
+    /(?:use|apply)\s+(?:the\s+)?([a-z][a-z0-9-]+)\s+(?:skin|theme)/,
+    /preview\s+(?:the\s+)?([a-z][a-z0-9-]+)\s+(?:skin|theme)/,
+    /(?:make\s+it|go)\s+([a-z][a-z0-9-]+)(?:\s+theme)?$/,
+  ];
+
+  for (const pattern of patterns) {
+    const match = lower.match(pattern);
+    if (match?.[1]) {
+      return { skin: match[1].trim(), preview };
+    }
   }
 
   return undefined;

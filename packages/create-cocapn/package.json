@@ -1,0 +1,27 @@
+{
+  "name": "create-cocapn",
+  "version": "0.1.0",
+  "description": "Zero-friction scaffolder for Cocapn agent instances",
+  "type": "module",
+  "bin": {
+    "create-cocapn": "./dist/index.js"
+  },
+  "exports": {
+    ".": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "node --import ../local-bridge/node_modules/tsx/dist/esm/index.cjs --test tests/scaffold.test.ts"
+  },
+  "dependencies": {
+    "commander": "^12.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.4.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

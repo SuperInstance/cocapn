@@ -4,7 +4,8 @@
   "description": "Local Node.js bridge — WebSocket server, Git sync, and agent spawner for the Cocapn hybrid OS",
   "type": "module",
   "bin": {
-    "cocapn-bridge": "./dist/esm/main.js"
+    "cocapn-bridge": "./dist/esm/main.js",
+    "cocapn-brain":  "./dist/esm/brain-main.js"
   },
   "exports": {
     ".": {

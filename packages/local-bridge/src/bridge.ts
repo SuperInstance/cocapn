@@ -31,6 +31,7 @@ import {
 } from "./CloudAdapter.js";
 import { ModuleManager } from "./modules/manager.js";
 import { FleetKeyManager } from "./security/fleet.js";
+import { Brain } from "./brain/index.js";
 import type { BridgeConfig } from "./config/types.js";
 
 // ─── AdmiralClient (optional import — avoids hard dep on cloud-agents pkg) ────
@@ -79,6 +80,7 @@ export class Bridge {
   private modules:       ModuleManager;
   private fleetKeys:     FleetKeyManager;
   private fleetKey:      string | undefined;
+  private brain:         Brain;
 
   constructor(options: BridgeOptions) {
     this.options    = options;
@@ -96,6 +98,7 @@ export class Bridge {
     this.secrets   = new SecretManager(options.privateRepoRoot);
     this.sync      = new GitSync(options.privateRepoRoot, this.config);
     this.modules   = new ModuleManager(options.privateRepoRoot);
+    this.brain     = new Brain(options.privateRepoRoot, this.config, this.sync);
     this.fleetKeys = new FleetKeyManager(options.privateRepoRoot);
 
     this.watcher = new RepoWatcher(
@@ -128,15 +131,17 @@ export class Bridge {
     );
 
     this.server = new BridgeServer({
-      config:        this.config,
-      router:        this.router,
-      spawner:       this.spawner,
-      sync:          this.sync,
-      repoRoot:      options.privateRepoRoot,
-      skipAuth:      options.skipAuth,
-      cloudAdapters: this.cloudAdapters,
-      moduleManager: this.modules,
-      fleetKey:      this.fleetKey,
+      config:         this.config,
+      router:         this.router,
+      spawner:        this.spawner,
+      sync:           this.sync,
+      repoRoot:       options.privateRepoRoot,
+      skipAuth:       options.skipAuth,
+      cloudAdapters:  this.cloudAdapters,
+      moduleManager:  this.modules,
+      fleetKey:       this.fleetKey,
+      brain:          this.brain,
+      enablePeerApi:  true,
     });
   }
 

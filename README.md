@@ -48,22 +48,18 @@ Cocapn is a **repo-first hybrid agent OS** — a local WebSocket bridge that run
 
 ### Install and init
 
+Run a single command — it will ask for your GitHub PAT, create and clone both repos, generate an age keypair, and print your subdomain URL.
+
 ```bash
-npm install -g cocapn-bridge
-cocapn-bridge init
+npx create-cocapn my-makerlog --domain makerlog
 ```
 
-The interactive wizard will:
-1. Ask for a GitHub PAT with `repo` scope
-2. Let you choose a domain (makerlog.ai, studylog.ai, activelog.ai, lifelog.ai, or custom)
-3. Create and initialize your public + private repos on GitHub
-4. Generate an age keypair and store it securely
-5. Start the bridge and open your instance in the browser
-
-### Manual start (after init)
-
 ```bash
-cocapn-bridge --repo ~/my-private-repo --public ~/my-public-repo
+# Or for a custom domain:
+npx create-cocapn my-log --domain studylog
+
+# After setup, start the bridge manually:
+cocapn-bridge --repo ./my-makerlog-brain
 ```
 
 ## Repository Structure

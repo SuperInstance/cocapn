@@ -275,6 +275,14 @@ ${bold(cyan("   ╚═════╝ ╚═════╝  ╚═════�
     pushRepo(privateDir, token, githubLogin);
     ok("Pushed");
 
+    // ── Strip PAT from remote URLs ────────────────────────────────────────────
+    // The PAT was embedded in the remote URL for the initial push.
+    // Replace it with the clean HTTPS URL so credentials are no longer on disk.
+    progress("Cleaning remote URLs…");
+    stripPatFromRemote(publicDir,  githubLogin, publicRepo);
+    stripPatFromRemote(privateDir, githubLogin, privateRepo);
+    ok("Remote URLs cleaned (PAT removed from .git/config)");
+
     // ── Install modules if full template ─────────────────────────────────────
     if (templateSlug === "full") {
       progress("Installing default modules…");
@@ -495,6 +503,20 @@ function pushRepo(dir: string, token: string, login: string): void {
       { cwd: dir, stdio: "ignore" }
     );
   } catch { /* ignore first-push errors */ }
+}
+
+/**
+ * Replace the PAT-embedded remote URL with a clean HTTPS URL.
+ * This must be called after the initial push so the PAT is no longer stored
+ * in .git/config on disk.
+ */
+function stripPatFromRemote(dir: string, login: string, repoName: string): void {
+  try {
+    execSync(
+      `git remote set-url origin https://github.com/${login}/${repoName}.git`,
+      { cwd: dir, stdio: "ignore" }
+    );
+  } catch { /* non-fatal — user can run the fix manually */ }
 }
 
 async function enablePages(token: string, login: string, repo: string): Promise<void> {

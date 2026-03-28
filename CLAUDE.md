@@ -37,11 +37,29 @@ Cocapn is a repo-first, domain-branded agent operating system with an optional C
 3. MUST work offline (local bridge functions without Cloudflare)
 4. WebSocket port 8787 (local), fallback to wss://tunnel.cocapn.io
 
-## Current Task
-We are migrating from a Cloudflare-only architecture to a hybrid repo-first system. The first phase extracts shared protocols, then builds the local bridge, then integrates with existing cloud agents.
+## Phase 1 Status: COMPLETE
+Local bridge, UI, protocols (MCP+A2A), security (age/JWT/audit), module system, and onboarding wizard are all implemented and tested.
+
+## Current Phase: Phase 2 — Agent Intelligence & Community UX
+See `docs/ROADMAP.md` for full details. Work items in priority order:
+
+1. **2.1** `create-cocapn` — standalone `npx create-cocapn` scaffolder package at `packages/create-cocapn/`. Shared init logic extracted to `packages/local-bridge/src/init/`.
+2. **2.2** `Brain` — `packages/local-bridge/src/brain/` class with `getSoul/getFact/setFact/searchWiki/createTask`. Auto-commits on mutation. CLI `cocapn-brain` sub-commands.
+3. **2.3** `Router` — Extend `BridgeServer` to parse `/claude`, `/copilot`, `/pi` prefixes and apply implicit content-based routing. Config-overridable in `cocapn/config.json`.
+4. **2.4** Chat customization — `install-module` / `change-skin` WebSocket types; preview branches; `/modules` UI route.
+5. **2.5** A2A peers — `/.well-known/cocapn/peer` endpoint; `GET /api/peer/fact`; cross-domain intent detection in Router.
+6. **2.6** Polish — Vitest coverage, GitHub Actions CI/CD, structured logging (`Logger`), `SECURITY.md`, fix PAT-in-remote-URL and `secret:KEY` ref resolution.
+
+## Active Architectural Decisions
+- `Brain` lives at `packages/local-bridge/src/brain/` (not inside `ws/` or `agents/`)
+- `Router` (chat command parser) lives at `packages/local-bridge/src/ws/router.ts` — distinct from `AgentRouter` (capability matcher) at `agents/router.ts`
+- `create-cocapn` must have ZERO dependency on the full bridge — only imports `src/init/`
+- `cocapn-brain` CLI is a separate binary entry point (same package as `cocapn-bridge`)
+- A2A peer auth uses the same fleet JWT already in `security/jwt.ts`
 
 ## When to Ask
 - When modifying protocol interfaces (MCP/A2A)
 - When adding new storage backends (must justify why not Git)
 - When changing encryption strategy
-- When uncertain about domain skinning implementation
+- When `Brain.setFact` / `createTask` commit format diverges from `"update memory: <action>"`
+- When Router intent detection needs an LLM call (should stay regex/heuristic for offline use)

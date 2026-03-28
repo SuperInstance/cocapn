@@ -1,0 +1,61 @@
+name: Publish
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  publish:
+    name: Publish to npm
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://registry.npmjs.org
+
+      - name: Install dependencies (local-bridge)
+        working-directory: packages/local-bridge
+        run: npm ci
+
+      - name: Build (local-bridge)
+        working-directory: packages/local-bridge
+        run: npm run build
+
+      - name: Publish @cocapn/local-bridge
+        working-directory: packages/local-bridge
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Check for create-cocapn package
+        id: check_create
+        run: |
+          if [ -d "packages/create-cocapn" ]; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install dependencies (create-cocapn)
+        if: steps.check_create.outputs.exists == 'true'
+        working-directory: packages/create-cocapn
+        run: npm ci
+
+      - name: Build (create-cocapn)
+        if: steps.check_create.outputs.exists == 'true'
+        working-directory: packages/create-cocapn
+        run: npm run build
+
+      - name: Publish create-cocapn
+        if: steps.check_create.outputs.exists == 'true'
+        working-directory: packages/create-cocapn
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

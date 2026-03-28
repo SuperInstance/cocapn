@@ -71,6 +71,8 @@ export interface AgentDefinition {
 export interface SpawnOptions {
   /** soul.md content injected as COCAPN_SOUL environment variable */
   soul?: string;
+  /** JSON context snapshot (soul + facts + task count) injected as COCAPN_CONTEXT */
+  context?: string;
   /** Callback to stream stdout/stderr back to the caller (e.g. WebSocket client) */
   outputCallback?: OutputCallback;
 }
@@ -113,7 +115,8 @@ export class AgentSpawner extends EventEmitter<SpawnerEventMap> {
     }
 
     const agentEnv: Record<string, string> = { ...definition.env };
-    if (options.soul) agentEnv["COCAPN_SOUL"] = options.soul;
+    if (options.soul)    agentEnv["COCAPN_SOUL"]    = options.soul;
+    if (options.context) agentEnv["COCAPN_CONTEXT"] = options.context;
 
     const proc = spawn(definition.command, definition.args, {
       env:   filterEnv(process.env, agentEnv),

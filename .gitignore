@@ -10,3 +10,4 @@ secrets/*.yml
 !secrets/*.yml.example
 *.age
 .DS_Store
+.remember/
