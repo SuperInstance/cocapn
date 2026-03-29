@@ -376,7 +376,7 @@ export class SkillLoader {
    */
   private loadCartridgeSync(path: string): SkillCartridge | null {
     try {
-      const content = readSync(path, 'utf-8');
+      const content = readFileSync(path, 'utf-8');
       return JSON.parse(content) as SkillCartridge;
     } catch {
       return null;
