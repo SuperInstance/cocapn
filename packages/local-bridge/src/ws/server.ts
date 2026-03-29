@@ -33,6 +33,7 @@ import { authenticateConnection, verifyPeerAuth as verifyPeerAuthHandler } from 
 import { ChatRouter } from "./chat-router.js";
 import { sanitizeRepoPath, SanitizationError } from "../utils/path-sanitizer.js";
 import { ChatHandler } from "../handlers/chat-handler.js";
+import { createSender, type Sender } from "./send.js";
 import type {
   BridgeServerOptions,
   BridgeServerEventMap,
@@ -62,12 +63,14 @@ export class BridgeServer extends EventEmitter<BridgeServerEventMap> {
   private audit:       AuditLogger;
   private chatRouter:  ChatRouter;
   private chatHandler: ChatHandler;
+  private sender:      Sender;
 
   constructor(options: BridgeServerOptions) {
     super();
     this.options    = options;
     this.audit      = new AuditLogger(options.repoRoot);
     this.chatRouter = new ChatRouter();
+    this.sender     = createSender();
     this.chatHandler = new ChatHandler({
       router:        options.router,
       spawner:       options.spawner,
@@ -257,7 +260,7 @@ export class BridgeServer extends EventEmitter<BridgeServerEventMap> {
       try {
         msg = JSON.parse(raw) as Record<string, unknown>;
       } catch {
-        this.sendError(ws, null, -32700, "Parse error");
+        this.sender.error(ws, null, -32700, "Parse error");
         return;
       }
 
@@ -266,7 +269,7 @@ export class BridgeServer extends EventEmitter<BridgeServerEventMap> {
         this.dispatchTyped(ws, clientId, msg as unknown as TypedMessage).catch(
           (err: unknown) => {
             const message = err instanceof Error ? err.message : String(err);
-            this.sendTyped(ws, {
+            this.sender.typed(ws, {
               type: `${(msg as TypedMessage).type}_ERROR`,
               id: (msg as TypedMessage).id,
               error: message,
@@ -284,7 +287,7 @@ export class BridgeServer extends EventEmitter<BridgeServerEventMap> {
             typeof (err as { code: unknown }).code === "number"
               ? (err as { code: number }).code
               : -32603;
-          this.sendError(ws, rpc.id, code, message);
+          this.sender.error(ws, rpc.id, code, message);
         });
       }
     });
@@ -301,7 +304,7 @@ export class BridgeServer extends EventEmitter<BridgeServerEventMap> {
       console.error(`[bridge] Client ${clientId} error:`, err);
     });
 
-    this.sendResult(ws, null, this.getBridgeStatus());
+    this.sender.result(ws, null, this.getBridgeStatus());
   }
 
   // ---------------------------------------------------------------------------
@@ -334,7 +337,7 @@ export class BridgeServer extends EventEmitter<BridgeServerEventMap> {
         await this.handleChangeSkin(ws, msg);
         break;
       default:
-        this.sendTyped(ws, {
+        this.sender.typed(ws, {
           type: "ERROR",
           id: msg.id,
           error: `Unknown message type: ${msg.type}`,
@@ -354,7 +357,7 @@ export class BridgeServer extends EventEmitter<BridgeServerEventMap> {
     const rawCwd = (msg["cwd"] as string | undefined) ?? this.options.repoRoot;
 
     if (!command) {
-      this.sendTyped(ws, { type: "BASH_OUTPUT", id: msg.id, done: true, error: "Missing command" });
+      this.sender.typed(ws, { type: "BASH_OUTPUT", id: msg.id, done: true, error: "Missing command" });
       return;
     }
 
@@ -364,7 +367,7 @@ export class BridgeServer extends EventEmitter<BridgeServerEventMap> {
       this.audit.log({ action: "bash.exec", agent: undefined, user: undefined,
         command, files: undefined, result: "denied",
         detail: "cwd outside repo root", durationMs: undefined });
-      this.sendTyped(ws, { type: "BASH_OUTPUT", id: msg.id, done: true, error: "cwd outside repo root" });
+      this.sender.typed(ws, { type: "BASH_OUTPUT", id: msg.id, done: true, error: "cwd outside repo root" });
       return;
     }
 
@@ -375,22 +378,22 @@ export class BridgeServer extends EventEmitter<BridgeServerEventMap> {
       const child = exec(command, { cwd });
 
       child.stdout?.on("data", (chunk: string) => {
-        this.sendTyped(ws, { type: "BASH_OUTPUT", id: msg.id, stdout: chunk, done: false });
+        this.sender.typed(ws, { type: "BASH_OUTPUT", id: msg.id, stdout: chunk, done: false });
       });
 
       child.stderr?.on("data", (chunk: string) => {
-        this.sendTyped(ws, { type: "BASH_OUTPUT", id: msg.id, stderr: chunk, done: false });
+        this.sender.typed(ws, { type: "BASH_OUTPUT", id: msg.id, stderr: chunk, done: false });
       });
 
       child.on("close", (exitCode) => {
         finish(exitCode === 0 ? "ok" : "error", `exit ${exitCode ?? "null"}`);
-        this.sendTyped(ws, { type: "BASH_OUTPUT", id: msg.id, done: true, exitCode });
+        this.sender.typed(ws, { type: "BASH_OUTPUT", id: msg.id, done: true, exitCode });
         resolveFn();
       });
 
       child.on("error", (err) => {
         finish("error", err.message);
-        this.sendTyped(ws, { type: "BASH_OUTPUT", id: msg.id, done: true, error: err.message });
+        this.sender.typed(ws, { type: "BASH_OUTPUT", id: msg.id, done: true, error: err.message });
         resolveFn();
       });
     });
@@ -406,7 +409,7 @@ export class BridgeServer extends EventEmitter<BridgeServerEventMap> {
     const content = msg["content"] as string | undefined;
 
     if (!relPath || content === undefined) {
-      this.sendTyped(ws, { type: "FILE_EDIT_RESULT", id: msg.id, ok: false, error: "Missing path or content" });
+      this.sender.typed(ws, { type: "FILE_EDIT_RESULT", id: msg.id, ok: false, error: "Missing path or content" });
       return;
     }
 
@@ -417,7 +420,7 @@ export class BridgeServer extends EventEmitter<BridgeServerEventMap> {
       const detail = err instanceof SanitizationError ? err.message : "Invalid path";
       this.audit.log({ action: "file.edit", agent: undefined, user: undefined,
         command: undefined, files: [relPath], result: "denied", detail, durationMs: undefined });
-      this.sendTyped(ws, { type: "FILE_EDIT_RESULT", id: msg.id, ok: false, error: detail });
+      this.sender.typed(ws, { type: "FILE_EDIT_RESULT", id: msg.id, ok: false, error: detail });
       return;
     }
 
@@ -428,11 +431,11 @@ export class BridgeServer extends EventEmitter<BridgeServerEventMap> {
       const filename = relPath.split("/").pop() ?? relPath;
       await this.options.sync.commitFile(filename);
       finish("ok");
-      this.sendTyped(ws, { type: "FILE_EDIT_RESULT", id: msg.id, ok: true, path: relPath });
+      this.sender.typed(ws, { type: "FILE_EDIT_RESULT", id: msg.id, ok: true, path: relPath });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       finish("error", message);
-      this.sendTyped(ws, {
+      this.sender.typed(ws, {
         type: "FILE_EDIT_RESULT",
         id: msg.id,
         ok: false,
@@ -451,11 +454,11 @@ export class BridgeServer extends EventEmitter<BridgeServerEventMap> {
     const routeResult = await this.options.router.resolveAndEnsureRunning(taskDescription);
 
     if (!routeResult) {
-      this.sendTyped(ws, { type: "A2A_RESPONSE", id: msg.id, routed: false, error: "No agent available" });
+      this.sender.typed(ws, { type: "A2A_RESPONSE", id: msg.id, routed: false, error: "No agent available" });
       return;
     }
 
-    this.sendTyped(ws, {
+    this.sender.typed(ws, {
       type:   "A2A_RESPONSE",
       id:     msg.id,
       routed: true,
@@ -473,7 +476,7 @@ export class BridgeServer extends EventEmitter<BridgeServerEventMap> {
   private async handleModuleInstall(ws: WebSocket, msg: TypedMessage): Promise<void> {
     const gitUrl = msg["gitUrl"] as string | undefined;
     if (!gitUrl) {
-      this.sendTyped(ws, { type: "MODULE_RESULT", id: msg.id, ok: false, error: "Missing gitUrl" });
+      this.sender.typed(ws, { type: "MODULE_RESULT", id: msg.id, ok: false, error: "Missing gitUrl" });
       return;
     }
 
@@ -481,19 +484,20 @@ export class BridgeServer extends EventEmitter<BridgeServerEventMap> {
 
     try {
       const mod = await manager.add(gitUrl, (line, stream) => {
-        this.sendTyped(ws, { type: "MODULE_PROGRESS", id: msg.id, line, stream });
+        this.sender.typed(ws, { type: "MODULE_PROGRESS", id: msg.id, line, stream });
       });
-      this.sendTyped(ws, { type: "MODULE_RESULT", id: msg.id, ok: true, module: mod });
+      this.sender.typed(ws, { type: "MODULE_RESULT", id: msg.id, ok: true, module: mod });
       // Broadcast updated module list to all connected clients
       this.broadcastModuleList();
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      this.sendTyped(ws, { type: "MODULE_RESULT", id: msg.id, ok: false, error: message });
+      this.sender.typed(ws, { type: "MODULE_RESULT", id: msg.id, ok: false, error: message });
     }
   }
 
   private broadcastModuleList(): void {
-    this.broadcastToAll({ type: "MODULE_LIST_UPDATE", modules: this.getModuleManager().list() });
+    if (!this.wss) return;
+    this.sender.broadcast(this.wss, { type: "MODULE_LIST_UPDATE", modules: this.getModuleManager().list() });
   }
 
   private getModuleManager(): ModuleManager {
@@ -512,29 +516,29 @@ export class BridgeServer extends EventEmitter<BridgeServerEventMap> {
 
     if (method.startsWith("bridge/")) {
       const result = await this.handleBridgeMethod(method, params);
-      this.sendResult(ws, id, result);
+      this.sender.result(ws, id, result);
       return;
     }
 
     if (method.startsWith("module/")) {
       const result = await this.handleModuleMethod(ws, method, params);
-      this.sendResult(ws, id, result);
+      this.sender.result(ws, id, result);
       return;
     }
 
     if (method.startsWith("mcp/")) {
       const result = await this.handleMcpMethod(method, params);
-      this.sendResult(ws, id, result);
+      this.sender.result(ws, id, result);
       return;
     }
 
     if (method.startsWith("a2a/")) {
       const result = await this.handleA2aMethod(method, params);
-      this.sendResult(ws, id, result);
+      this.sender.result(ws, id, result);
       return;
     }
 
-    this.sendError(ws, id, -32601, `Method not found: ${method}`);
+    this.sender.error(ws, id, -32601, `Method not found: ${method}`);
   }
 
   private async handleBridgeMethod(method: string, _params: unknown): Promise<unknown> {
@@ -609,7 +613,7 @@ export class BridgeServer extends EventEmitter<BridgeServerEventMap> {
         const gitUrl = p["gitUrl"] as string | undefined;
         if (!gitUrl) throw new Error("Missing gitUrl");
         const mod = await manager.add(gitUrl, (line, stream) => {
-          this.sendTyped(ws, { type: "MODULE_PROGRESS", id: "rpc", line, stream });
+          this.sender.typed(ws, { type: "MODULE_PROGRESS", id: "rpc", line, stream });
         });
         this.broadcastModuleList();
         return mod;
@@ -671,18 +675,6 @@ export class BridgeServer extends EventEmitter<BridgeServerEventMap> {
     };
   }
 
-  private sendTyped(ws: WebSocket, payload: Record<string, unknown>): void {
-    ws.send(JSON.stringify(payload));
-  }
-
-  private sendResult(ws: WebSocket, id: JsonRpcRequest["id"], result: unknown): void {
-    ws.send(JSON.stringify({ jsonrpc: "2.0", id, result }));
-  }
-
-  private sendError(ws: WebSocket, id: JsonRpcRequest["id"], code: number, message: string): void {
-    ws.send(JSON.stringify({ jsonrpc: "2.0", id, error: { code, message } }));
-  }
-
   // ---------------------------------------------------------------------------
   // CHANGE_SKIN handler (2.4) — direct CHANGE_SKIN typed message path
   // ---------------------------------------------------------------------------
@@ -697,7 +689,7 @@ export class BridgeServer extends EventEmitter<BridgeServerEventMap> {
     const preview = msg["preview"] as boolean | undefined;
 
     if (!skin) {
-      this.sendTyped(ws, { type: "SKIN_UPDATE", id: msg.id, done: true, error: "Missing skin name" });
+      this.sender.typed(ws, { type: "SKIN_UPDATE", id: msg.id, done: true, error: "Missing skin name" });
       return;
     }
 
@@ -714,15 +706,15 @@ export class BridgeServer extends EventEmitter<BridgeServerEventMap> {
       }
       try {
         await manager.enable(skinMod.name);
-        this.sendTyped(ws, {
+        this.sender.typed(ws, {
           type: "SKIN_UPDATE", id: msg.id,
           skin: skinMod.name, done: true,
           message: `Skin **${skinMod.name}** activated.`,
         });
-        this.broadcastToAll({ type: "SKIN_UPDATE_BROADCAST", skin: skinMod.name });
+        this.sender.broadcast(this.wss, { type: "SKIN_UPDATE_BROADCAST", skin: skinMod.name });
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
-        this.sendTyped(ws, { type: "SKIN_UPDATE", id: msg.id, done: true, error: message });
+        this.sender.typed(ws, { type: "SKIN_UPDATE", id: msg.id, done: true, error: message });
       }
       return;
     }
@@ -735,7 +727,7 @@ export class BridgeServer extends EventEmitter<BridgeServerEventMap> {
     const cssVars = BUILTIN_VARS[skin.toLowerCase()];
     if (cssVars) {
       const branchName = preview ? `skin-preview-${skin}-${Date.now()}` : undefined;
-      this.sendTyped(ws, {
+      this.sender.typed(ws, {
         type: "SKIN_UPDATE", id: msg.id,
         skin, cssVars, done: true,
         previewBranch: branchName,
@@ -743,22 +735,13 @@ export class BridgeServer extends EventEmitter<BridgeServerEventMap> {
           ? `Skin preview created. Reply **"looks good, merge it"** to apply.`
           : `Theme **${skin}** applied.`,
       });
-      this.broadcastToAll({ type: "SKIN_UPDATE_BROADCAST", skin, cssVars });
+      this.sender.broadcast(this.wss, { type: "SKIN_UPDATE_BROADCAST", skin, cssVars });
       return;
     }
 
-    this.sendTyped(ws, {
+    this.sender.typed(ws, {
       type: "SKIN_UPDATE", id: msg.id, done: true,
       error: `Unknown skin: ${skin}. Available: dark, light, or an installed skin module.`,
     });
-  }
-
-  /** Send a JSON payload to every open WebSocket client. */
-  private broadcastToAll(payload: Record<string, unknown>): void {
-    if (!this.wss) return;
-    const raw = JSON.stringify(payload);
-    for (const client of this.wss.clients) {
-      if (client.readyState === WebSocket.OPEN) client.send(raw);
-    }
   }
 }
