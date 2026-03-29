@@ -14,6 +14,10 @@
  *   - Reads Cloudflare credentials from the SecretManager (age-encrypted in repo).
  *   - Sends the GitHub PAT stored in the session as a Bearer token so cloud agents
  *     can read from the private repo when they need context.
+ *
+ * Registry:
+ *   - Registers user profiles with AdmiralDO for cross-domain discovery.
+ *   - Called when Publisher exports a profile with discovery: true.
  */
 
 import { A2AClient } from "@cocapn/protocols/a2a";
@@ -23,6 +27,7 @@ import type {
   TaskStreamEvent,
 } from "@cocapn/protocols/a2a";
 import type { AgentDefinition, OutputCallback } from "./agents/spawner.js";
+import type { SignedProfile } from "./publishing/profile.js";
 
 // ─── Cloud agent endpoint config ─────────────────────────────────────────────
 
@@ -176,6 +181,53 @@ export class CloudAdapter {
   getAgentId(): string { return this.agentId; }
   getWorkerUrl(): string { return this.workerUrl; }
 
+  // ── Registry registration ───────────────────────────────────────────────────
+
+  /**
+   * Register a profile with the AdmiralDO discovery registry.
+   *
+   * Called when Publisher exports a profile with discovery: true.
+   * Converts the SignedProfile to a RegistryProfile and sends it to Admiral.
+   *
+   * Returns the peer count (number of registered users) or undefined on failure.
+   */
+  async registerWithAdmiral(signedProfile: SignedProfile): Promise<number | undefined> {
+    if (!this.workerUrl) return undefined;
+
+    try {
+      // Convert SignedProfile to RegistryProfile format
+      const registryProfile = {
+        username: signedProfile.profile.displayName ?? "unknown",
+        displayName: signedProfile.profile.displayName,
+        currentFocus: signedProfile.profile.currentProject,
+        website: signedProfile.profile.website,
+        bio: signedProfile.profile.bio,
+        domains: signedProfile.profile.domains,
+        signature: signedProfile.signature,
+      };
+
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), REACHABILITY_TIMEOUT_MS);
+
+      const res = await fetch(`${this.workerUrl}/registry/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ profile: registryProfile }),
+        signal: controller.signal,
+      });
+
+      clearTimeout(timer);
+
+      if (!res.ok) return undefined;
+
+      const result = await res.json() as { ok: boolean; peerCount: number };
+      return result.peerCount;
+    } catch (err) {
+      console.warn(`[cloud] Failed to register with Admiral:`, err);
+      return undefined;
+    }
+  }
+
   // ── Internal ──────────────────────────────────────────────────────────────
 
   private async pollUntilDone(
@@ -279,6 +331,24 @@ export class CloudAdapterRegistry {
   setGitHubToken(token: string): void {
     this.githubToken = token;
     this.init(); // re-create adapters with new token
+  }
+
+  /**
+   * Register a profile with all AdmiralDO instances.
+   *
+   * Returns the highest peer count from all successful registrations,
+   * or undefined if all registrations fail.
+   */
+  async registerWithAdmiral(signedProfile: SignedProfile): Promise<number | undefined> {
+    const results = await Promise.all(
+      [...this.adapters.values()].map((adapter) => adapter.registerWithAdmiral(signedProfile))
+    );
+
+    // Return the highest peer count from successful registrations
+    const validResults = results.filter((r) => r !== undefined) as number[];
+    if (validResults.length === 0) return undefined;
+
+    return Math.max(...validResults);
   }
 }
 
