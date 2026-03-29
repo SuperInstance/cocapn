@@ -1,5 +1,5 @@
 name            = "cocapn-agent"
-main            = "src/worker.ts"
+main            = "dist/worker.js"
 compatibility_date = "2024-12-05"
 compatibility_flags = ["nodejs_compat"]
 
@@ -10,15 +10,9 @@ class_name = "AdmiralDO"
 
 [[migrations]]
 tag = "v1"
-new_classes = ["AdmiralDO"]
+new_sqlite_classes = ["AdmiralDO"]
 
-# Secrets (set via `wrangler secret put`):
-#   GITHUB_PAT       — GitHub PAT with repo:read scope
-#   FLEET_JWT_SECRET — Secret key for fleet JWT verification (HMAC-SHA256)
-#   CF_API_TOKEN     — Cloudflare API token (for self-referential calls)
-#
-# Environment variables (non-secret):
 [vars]
-PRIVATE_REPO  = ""   # e.g. alice/alice-brain
-PUBLIC_REPO   = ""   # e.g. alice/alice.makerlog.ai
+PRIVATE_REPO  = ""
+PUBLIC_REPO   = ""
 BRIDGE_MODE   = "cloud"
