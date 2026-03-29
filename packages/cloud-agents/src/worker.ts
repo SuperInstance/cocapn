@@ -28,15 +28,29 @@ import { makeGitHubClient } from "./github.js";
 import { AdmiralClient } from "./admiral.js";
 export { AdmiralDO } from "./admiral.js";
 
+// Auth imports
+import {
+  handleSignup,
+  handleSignin,
+  handleRefresh,
+  handleSignout,
+  handleGetMe,
+  handleCreateApiKey,
+  handleListApiKeys,
+  handleRevokeApiKey,
+  authMiddleware,
+} from "./auth/routes.js";
+
 // ─── Worker Env ───────────────────────────────────────────────────────────────
 
 export interface Env {
-  GITHUB_PAT:      string;
+  GITHUB_PAT:       string;
   FLEET_JWT_SECRET: string;
-  PRIVATE_REPO:    string;
-  PUBLIC_REPO:     string;
-  BRIDGE_MODE:     string;
-  ADMIRAL:         DurableObjectNamespace;
+  PRIVATE_REPO:     string;
+  PUBLIC_REPO:      string;
+  BRIDGE_MODE:      string;
+  ADMIRAL:          DurableObjectNamespace;
+  AUTH_KV:          KVNamespace;
 }
 
 // ─── HTTP API Types ───────────────────────────────────────────────────────────
@@ -409,6 +423,48 @@ export default {
     if (pathname.startsWith("/api/status/") && request.method === "GET") {
       const taskId = pathname.slice("/api/status/".length);
       return handleGetTaskStatus(taskId, env);
+    }
+
+    // ── Auth Routes ─────────────────────────────────────────────────────────────
+
+    // Sign up
+    if (pathname === "/api/auth/signup" && request.method === "POST") {
+      return handleSignup(request, env);
+    }
+
+    // Sign in
+    if (pathname === "/api/auth/signin" && request.method === "POST") {
+      return handleSignin(request, env);
+    }
+
+    // Refresh token
+    if (pathname === "/api/auth/refresh" && request.method === "POST") {
+      return handleRefresh(request, env);
+    }
+
+    // Sign out
+    if (pathname === "/api/auth/signout" && request.method === "POST") {
+      return handleSignout(request, env);
+    }
+
+    // Get current user
+    if (pathname === "/api/auth/me" && request.method === "GET") {
+      return handleGetMe(request, env);
+    }
+
+    // Create API key
+    if (pathname === "/api/auth/api-keys" && request.method === "POST") {
+      return handleCreateApiKey(request, env);
+    }
+
+    // List API keys
+    if (pathname === "/api/auth/api-keys" && request.method === "GET") {
+      return handleListApiKeys(request, env);
+    }
+
+    // Revoke API key
+    if (pathname.startsWith("/api/auth/api-keys/") && request.method === "DELETE") {
+      return handleRevokeApiKey(request, env);
     }
 
     // ── A2A Server Routes (fallback) ────────────────────────────────────────────

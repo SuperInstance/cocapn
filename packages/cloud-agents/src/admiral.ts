@@ -275,6 +275,76 @@ export class AdmiralDO implements DurableObject {
         CREATE INDEX IF NOT EXISTS idx_queue_status
         ON task_queue(status)
       `;
+
+      // Create users table (for multi-user authentication)
+      await this.state.storage.sql`
+        CREATE TABLE IF NOT EXISTS users (
+          id TEXT PRIMARY KEY,
+          email TEXT UNIQUE NOT NULL,
+          passwordHash TEXT NOT NULL,
+          passwordSalt TEXT NOT NULL,
+          name TEXT NOT NULL,
+          instance TEXT UNIQUE,
+          plan TEXT DEFAULT 'free',
+          createdAt TEXT NOT NULL,
+          lastLogin TEXT,
+          lastLoginIp TEXT,
+          settings TEXT DEFAULT '{}',
+          status TEXT DEFAULT 'active',
+          metadata TEXT
+        )
+      `;
+
+      await this.state.storage.sql`
+        CREATE INDEX IF NOT EXISTS idx_users_email
+        ON users(email)
+      `;
+
+      await this.state.storage.sql`
+        CREATE INDEX IF NOT EXISTS idx_users_instance
+        ON users(instance)
+      `;
+
+      await this.state.storage.sql`
+        CREATE INDEX IF NOT EXISTS idx_users_plan
+        ON users(plan)
+      `;
+
+      await this.state.storage.sql`
+        CREATE INDEX IF NOT EXISTS idx_users_status
+        ON users(status)
+      `;
+
+      // Create api_keys table
+      await this.state.storage.sql`
+        CREATE TABLE IF NOT EXISTS api_keys (
+          id TEXT PRIMARY KEY,
+          userId TEXT NOT NULL,
+          keyHash TEXT NOT NULL,
+          keyPrefix TEXT NOT NULL,
+          name TEXT NOT NULL,
+          scopes TEXT NOT NULL,
+          createdAt TEXT NOT NULL,
+          lastUsed TEXT,
+          expiresAt TEXT,
+          FOREIGN KEY (userId) REFERENCES users(id)
+        )
+      `;
+
+      await this.state.storage.sql`
+        CREATE INDEX IF NOT EXISTS idx_api_keys_user
+        ON api_keys(userId)
+      `;
+
+      await this.state.storage.sql`
+        CREATE INDEX IF NOT EXISTS idx_api_keys_prefix
+        ON api_keys(keyPrefix)
+      `;
+
+      await this.state.storage.sql`
+        CREATE INDEX IF NOT EXISTS idx_api_keys_hash
+        ON api_keys(keyHash)
+      `;
     } catch (error) {
       // If schema creation fails, disable SQL
       console.error("Failed to initialize SQL schema:", error);
@@ -431,6 +501,40 @@ export class AdmiralDO implements DurableObject {
     }
     if (request.method === "POST" && pathname === "tasks/webhook") {
       return this.handleWebhook(request);
+    }
+
+    // Auth endpoints (for user management)
+    if (request.method === "POST" && pathname === "auth/users") {
+      return this.handleCreateUser(request);
+    }
+    if (request.method === "GET" && pathname.startsWith("auth/users/")) {
+      const parts = pathname.split("/");
+      if (parts[3] === "by-email" && parts[4]) {
+        return this.handleGetUserByEmail(parts[4]);
+      }
+      return this.handleGetUser(parts[3]);
+    }
+    if (request.method === "PATCH" && pathname.startsWith("auth/users/")) {
+      const userId = pathname.split("/")[3];
+      return this.handleUpdateUser(userId, request);
+    }
+    if (request.method === "POST" && pathname === "auth/api-keys") {
+      return this.handleCreateApiKey(request);
+    }
+    if (request.method === "GET" && pathname.startsWith("auth/api-keys/")) {
+      const parts = pathname.split("/");
+      if (parts[4] === "verify") {
+        return this.handleVerifyApiKey(parts[4]);
+      }
+      return this.handleListApiKeys(parts[3]);
+    }
+    if (request.method === "PATCH" && pathname.startsWith("auth/api-keys/")) {
+      const keyId = pathname.split("/")[3];
+      return this.handleUpdateApiKey(keyId, request);
+    }
+    if (request.method === "DELETE" && pathname.startsWith("auth/api-keys/")) {
+      const parts = pathname.split("/");
+      return this.handleDeleteApiKey(parts[3], parts[4]);
     }
 
     return new Response("Not Found", { status: 404 });
@@ -1332,6 +1436,443 @@ export class AdmiralDO implements DurableObject {
           headers: { "Content-Type": "application/json" },
         })
       );
+    }
+  }
+
+  // ── Auth handlers ───────────────────────────────────────────────────────────────
+
+  /**
+   * POST /auth/users
+   *
+   * Create a new user in the database.
+   */
+  private async handleCreateUser(request: Request): Promise<Response> {
+    try {
+      if (!(await this.isSqlEnabled())) {
+        return new Response("SQL not enabled", { status: 503 });
+      }
+
+      await this.initSqlSchema();
+
+      const body = await request.json() as { action: string; user: Record<string, unknown> };
+      if (body.action !== "create" || !body.user) {
+        return new Response("Invalid request", { status: 400 });
+      }
+
+      const user = body.user;
+
+      await this.state.storage.sql`
+        INSERT INTO users (
+          id, email, passwordHash, passwordSalt, name, instance, plan, createdAt, status
+        ) VALUES (
+          ${user.id as string},
+          ${user.email as string},
+          ${user.passwordHash as string},
+          ${user.passwordSalt as string},
+          ${user.name as string},
+          ${user.instance as string | null},
+          ${user.plan as string | null},
+          ${user.createdAt as string},
+          ${user.status as string | null}
+        )
+      `;
+
+      return json({ ok: true });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      return new Response(msg, { status: 400 });
+    }
+  }
+
+  /**
+   * GET /auth/users/:id
+   *
+   * Get a user by ID.
+   */
+  private async handleGetUser(userId: string): Promise<Response> {
+    try {
+      if (!(await this.isSqlEnabled())) {
+        return new Response("SQL not enabled", { status: 503 });
+      }
+
+      await this.initSqlSchema();
+
+      const results = await this.state.storage.sql<Array<{
+        id: string;
+        email: string;
+        passwordHash: string;
+        passwordSalt: string;
+        name: string;
+        instance: string | null;
+        plan: string;
+        createdAt: string;
+        lastLogin: string | null;
+        lastLoginIp: string | null;
+        settings: string | null;
+        status: string;
+        metadata: string | null;
+      }>>`
+        SELECT * FROM users WHERE id = ${userId} LIMIT 1
+      `;
+
+      if (results.length === 0) {
+        return new Response("User not found", { status: 404 });
+      }
+
+      const row = results[0]!;
+      return json({
+        id: row.id,
+        email: row.email,
+        passwordHash: row.passwordHash,
+        passwordSalt: row.passwordSalt,
+        name: row.name,
+        instance: row.instance ?? undefined,
+        plan: row.plan,
+        createdAt: row.createdAt,
+        lastLogin: row.lastLogin ?? undefined,
+        lastLoginIp: row.lastLoginIp ?? undefined,
+        settings: row.settings ? JSON.parse(row.settings) : undefined,
+        status: row.status as "active" | "suspended" | "banned",
+        metadata: row.metadata ? JSON.parse(row.metadata) : undefined,
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      return new Response(msg, { status: 500 });
+    }
+  }
+
+  /**
+   * GET /auth/users/by-email/:email
+   *
+   * Get a user by email.
+   */
+  private async handleGetUserByEmail(email: string): Promise<Response> {
+    try {
+      if (!(await this.isSqlEnabled())) {
+        return new Response("SQL not enabled", { status: 503 });
+      }
+
+      await this.initSqlSchema();
+
+      const results = await this.state.storage.sql<Array<{
+        id: string;
+        email: string;
+        passwordHash: string;
+        passwordSalt: string;
+        name: string;
+        instance: string | null;
+        plan: string;
+        createdAt: string;
+        lastLogin: string | null;
+        lastLoginIp: string | null;
+        settings: string | null;
+        status: string;
+        metadata: string | null;
+      }>>`
+        SELECT * FROM users WHERE email = ${email.toLowerCase()} LIMIT 1
+      `;
+
+      if (results.length === 0) {
+        return new Response("User not found", { status: 404 });
+      }
+
+      const row = results[0]!;
+      return json({
+        id: row.id,
+        email: row.email,
+        passwordHash: row.passwordHash,
+        passwordSalt: row.passwordSalt,
+        name: row.name,
+        instance: row.instance ?? undefined,
+        plan: row.plan,
+        createdAt: row.createdAt,
+        lastLogin: row.lastLogin ?? undefined,
+        lastLoginIp: row.lastLoginIp ?? undefined,
+        settings: row.settings ? JSON.parse(row.settings) : undefined,
+        status: row.status as "active" | "suspended" | "banned",
+        metadata: row.metadata ? JSON.parse(row.metadata) : undefined,
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      return new Response(msg, { status: 500 });
+    }
+  }
+
+  /**
+   * PATCH /auth/users/:id
+   *
+   * Update a user (e.g., last login).
+   */
+  private async handleUpdateUser(userId: string, request: Request): Promise<Response> {
+    try {
+      if (!(await this.isSqlEnabled())) {
+        return new Response("SQL not enabled", { status: 503 });
+      }
+
+      await this.initSqlSchema();
+
+      const body = await request.json() as Record<string, unknown>;
+
+      // Build dynamic UPDATE query
+      const updates: string[] = [];
+      const values: unknown[] = [];
+
+      if (body.lastLogin) {
+        updates.push("lastLogin = ?");
+        values.push(body.lastLogin);
+      }
+      if (body.lastLoginIp) {
+        updates.push("lastLoginIp = ?");
+        values.push(body.lastLoginIp);
+      }
+      if (body.status) {
+        updates.push("status = ?");
+        values.push(body.status);
+      }
+
+      if (updates.length === 0) {
+        return json({ ok: true });
+      }
+
+      values.push(userId);
+
+      await this.state.storage.sql(
+        `UPDATE users SET ${updates.join(", ")} WHERE id = ?`,
+        ...values as []
+      );
+
+      return json({ ok: true });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      return new Response(msg, { status: 500 });
+    }
+  }
+
+  /**
+   * POST /auth/api-keys
+   *
+   * Create an API key.
+   */
+  private async handleCreateApiKey(request: Request): Promise<Response> {
+    try {
+      if (!(await this.isSqlEnabled())) {
+        return new Response("SQL not enabled", { status: 503 });
+      }
+
+      await this.initSqlSchema();
+
+      const apiKey = await request.json() as {
+        id: string;
+        userId: string;
+        keyHash: string;
+        keyPrefix: string;
+        name: string;
+        scopes: string[];
+        createdAt: string;
+        expiresAt?: string;
+      };
+
+      await this.state.storage.sql`
+        INSERT INTO api_keys (
+          id, userId, keyHash, keyPrefix, name, scopes, createdAt, expiresAt
+        ) VALUES (
+          ${apiKey.id},
+          ${apiKey.userId},
+          ${apiKey.keyHash},
+          ${apiKey.keyPrefix},
+          ${apiKey.name},
+          ${JSON.stringify(apiKey.scopes)},
+          ${apiKey.createdAt},
+          ${apiKey.expiresAt ?? null}
+        )
+      `;
+
+      return json({ ok: true });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      return new Response(msg, { status: 500 });
+    }
+  }
+
+  /**
+   * GET /auth/api-keys/:userId
+   *
+   * List API keys for a user.
+   */
+  private async handleListApiKeys(userId: string): Promise<Response> {
+    try {
+      if (!(await this.isSqlEnabled())) {
+        return new Response("SQL not enabled", { status: 503 });
+      }
+
+      await this.initSqlSchema();
+
+      const results = await this.state.storage.sql<Array<{
+        id: string;
+        userId: string;
+        keyHash: string;
+        keyPrefix: string;
+        name: string;
+        scopes: string;
+        createdAt: string;
+        lastUsed: string | null;
+        expiresAt: string | null;
+      }>>`
+        SELECT * FROM api_keys WHERE userId = ${userId}
+      `;
+
+      return json(
+        results.map((row) => ({
+          id: row.id,
+          userId: row.userId,
+          keyHash: row.keyHash,
+          keyPrefix: row.keyPrefix,
+          name: row.name,
+          scopes: JSON.parse(row.scopes),
+          createdAt: row.createdAt,
+          lastUsed: row.lastUsed ?? undefined,
+          expiresAt: row.expiresAt ?? undefined,
+        }))
+      );
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      return new Response(msg, { status: 500 });
+    }
+  }
+
+  /**
+   * GET /auth/api-keys/verify/:hash
+   *
+   * Verify an API key and return the key with user.
+   */
+  private async handleVerifyApiKey(keyHash: string): Promise<Response> {
+    try {
+      if (!(await this.isSqlEnabled())) {
+        return new Response("SQL not enabled", { status: 503 });
+      }
+
+      await this.initSqlSchema();
+
+      const results = await this.state.storage.sql<Array<{
+        id: string;
+        userId: string;
+        keyHash: string;
+        keyPrefix: string;
+        name: string;
+        scopes: string;
+        createdAt: string;
+        lastUsed: string | null;
+        expiresAt: string | null;
+      }>>`
+        SELECT * FROM api_keys WHERE keyHash = ${keyHash} LIMIT 1
+      `;
+
+      if (results.length === 0) {
+        return new Response("API key not found", { status: 404 });
+      }
+
+      const apiKey = results[0]!;
+
+      // Fetch the user
+      const userResults = await this.state.storage.sql<Array<{
+        id: string;
+        email: string;
+        passwordHash: string;
+        passwordSalt: string;
+        name: string;
+        instance: string | null;
+        plan: string;
+        createdAt: string;
+        lastLogin: string | null;
+        lastLoginIp: string | null;
+        settings: string | null;
+        status: string;
+        metadata: string | null;
+      }>>`
+        SELECT * FROM users WHERE id = ${apiKey.userId} LIMIT 1
+      `;
+
+      if (userResults.length === 0) {
+        return new Response("User not found", { status: 404 });
+      }
+
+      const userRow = userResults[0]!;
+
+      return json({
+        ...apiKey,
+        scopes: JSON.parse(apiKey.scopes),
+        user: {
+          id: userRow.id,
+          email: userRow.email,
+          passwordHash: userRow.passwordHash,
+          passwordSalt: userRow.passwordSalt,
+          name: userRow.name,
+          instance: userRow.instance ?? undefined,
+          plan: userRow.plan,
+          createdAt: userRow.createdAt,
+          lastLogin: userRow.lastLogin ?? undefined,
+          lastLoginIp: userRow.lastLoginIp ?? undefined,
+          settings: userRow.settings ? JSON.parse(userRow.settings) : undefined,
+          status: userRow.status as "active" | "suspended" | "banned",
+          metadata: userRow.metadata ? JSON.parse(userRow.metadata) : undefined,
+        },
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      return new Response(msg, { status: 500 });
+    }
+  }
+
+  /**
+   * PATCH /auth/api-keys/:id
+   *
+   * Update an API key (e.g., lastUsed).
+   */
+  private async handleUpdateApiKey(keyId: string, request: Request): Promise<Response> {
+    try {
+      if (!(await this.isSqlEnabled())) {
+        return new Response("SQL not enabled", { status: 503 });
+      }
+
+      await this.initSqlSchema();
+
+      const body = await request.json() as Record<string, unknown>;
+
+      if (body.lastUsed) {
+        await this.state.storage.sql`
+          UPDATE api_keys SET lastUsed = ${body.lastUsed as string}
+          WHERE id = ${keyId}
+        `;
+      }
+
+      return json({ ok: true });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      return new Response(msg, { status: 500 });
+    }
+  }
+
+  /**
+   * DELETE /auth/api-keys/:userId/:keyId
+   *
+   * Delete an API key.
+   */
+  private async handleDeleteApiKey(userId: string, keyId: string): Promise<Response> {
+    try {
+      if (!(await this.isSqlEnabled())) {
+        return new Response("SQL not enabled", { status: 503 });
+      }
+
+      await this.initSqlSchema();
+
+      await this.state.storage.sql`
+        DELETE FROM api_keys WHERE id = ${keyId} AND userId = ${userId}
+      `;
+
+      return json({ ok: true });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      return new Response(msg, { status: 500 });
     }
   }
 }
