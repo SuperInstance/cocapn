@@ -33,61 +33,20 @@ import { verifyJwt } from "../security/jwt.js";
 import { ChatRouter } from "./chat-router.js";
 import { sanitizeRepoPath, SanitizationError } from "../utils/path-sanitizer.js";
 import { ChatHandler } from "../handlers/chat-handler.js";
+import type {
+  BridgeServerOptions,
+  BridgeServerEventMap,
+  JsonRpcRequest,
+  TypedMessage,
+  SessionState,
+} from "./types.js";
+
+// Re-export types for backward compatibility
+export type { BridgeServerOptions, BridgeServerEventMap, TypedMessage, JsonRpcRequest, SessionState };
 
 // ---------------------------------------------------------------------------
-// Types
+// Constants
 // ---------------------------------------------------------------------------
-
-export interface BridgeServerOptions {
-  config: BridgeConfig;
-  router: AgentRouter;
-  spawner: AgentSpawner;
-  sync: GitSync;
-  /** Root of the private repo — used for FILE_EDIT path resolution */
-  repoRoot: string;
-  /** Skip GitHub token validation (for local-only / testing) */
-  skipAuth: boolean | undefined;
-  /** Cloud adapter registry — set when mode !== "local" */
-  cloudAdapters: CloudAdapterRegistry | undefined;
-  /** Module manager — lazily created if not provided */
-  moduleManager: ModuleManager | undefined;
-  /** Fleet symmetric key for JWT auth (alternative to GitHub PAT) */
-  fleetKey: string | undefined;
-  /** Brain — provides soul + memory context for agent spawning */
-  brain: Brain | undefined;
-  /**
-   * Enable the A2A peer HTTP API on port+1.
-   * Disabled by default to avoid port conflicts in tests.
-   */
-  enablePeerApi?: boolean;
-}
-
-export type BridgeServerEventMap = {
-  listening: [port: number];
-  connection: [clientId: string];
-  disconnection: [clientId: string];
-  error: [err: Error];
-};
-
-interface JsonRpcRequest {
-  jsonrpc: "2.0";
-  id: string | number | null;
-  method: string;
-  params?: unknown;
-}
-
-interface TypedMessage {
-  type: "CHAT" | "BASH" | "FILE_EDIT" | "A2A_REQUEST" | "MODULE_INSTALL" | "INSTALL_MODULE" | "CHANGE_SKIN";
-  id: string;
-  [key: string]: unknown;
-}
-
-interface SessionState {
-  clientId: string;
-  githubLogin: string | undefined;
-  githubToken: string | undefined;
-  connectedAt: Date;
-}
 
 const GITHUB_API = "https://api.github.com";
 let clientCounter = 0;
