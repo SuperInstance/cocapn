@@ -5,7 +5,7 @@
   "type": "module",
   "bin": {
     "cocapn-bridge": "./dist/esm/main.js",
-    "cocapn-brain":  "./dist/esm/brain-main.js"
+    "cocapn-brain": "./dist/esm/brain-main.js"
   },
   "exports": {
     ".": {
@@ -31,6 +31,7 @@
     "ajv-formats": "^3.0.1",
     "chokidar": "^3.6.0",
     "commander": "^12.1.0",
+    "gray-matter": "^4.0.3",
     "libsodium-wrappers-sumo": "^0.8.2",
     "simple-git": "^3.25.0",
     "ws": "^8.17.0",
