@@ -17,6 +17,7 @@ export interface EmbeddingOptions {
   model?: string;         // for openai: text-embedding-3-small
   dimensions?: number;    // default 384 for local, 1536 for openai
   apiKey?: string;        // for openai
+  baseUrl?: string;       // for openai: default https://api.openai.com
 }
 
 export interface EmbeddingResult {
@@ -108,11 +109,13 @@ class LocalEmbeddingProvider implements EmbeddingProviderType {
 class OpenAIEmbeddingProvider implements EmbeddingProviderType {
   private apiKey: string;
   private model: string;
+  private baseUrl: string;
   private dimensions: number;
 
-  constructor(apiKey: string, model: string = "text-embedding-3-small", dimensions: number = 1536) {
+  constructor(apiKey: string, model: string = "text-embedding-3-small", dimensions: number = 1536, baseUrl: string = "https://api.openai.com") {
     this.apiKey = apiKey;
     this.model = model;
+    this.baseUrl = baseUrl;
     this.dimensions = dimensions;
   }
 
@@ -125,7 +128,7 @@ class OpenAIEmbeddingProvider implements EmbeddingProviderType {
 
   async embed(text: string): Promise<number[] | null> {
     try {
-      const response = await fetch("https://api.openai.com/v1/embeddings", {
+      const response = await fetch(`${this.baseUrl}/v1/embeddings`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -153,7 +156,7 @@ class OpenAIEmbeddingProvider implements EmbeddingProviderType {
 
   async embedBatch(texts: string[]): Promise<(number[] | null)[]> {
     try {
-      const response = await fetch("https://api.openai.com/v1/embeddings", {
+      const response = await fetch(`${this.baseUrl}/v1/embeddings`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -188,7 +191,8 @@ export async function createEmbeddingProvider(
     return new OpenAIEmbeddingProvider(
       options.apiKey || "",
       options.model || "text-embedding-3-small",
-      options.dimensions || 1536
+      options.dimensions || 1536,
+      options.baseUrl || "https://api.openai.com"
     );
   }
 

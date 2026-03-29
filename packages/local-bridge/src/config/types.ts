@@ -14,6 +14,8 @@ export interface VectorSearchConfig {
   provider: EmbeddingProvider;
   /** OpenAI API key (only used when provider is "openai") */
   apiKey?: string;
+  /** Base URL for embeddings API (default: https://api.openai.com) — use for DeepSeek, etc. */
+  baseUrl?: string;
   /** Model name for OpenAI embeddings (default: text-embedding-3-small) */
   model?: string;
   /** Embedding dimensions (default: 384 for local, 1536 for OpenAI) */
