@@ -30,6 +30,7 @@ import { createTokensCommand } from "./commands/tokens.js";
 import { createHealthCommand } from "./commands/health.js";
 import { createPluginCommand } from "./commands/plugin.js";
 import { createPersonalityCommand } from "./commands/personality.js";
+import { createRunCommand } from "./commands/run.js";
 
 const VERSION = "0.1.0";
 
@@ -61,6 +62,9 @@ export function createCLI(): Command {
 
   // Personality commands
   program.addCommand(createPersonalityCommand());
+
+  // CI commands
+  program.addCommand(createRunCommand());
 
   // Analysis commands
   program.addCommand(createTreeCommand());

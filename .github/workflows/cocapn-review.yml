@@ -1,0 +1,16 @@
+name: Cocapn PR Review
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/cocapn
+        with:
+          task: 'Review this pull request. Check for bugs, style issues, and suggest improvements. Post a comment with your review.'
+          api-key: ${{ secrets.COCAPN_API_KEY }}

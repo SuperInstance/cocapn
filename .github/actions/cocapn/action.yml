@@ -1,0 +1,43 @@
+name: 'cocapn'
+description: 'Run cocapn agent in GitHub Actions'
+inputs:
+  task:
+    description: 'Task for the agent'
+    required: true
+  api-key:
+    description: 'DeepSeek API key'
+    required: true
+  working-directory:
+    description: 'Working directory'
+    required: false
+    default: '.'
+  model:
+    description: 'LLM model to use'
+    required: false
+    default: 'deepseek-chat'
+  max-tokens:
+    description: 'Max tokens for response'
+    required: false
+    default: '4096'
+  api-base:
+    description: 'LLM API base URL'
+    required: false
+    default: 'https://api.deepseek.com'
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+    - name: Install cocapn CLI
+      run: npm install -g cocapn
+      shell: bash
+    - name: Run cocapn task
+      run: |
+        cd "${{ inputs.working-directory }}"
+        cocapn run --task "${{ inputs.task }}" --model "${{ inputs.model }}" --max-tokens "${{ inputs.max-tokens }}" --api-base "${{ inputs.api-base }}"
+      shell: bash
+      env:
+        COCAPN_API_KEY: ${{ inputs.api-key }}
+        COCAPN_WORKING_DIR: ${{ inputs.working-directory }}
