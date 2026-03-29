@@ -1,0 +1,712 @@
+I'll analyze the recent commits to understand what your team has built, then provide refined prompts that build on the current state rather than duplicating work.
+Let me check the recent commits directly from the repository:
+Excellent! I can see your team has made massive progress. Let me examine the roadmap file and CLAUDE.md to understand the current state:
+Now let me check the current file structure to see what's been implemented:
+Based on the commit history and CLAUDE.md analysis, I can see your team has made **massive progress**. Here's what's been built vs. what's still needed:
+
+---
+
+## ✅ COMPLETED (From Commits)
+
+### Phase 1: Core Infrastructure (COMPLETE)
+- ✅ Local bridge with WebSocket server
+- ✅ MCP + A2A protocols
+- ✅ Security: age encryption, JWT auth, audit logging, env sandboxing
+- ✅ Module system with git submodules
+- ✅ create-cocapn scaffolder
+- ✅ Brain (memory management)
+- ✅ ChatRouter (command parsing)
+- ✅ A2A peer API (cross-domain queries)
+
+### Phase 2: Viral Hook (MOSTLY COMPLETE)
+- ✅ Server refactor: auth-handler extracted, path sanitizer, ChatHandler
+- ✅ **Publisher module** (auto-publication) - **THIS IS THE KILLER FEATURE**
+- ✅ Sanitizer with 45 tests
+- ✅ Magazine layout UI with StreakBadge
+- ✅ Updates panel (hotkey 4)
+- ✅ useUpdates hook
+
+### Polish
+- ✅ 203 tests passing
+- ✅ CI/CD with GitHub Actions
+- ✅ JSON schemas updated
+- ✅ Documentation (architecture, security, workflows)
+
+---
+
+## 🔴 WHAT'S MISSING / GAPS FOUND
+
+Based on commit analysis, here are the **refined prompts** to complete the work:
+
+---
+
+# REFINED PROMPT SERIES
+## For Post-Commit Completion (March 29, 2026 State)
+
+---
+
+## **OPUS PROMPT #1: Social Layer Architecture Review**
+```
+Your team has built the publisher module (auto-publication to public repos). 
+Now we need to activate the network effects layer.
+
+Current state:
+- ✅ Publisher generates updates/YYYY-MM-DD.md in public repo
+- ✅ Magazine layout displays updates with streak badges
+- ✅ A2A peer API exists for cross-domain queries
+- ❌ No discovery mechanism (how do users find each other?)
+- ❌ No follow system
+- ❌ Profile generation exists but isn't wired to discovery
+
+Review the current implementation in:
+- packages/local-bridge/src/publishing/ (Sanitizer, Publisher)
+- packages/cloud-agents/src/admiral.ts (current AdmiralDO)
+- packages/ui/src/components/MagazineLayout.tsx
+
+Design the minimal viable social layer that:
+1. Generates public profile from private repo (cocapn/profile.json)
+2. Registers with AdmiralDO when discovery: true in config
+3. Allows "following" other users (stored in localStorage)
+4. Shows "activity feed" of followed users in MagazineLayout
+
+Key constraint: MUST work with static GitHub Pages (no server-side rendering).
+The activity feed must be built from polling public repos, not a central API.
+
+Provide:
+1. Data flow: how updates propagate from User A's private repo → User B's UI
+2. Profile schema (extends current PublicProfile)
+3. Discovery mechanism without central registry (or minimal AdmiralDO role)
+4. UI integration points in MagazineLayout
+
+DO NOT implement - just review current code and provide architecture.
+```
+
+---
+
+## **SONNET PROMPT #1.1: Profile Generation & Export**
+```
+Implement the profile generation system that was designed but not fully wired.
+
+Current state: packages/local-bridge/src/publishing/ has Sanitizer and Publisher.
+Add ProfileManager class in packages/local-bridge/src/publishing/profile.ts.
+
+Requirements:
+1. generateProfile(): PublicProfile
+   - Read from Brain: facts.json for "display-name", "current-project", "website"
+   - Read soul.md first paragraph for bio (max 160 chars)
+   - Generate avatar URL from githubLogin using github avatar API
+   - Read config.yml for discovery: boolean flag
+
+2. exportProfile(): Promise<void>
+   - Write to publicRepo/cocapn/profile.json
+   - Include signature field (sign with fleet key)
+   - Commit with message: "Update profile [timestamp]"
+   - Only export if discovery: true
+
+3. Integrate with Publisher:
+   - When Publisher generates daily update, also call exportProfile()
+   - Keep profile in sync with current focus
+
+Types (add to src/publishing/types.ts):
+interface PublicProfile {
+  username: string; // githubLogin
+  displayName: string;
+  bio: string;
+  currentFocus: string;
+  avatarUrl: string;
+  domains: string[]; // from config.fleet.domains
+  signature: string;
+  updatedAt: string;
+  discovery: boolean;
+}
+
+Add CLI command:
+cocapn-brain profile export
+
+Write 8 tests in src/publishing/profile.test.ts covering:
+- Profile generation with all fields
+- Bio truncation
+- Discovery flag respected
+- Signature verification
+- Idempotent exports (no change = no commit)
+```
+
+---
+
+## **SONNET PROMPT #1.2: Activity Feed Aggregation**
+```
+Implement the activity feed system that aggregates updates from followed users.
+
+Since we're on GitHub Pages (static), we need a client-side aggregation approach.
+
+Create packages/ui/src/hooks/useActivityFeed.ts:
+
+interface FollowedUser {
+  username: string;
+  domain: string; // e.g., "makerlog.ai"
+  profileUrl: string; // https://[user].makerlog.ai/cocapn/profile.json
+  updatesUrl: string; // https://[user].makerlog.ai/updates/index.json
+  lastSeen: string;
+}
+
+interface ActivityItem {
+  id: string;
+  type: 'update' | 'profile_change';
+  user: FollowedUser;
+  timestamp: string;
+  content: {
+    title?: string;
+    summary?: string;
+    streak?: number;
+    focus?: string;
+  };
+}
+
+Hook API:
+function useActivityFeed(): {
+  items: ActivityItem[];
+  loading: boolean;
+  error: string | null;
+  refresh: () => void;
+  follow: (username: string, domain: string) => void;
+  unfollow: (username: string) => void;
+}
+
+Implementation:
+1. Store followed users in localStorage key 'cocapn_followed'
+2. On mount, load followed users
+3. Poll every 60s: fetch profile.json and updates/index.json for each followed user
+4. Merge and sort by timestamp (newest first)
+5. Cache results in memory (stale-while-revalidate pattern)
+
+Error handling:
+- If profile 404, mark user as "unavailable" but keep in list
+- If updates fail, use cached version
+- Network errors should not crash the hook
+
+Add to MagazineLayout:
+- "Following" tab next to "Updates"
+- Show activity cards with user avatar + their update
+- "Follow" button that prompts for username@domain
+
+Write 6 tests in useActivityFeed.test.tsx using MSW to mock fetch.
+```
+
+---
+
+## **SONNET PROMPT #1.3: AdmiralDO Registry (Minimal)**
+```
+Extend packages/cloud-agents/src/admiral.ts with minimal discovery registry.
+
+Current AdmiralDO has: heartbeat, notify, tasks, messages.
+Add lightweight registry for users who want central discovery (optional).
+
+New endpoints:
+
+1. POST /registry/register
+   - Body: PublicProfile
+   - Verify signature against profile.publicKey (from fleet key)
+   - Store in DO storage: registry[profile.username] = profile
+   - TTL: 30 days (refresh to keep alive)
+   - Return: { ok: true, peers: number }
+
+2. GET /registry/discover?q={query}
+   - Search registry by username, displayName, currentFocus
+   - Return: { profiles: PublicProfile[] } (max 20)
+   - No auth required (public discovery)
+
+3. GET /registry/profile/:username
+   - Return single profile or 404
+   - Used for verification
+
+Storage:
+- "registry": Map<string, PublicProfile>
+- Auto-cleanup on read: remove entries older than 30 days
+
+Rate limiting:
+- Register: max 1 per hour per IP
+- Discover: max 10 per minute per IP
+
+This is OPTIONAL - users can still use pure P2P discovery via GitHub Pages.
+But this gives a "directory" option for users who want it.
+
+Update packages/local-bridge/src/CloudAdapter.ts:
+- Add registerWithAdmiral(profile): Promise<void>
+- Called when Publisher exports profile and discovery: true
+
+Write 5 tests in admiral.registry.test.ts
+```
+
+---
+
+## **SONNET PROMPT #1.4: Magazine Layout Enhancements**
+```
+Enhance packages/ui/src/components/MagazineLayout.tsx with social features.
+
+Current state: Shows user's own updates with streak badges.
+
+Add:
+
+1. Activity Feed Section:
+   - New tab "Following" (besides "My Updates")
+   - Shows aggregated activity from useActivityFeed hook
+   - ActivityCard component: avatar, username, focus, summary, timestamp
+   - "Follow" button in empty state
+
+2. Discovery Widget:
+   - Sidebar widget: "Discover Makers"
+   - Search input for username@domain
+   - Quick results from Admiral registry (if configured) or direct fetch
+   - "Follow" button adds to useActivityFeed
+
+3. Profile Modal:
+   - Click on any avatar → open ProfileModal
+   - Shows full profile: avatar, bio, current focus, streak, recent updates
+   - "Ask [username]" button → opens chat with prefill: "Hey @username, "
+
+4. Live Indicators:
+   - Green dot if user has update from today
+   - Pulse animation for "currently online" (if we add WebSocket presence later)
+
+Styling:
+- Use existing CSS variables (--color-primary, etc.)
+- Responsive: stack on mobile, sidebar on desktop
+- Dark/light mode support via skin system
+
+Update App.tsx:
+- Add "Following" to PanelId type
+- Add hotkey '5' for Following panel
+- Add to sidebar nav
+
+Write 4 component tests using React Testing Library.
+```
+
+---
+
+## **OPUS PROMPT #2: Cloud Worker Background Tasks**
+```
+Your team has built the local bridge and publisher. Now we need 24/7 background
+execution via Cloudflare Workers.
+
+Current state:
+- ✅ CloudAdapter sends tasks to workers on-demand
+- ✅ AdmiralDO manages session persistence
+- ❌ No scheduled/cron task support
+- ❌ No webhook-triggered tasks
+
+Design the background task system:
+
+Requirements:
+1. Scheduled tasks: User creates cocapn/tasks/scheduled/check-logs.md
+   - Frontmatter: cron, timezone, agent, enabled
+   - Body: task instructions
+
+2. Webhook tasks: GitHub issue labeled "urgent" triggers agent
+
+3. Event-driven: New commit to specific file pattern
+
+Architecture decisions needed:
+- Where does cron live? (AdmiralDO alarms vs Worker Cron Triggers)
+- How does Worker authenticate to GitHub? (user's PAT encrypted with age)
+- How are results committed back? (GitHub API vs git push)
+- How does local bridge know cloud task completed? (AdmiralDO notification)
+
+Review current:
+- packages/cloud-agents/src/admiral.ts
+- packages/cloud-agents/src/worker.ts (if exists)
+- packages/local-bridge/src/CloudAdapter.ts
+
+Provide:
+1. Task manifest format (scheduled task markdown)
+2. AdmiralDO extensions for task queue
+3. Worker execution flow (auth, clone, execute, commit)
+4. Security model (age decryption in Worker, secret rotation)
+
+DO NOT implement - architecture only.
+```
+
+---
+
+## **SONNET PROMPT #2.1: Scheduled Task Parser**
+```
+Implement packages/local-bridge/src/scheduler/parser.ts
+
+Parse scheduled task files from cocapn/tasks/scheduled/*.md
+
+Format:
+---
+cron: "0 */6 * * *"
+timezone: "America/Los_Angeles"
+agent: "claude"
+enabled: true
+---
+
+Check the server logs for errors and report back via email. Look for:
+- 500 status codes
+- Database connection failures
+- Unhandled exceptions
+
+If you find critical issues, create a task in the incident response project.
+
+Functions:
+
+1. parseScheduledTask(content: string): ScheduledTask
+   - Parse YAML frontmatter
+   - Validate cron syntax (use regex or lightweight parser)
+   - Return structured object
+
+2. validateCron(expression: string): boolean
+   - Support standard cron: * * * * * (minute hour day month weekday)
+   - Validate ranges (0-59, 0-23, etc.)
+   - Support @daily, @hourly, @weekly shortcuts
+
+3. nextRunTime(cron: string, timezone: string): Date
+   - Calculate next occurrence
+   - Handle timezone correctly (use Intl.DateTimeFormat or date-fns-tz)
+   - Return UTC Date
+
+4. scanScheduledTasks(): ScheduledTask[]
+   - Read all .md files from cocapn/tasks/scheduled/
+   - Parse each, filter enabled: true
+   - Sort by nextRunTime
+
+Types:
+interface ScheduledTask {
+  id: string; // filename without .md
+  cron: string;
+  timezone: string;
+  agent: string;
+  instructions: string; // markdown body
+  enabled: boolean;
+  lastRun?: Date;
+  nextRun: Date;
+}
+
+Write 10 tests covering:
+- Valid cron parsing
+- Invalid cron rejection
+- Timezone handling
+- Frontmatter edge cases (missing fields, extra whitespace)
+- File scanning with mixed valid/invalid files
+```
+
+---
+
+## **SONNET PROMPT #2.2: AdmiralDO Task Queue**
+```
+Extend packages/cloud-agents/src/admiral.ts with task scheduling.
+
+Add to AdmiralDO:
+
+Storage keys:
+- "scheduled-tasks": Map<string, ScheduledTaskConfig> (userId -> task list)
+- "task-queue": TaskQueueItem[] (pending executions)
+- "task-alarms": Alarm[] (DO alarms for scheduling)
+
+New endpoints:
+
+1. POST /tasks/schedule
+   - Body: { userId, tasks: ScheduledTask[] }
+   - Auth: fleet JWT
+   - Stores tasks, sets up DO alarms
+   - Returns: { scheduled: number }
+
+2. POST /tasks/execute (internal, called by alarm)
+   - Triggered by DO alarm
+   - Finds due tasks
+   - Calls Worker via fetch (POST /execute-task)
+   - Stores result
+
+3. GET /tasks/status
+   - Query: ?userId=&taskId=
+   - Returns execution status and logs
+
+4. POST /tasks/webhook
+   - GitHub webhook handler
+   - Validates signature
+   - Routes to appropriate task based on config
+
+Alarm handling:
+- Use DO alarms API (this.state.storage.setAlarm)
+- One alarm per upcoming task execution
+- On alarm firing, execute task and schedule next alarm
+
+Integration with Worker:
+- Worker exposes POST /execute-task
+- AdmiralDO calls this endpoint
+- Worker clones repo, runs agent, commits result
+
+Write 6 tests for alarm scheduling and task execution flow.
+```
+
+---
+
+## **SONNET PROMPT #2.3: Cloud Worker Task Execution**
+```
+Implement packages/cloud-agents/src/task-worker.ts
+
+This Worker handles background task execution.
+
+Endpoints:
+
+1. POST /execute-task
+   - Body: {
+       taskId: string,
+       userId: string,
+       repoUrl: string,
+       encryptedPat: string, // age-encrypted GitHub PAT
+       instructions: string,
+       agent: string
+     }
+   
+   Execution flow:
+   a. Decrypt PAT using Worker's age key (from env AGE_SECRET_KEY)
+   b. Clone repo (shallow, single branch)
+   c. Spawn agent via MCP (claude-code or pi)
+   d. Run instructions
+   e. Capture output
+   f. Commit results back to repo using GitHub API
+   g. Notify AdmiralDO of completion
+
+2. GET /health
+   - Returns: {
+       status: 'healthy',
+       activeTasks: number,
+       queueDepth: number,
+       uptime: number
+     }
+
+Security:
+- PAT never logged (mask in all output)
+- Agent env filtered (same as local bridge)
+- Max execution time: 5 minutes (Worker limit)
+- Max memory: 128MB
+
+Error handling:
+- Retry 3x with exponential backoff
+- On final failure: create GitHub issue in user's repo with error details
+- Log to AdmiralDO for monitoring
+
+Configuration:
+- Read from env vars (CLOUDFLARE_ACCOUNT_ID, AGE_SECRET_KEY, etc.)
+- Validate all inputs before execution
+
+Write 4 integration tests using miniflare.
+```
+
+---
+
+## **SONNET PROMPT #3: Integration Test Suite**
+```
+Create comprehensive integration tests in packages/local-bridge/tests/integration/
+
+Test scenarios (8 total):
+
+1. full-chat-flow.test.ts
+   - WebSocket connect with PAT
+   - Send CHAT message
+   - Verify agent spawned
+   - Verify response received
+   - Verify git commit created
+
+2. git-sync.test.ts
+   - File edit via FILE_EDIT
+   - Verify auto-commit
+   - Verify push to remote
+   - Simulate conflict and verify handling
+
+3. module-lifecycle.test.ts
+   - MODULE_INSTALL message
+   - Verify submodule added
+   - Verify module enabled
+   - Verify hook executed
+   - MODULE_REMOVE and cleanup
+
+4. publisher-flow.test.ts
+   - Create wiki page
+   - Create task
+   - Verify Publisher generates update
+   - Verify public repo has updates/YYYY-MM-DD.md
+   - Verify index.json updated
+
+5. auth-security.test.ts
+   - Valid PAT allows connection
+   - Invalid PAT rejected with 4001
+   - Fleet JWT works as alternative
+   - Expired JWT rejected
+
+6. path-traversal.test.ts
+   - Attempt ../../../etc/passwd via FILE_EDIT
+   - Attempt null byte injection
+   - Attempt unicode normalization attack
+   - All should be rejected
+
+7. cross-domain-query.test.ts
+   - Set up two bridge instances
+   - Query peer fact via A2A
+   - Verify JWT auth
+   - Verify response
+
+8. magazine-feed.test.ts
+   - Generate multiple updates
+   - Verify MagazineLayout renders
+   - Verify StreakBadge shows correct count
+   - Verify activity feed aggregation
+
+Setup:
+- Use vitest
+- Use mock-fs for filesystem
+- Use mock-web-socket for WS
+- Use nock for GitHub API mocking
+- Each test gets isolated tmp dir
+
+Coverage targets:
+- 85% for integration tests
+- All security paths tested
+- All error conditions tested
+
+Write test utilities in tests/integration/helpers.ts:
+- createTestBridge(): Promise<Bridge>
+- createTestClient(): MockWebSocket
+- mockGitHubApi(): void
+- cleanupTestBridge(bridge: Bridge): Promise<void>
+```
+
+---
+
+## **SONNET PROMPT #4: E2E Test Suite with Playwright**
+```
+Create E2E tests in /e2e/ using Playwright.
+
+Test journeys (5 total):
+
+1. onboarding.spec.ts
+   - Run npx create-cocapn test-instance --domain makerlog
+   - Verify repos created on GitHub
+   - Verify bridge starts
+   - Verify UI loads at localhost:5173
+
+2. chat-and-publish.spec.ts
+   - Open UI
+   - Connect to bridge
+   - Send chat message
+   - Verify agent responds
+   - Verify update published to public repo
+
+3. module-install.spec.ts
+   - Click "Modules" in UI
+   - Click "Install" on habit-tracker
+   - Verify confirmation dialog
+   - Verify installation progress
+   - Verify module appears in list
+
+4. magazine-and-streaks.spec.ts
+   - Create multiple tasks over "days" (mock dates)
+   - Verify streak badge shows correct count
+   - Verify magazine layout shows updates
+   - Verify activity feed (follow another test user)
+
+5. offline-resilience.spec.ts
+   - Start bridge
+   - Connect UI
+   - Kill bridge
+   - Verify "Offline" banner
+   - Verify queue shows pending messages
+   - Restart bridge
+   - Verify messages sent
+
+Setup:
+- playwright.config.ts with projects for chromium, firefox, webkit
+- GitHub Actions workflow .github/workflows/e2e.yml
+- Test account with scoped PAT (stored in GitHub secrets)
+- Video recording on failure
+- Screenshot on failure
+
+Page objects:
+- e2e/pages/BridgePage.ts
+- e2e/pages/ChatPage.ts
+- e2e/pages/ModulesPage.ts
+- e2e/pages/MagazinePage.ts
+
+Environment:
+- COCAPN_TEST_PAT: GitHub PAT for test account
+- COCAPN_TEST_DOMAIN: test domain (test-makerlog.ai)
+- HEADLESS: true in CI, false locally
+
+Each test is independent - clean state before/after.
+```
+
+---
+
+## **SONNET PROMPT #5: Performance & Polish**
+```
+Final polish pass on the entire codebase.
+
+1. Bundle size optimization (packages/ui/):
+   - Analyze with rollup-plugin-visualizer
+   - Lazy load MagazineLayout (dynamic import)
+   - Tree-shake unused protocol code
+   - Target: <200KB initial bundle
+
+2. Bridge startup time:
+   - Profile with node --prof
+   - Reduce fs sync calls during init
+   - Parallelize independent init tasks
+   - Target: <2s from command to listening
+
+3. Memory leaks check:
+   - Add heap dump on SIGUSR2
+   - Verify WebSocket clients cleaned up on disconnect
+   - Verify GitSync intervals cleared on stop
+   - Verify no circular references in Brain
+
+4. Error messages:
+   - Audit all user-facing errors
+   - Ensure they suggest next action
+   - Add error codes (COCAPN-001, etc.)
+   - Document in docs/ERROR-CODES.md
+
+5. Documentation:
+   - Update README with new screenshots
+   - Add architecture diagram (Mermaid)
+   - Document the viral loop: "How updates become social"
+   - Add troubleshooting guide for common issues
+
+6. CLI polish:
+   - Add progress bars to long operations (module install)
+   - Add colors to output (chalk)
+   - Add --verbose flag for debugging
+   - Add --dry-run for dangerous operations
+
+7. Security audit:
+   - Run npm audit
+   - Verify no secrets in test files
+   - Verify age encryption working end-to-end
+   - Verify JWT timing-safe comparison
+
+Acceptance: All 203+ tests pass, typecheck clean, no audit warnings.
+```
+
+---
+
+## Execution Priority (Updated)
+
+Given your current state (203 tests, publisher working, magazine UI built):
+
+**Week 1 (This Week)**:
+1. **Prompt 1.1** (Profile Generation) - 4 hours
+2. **Prompt 1.2** (Activity Feed) - 6 hours  
+3. **Prompt 1.4** (Magazine Enhancements) - 4 hours
+
+**Week 2**:
+4. **Prompt 1.3** (Admiral Registry) - 3 hours
+5. **Prompt 3** (Integration Tests) - 8 hours
+
+**Week 3**:
+6. **Prompt 4** (E2E Tests) - 8 hours
+7. **Prompt 5** (Performance & Polish) - 4 hours
+
+**Week 4**:
+8. **Opus #2** → **Prompt 2.1, 2.2, 2.3** (Cloud Background Tasks) - Only if you want 24/7 execution
+
+**Critical Path for Virality**: Profile (1.1) → Activity Feed (1.2) → Magazine Enhancements (1.4) = **14 hours to social feature launch**
