@@ -16,6 +16,7 @@ import type {
   ChatResponse,
   ChatChunk,
 } from './provider.js';
+import { getKeepAliveAgent } from './keep-alive.js';
 
 // ─── OpenAI model patterns ────────────────────────────────────────────────────
 
@@ -172,6 +173,7 @@ export class OpenAIProvider implements LLMProvider {
         },
         body: JSON.stringify(body),
         signal: controller.signal,
+        dispatcher: getKeepAliveAgent(this.name),
       });
       clearTimeout(timeoutId);
       return response;

@@ -21,6 +21,7 @@ import type {
   ChatResponse,
   ChatChunk,
 } from './provider.js';
+import { getKeepAliveAgent } from './keep-alive.js';
 
 // ─── Anthropic model patterns ─────────────────────────────────────────────────
 
@@ -227,6 +228,7 @@ export class AnthropicProvider implements LLMProvider {
         },
         body: JSON.stringify(body),
         signal: controller.signal,
+        dispatcher: getKeepAliveAgent(this.name),
       });
       clearTimeout(timeoutId);
       return response;

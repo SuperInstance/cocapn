@@ -41,6 +41,8 @@ const TENANTS_FILE = "tenants.json";
 export class TenantRegistry {
   private storagePath: string;
   private tenants: Map<string, Tenant> = new Map();
+  /** Per-tenant mutex: serializes concurrent usage updates so counts don't race. */
+  private usageLocks: Map<string, Promise<void>> = new Map();
 
   constructor(storagePath?: string) {
     this.storagePath = storagePath || join(
@@ -191,33 +193,49 @@ export class TenantRegistry {
 
   /**
    * Record token usage for a tenant. Persists atomically.
+   * Uses a per-tenant mutex to prevent lost increments under concurrency.
    * Throws if tenant not found or daily limit exceeded.
    */
   async recordUsage(tenantId: string, tokens: number): Promise<void> {
-    const tenant = this.tenants.get(tenantId);
-    if (!tenant) {
-      throw new Error(`Tenant not found: ${tenantId}`);
+    // Chain onto the existing lock (if any) for this tenant
+    const prior = this.usageLocks.get(tenantId) ?? Promise.resolve();
+    let resolve!: () => void;
+    const current = new Promise<void>((r) => { resolve = r; });
+    this.usageLocks.set(tenantId, current);
+
+    await prior;
+    try {
+      const tenant = this.tenants.get(tenantId);
+      if (!tenant) {
+        throw new Error(`Tenant not found: ${tenantId}`);
+      }
+
+      // Check daily limit (0 = unlimited)
+      if (
+        tenant.config.maxTokensPerDay > 0 &&
+        tenant.usage.tokensToday + tokens > tenant.config.maxTokensPerDay
+      ) {
+        throw new Error(
+          `Daily token limit exceeded for tenant ${tenantId}: ` +
+            `${tenant.usage.tokensToday + tokens} > ${tenant.config.maxTokensPerDay}`,
+        );
+      }
+
+      tenant.usage.tokensToday += tokens;
+      tenant.usage.tokensTotal += tokens;
+      tenant.usage.messagesToday += 1;
+      tenant.usage.messagesTotal += 1;
+      tenant.lastActive = new Date().toISOString();
+
+      this.tenants.set(tenantId, tenant);
+      this.persist();
+    } finally {
+      resolve();
+      // Clean up the lock entry if we were the last writer
+      if (this.usageLocks.get(tenantId) === current) {
+        this.usageLocks.delete(tenantId);
+      }
     }
-
-    // Check daily limit (0 = unlimited)
-    if (
-      tenant.config.maxTokensPerDay > 0 &&
-      tenant.usage.tokensToday + tokens > tenant.config.maxTokensPerDay
-    ) {
-      throw new Error(
-        `Daily token limit exceeded for tenant ${tenantId}: ` +
-          `${tenant.usage.tokensToday + tokens} > ${tenant.config.maxTokensPerDay}`,
-      );
-    }
-
-    tenant.usage.tokensToday += tokens;
-    tenant.usage.tokensTotal += tokens;
-    tenant.usage.messagesToday += 1;
-    tenant.usage.messagesTotal += 1;
-    tenant.lastActive = new Date().toISOString();
-
-    this.tenants.set(tenantId, tenant);
-    this.persist();
   }
 
   /**

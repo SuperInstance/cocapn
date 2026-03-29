@@ -13,8 +13,9 @@
  *   - Optional Cloudflare tunnel via cloudflared
  */
 
-import { readFileSync, existsSync, readdirSync } from "fs";
+import { readFileSync, existsSync, readdirSync, rmSync } from "fs";
 import { join } from "path";
+import { tmpdir } from "os";
 import { parse as parseYaml } from "yaml";
 import { loadConfig } from "./config/loader.js";
 import { GitSync } from "./git/sync.js";
@@ -40,6 +41,7 @@ import { RepoGraph } from "./graph/index.js";
 import { SelfAssembler, SelfAssembler as AssemblySystem } from "./assembly/index.js";
 import { CloudConnector, type CloudConnectorConfig } from "./cloud-bridge/connector.js";
 import { LLMRouter, type LLMRouterConfig } from "./llm/index.js";
+import { destroyAllAgents } from "./llm/keep-alive.js";
 import { PersonalityManager } from "./personality/index.js";
 import { Telemetry, getSystemProperties } from "./telemetry/index.js";
 import { RequestQueue } from "./queue/index.js";
@@ -328,17 +330,84 @@ export class Bridge {
     }
   }
 
-  async stop(): Promise<void> {
-    console.info("[bridge] Stopping…");
+  /**
+   * Graceful shutdown — closes WebSocket connections with a 'shutdown' event,
+   * waits for pending LLM requests to complete (with timeout), flushes
+   * analytics/telemetry, cleans up temp files, and logs shutdown status.
+   */
+  async shutdown(timeoutMs = 30_000): Promise<void> {
+    console.info("[bridge] Shutting down gracefully…");
+    const deadline = Date.now() + timeoutMs;
+
+    // 1. Stop accepting new connections and broadcast shutdown event
+    console.info("[bridge] Closing WebSocket connections…");
+    await this.server.shutdown();
+
+    // 2. Stop git sync timers and file watcher
     this.sync.stopTimers();
     await this.watcher.stop();
+
+    // 3. Stop spawning new agents
     await this.spawner.stopAll();
+
+    // 4. Destroy cloud connector
     this.cloudConnector?.destroy();
+
+    // 5. Wait for pending LLM requests to drain (with timeout)
+    console.info("[bridge] Waiting for pending LLM requests…");
+    const drainDeadline = Math.max(deadline - Date.now(), 1_000);
     await this.requestQueue.shutdown();
+    destroyAllAgents();
+
+    const elapsed = Date.now();
+    if (elapsed < deadline) {
+      console.info(`[bridge] LLM requests drained in ${elapsed - (deadline - timeoutMs)}ms`);
+    } else {
+      console.warn("[bridge] LLM drain timed out — forcing shutdown");
+    }
+
+    // 6. Flush analytics/telemetry
+    console.info("[bridge] Flushing telemetry…");
     await this.telemetry.shutdown();
+
+    // 7. Stop the HTTP server (already done by server.shutdown, but ensure clean)
     await this.server.stop();
+
+    // 8. Clean up temp files created by this bridge instance
+    this.cleanupTempFiles();
+
+    // 9. Clear sensitive caches
     this.secrets.clearCache();
-    console.info("[bridge] Stopped.");
+
+    console.info("[bridge] Shutdown complete.");
+  }
+
+  /**
+   * Legacy stop method — delegates to shutdown for backward compatibility.
+   */
+  async stop(): Promise<void> {
+    await this.shutdown();
+  }
+
+  /**
+   * Remove temp files created by this bridge instance.
+   */
+  private cleanupTempFiles(): void {
+    const prefix = `cocapn-${this.instanceId}`;
+    try {
+      const tmpFiles = readdirSync(tmpdir());
+      for (const file of tmpFiles) {
+        if (file.startsWith(prefix)) {
+          try {
+            rmSync(join(tmpdir(), file), { force: true });
+          } catch {
+            // Best-effort cleanup
+          }
+        }
+      }
+    } catch {
+      // tmpdir() unavailable — skip
+    }
   }
 
   getConfig():      BridgeConfig           { return this.config; }

@@ -41,6 +41,7 @@ export class RequestQueue {
   private queue: QueueItem[] = [];
   private running = new Set<string>();      // item IDs currently executing
   private items = new Map<string, QueueItem>(); // all known items
+  private deadLetterQueue: QueueItem[] = [];
   private waiters = new Map<string, Array<{ resolve: (item: QueueItem) => void; reject: (err: Error) => void; timer: ReturnType<typeof setTimeout> }>>();
   private rateLimiter: LLMRateLimiter;
   private backpressure: BackpressureManager;
@@ -202,6 +203,43 @@ export class RequestQueue {
    */
   getBackpressure(): BackpressureManager {
     return this.backpressure;
+  }
+
+  // ─── Dead-Letter Queue ─────────────────────────────────────────────────────
+
+  /**
+   * Get all items that exhausted their retries and were moved to the DLQ.
+   */
+  getDeadLetterItems(): QueueItem[] {
+    return [...this.deadLetterQueue];
+  }
+
+  /**
+   * Retry a dead-letter item by re-enqueuing it with reset retries.
+   * Returns the new item ID. Throws if the item is not in the DLQ.
+   */
+  async retryDeadLetterItem(itemId: string): Promise<string> {
+    const idx = this.deadLetterQueue.findIndex((i) => i.id === itemId);
+    if (idx === -1) {
+      throw new Error(`Item ${itemId} not found in dead-letter queue`);
+    }
+
+    const [dlItem] = this.deadLetterQueue.splice(idx, 1);
+
+    // Reset for retry
+    dlItem.status = 'queued';
+    dlItem.retries = 0;
+    dlItem.startedAt = undefined;
+    dlItem.completedAt = undefined;
+    dlItem.error = undefined;
+    dlItem.createdAt = Date.now();
+
+    this.items.set(dlItem.id, dlItem);
+    this.insertByPriority(dlItem);
+    this.scheduleProcess();
+
+    console.info(`[queue] DLQ retry: ${itemId} re-enqueued`);
+    return dlItem.id;
   }
 
   /**
@@ -371,6 +409,9 @@ export class RequestQueue {
         this.insertByPriority(item);
         this.scheduleProcess();
       } else {
+        // Max retries exhausted — move to dead-letter queue
+        console.warn(`[queue] DLQ: item ${item.id} exhausted ${this.config.maxRetries} retries: ${message}`);
+        this.deadLetterQueue.push(item);
         this.completeItem(item, undefined, message);
       }
     }

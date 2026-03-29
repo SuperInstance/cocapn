@@ -345,6 +345,25 @@ export class BridgeServer extends EventEmitter<BridgeServerEventMap> {
     });
   }
 
+  /**
+   * Broadcast a shutdown event to all connected WebSocket clients,
+   * then close the server gracefully.
+   */
+  async shutdown(): Promise<void> {
+    if (!this.wss) return;
+    // Send shutdown event to all clients before terminating
+    for (const client of this.wss.clients) {
+      try {
+        client.send(JSON.stringify({ type: "SHUTDOWN", message: "Bridge is shutting down" }));
+      } catch {
+        // Client may already be disconnected
+      }
+    }
+    // Brief grace period for clients to receive the event
+    await new Promise((r) => setTimeout(r, 100));
+    await this.stop();
+  }
+
   async stop(): Promise<void> {
     if (!this.wss) return;
     for (const client of this.wss.clients) {

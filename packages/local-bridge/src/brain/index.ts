@@ -18,8 +18,10 @@ import {
   existsSync,
   readdirSync,
   mkdirSync,
+  rmdirSync,
 } from "fs";
 import { join, extname, basename } from "path";
+import { homedir } from "os";
 import type { GitSync } from "../git/sync.js";
 import type { BridgeConfig } from "../config/types.js";
 import { InvertedIndex, tokenize } from "../utils/inverted-index.js";
@@ -187,10 +189,15 @@ export class Brain {
    * Commit message: "update memory: set fact <key>"
    */
   async setFact(key: string, value: string): Promise<void> {
-    const facts = this.readFacts();
-    facts[key] = value;
-    this.writeFacts(facts);
-    await this.sync.commit(`update memory: set fact ${key}`);
+    const release = await acquireLock();
+    try {
+      const facts = this.readFacts();
+      facts[key] = value;
+      this.writeFacts(facts);
+      await this.sync.commit(`update memory: set fact ${key}`);
+    } finally {
+      release();
+    }
   }
 
   /**
@@ -198,11 +205,16 @@ export class Brain {
    * No-op (no commit) if the key doesn't exist.
    */
   async deleteFact(key: string): Promise<void> {
-    const facts = this.readFacts();
-    if (!(key in facts)) return;
-    delete facts[key];
-    this.writeFacts(facts);
-    await this.sync.commit(`update memory: deleted fact ${key}`);
+    const release = await acquireLock();
+    try {
+      const facts = this.readFacts();
+      if (!(key in facts)) return;
+      delete facts[key];
+      this.writeFacts(facts);
+      await this.sync.commit(`update memory: deleted fact ${key}`);
+    } finally {
+      release();
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -325,27 +337,32 @@ export class Brain {
    * Also stores embedding if vector search is available.
    */
   async addWikiPage(sourcePath: string, destName?: string): Promise<void> {
-    const wikiDir = join(this.repoRoot, "cocapn", "wiki");
-    ensureDir(wikiDir);
+    const release = await acquireLock();
+    try {
+      const wikiDir = join(this.repoRoot, "cocapn", "wiki");
+      ensureDir(wikiDir);
 
-    const name = destName ?? basename(sourcePath);
-    const destPath = join(wikiDir, name);
-    const content = readFileSync(sourcePath, "utf8");
-    writeFileSync(destPath, content, "utf8");
-    this.wikiIndex.add(name, content);
+      const name = destName ?? basename(sourcePath);
+      const destPath = join(wikiDir, name);
+      const content = readFileSync(sourcePath, "utf8");
+      writeFileSync(destPath, content, "utf8");
+      this.wikiIndex.add(name, content);
 
-    // Store embedding in background (non-blocking)
-    if (this.vectorStore && this.vectorStore.isEnabled()) {
-      setImmediate(async () => {
-        try {
-          await this.vectorStore.store(name, content);
-        } catch (error) {
-          // Silently fail to allow keyword-only search
-        }
-      });
+      // Store embedding in background (non-blocking)
+      if (this.vectorStore && this.vectorStore.isEnabled()) {
+        setImmediate(async () => {
+          try {
+            await this.vectorStore.store(name, content);
+          } catch (error) {
+            // Silently fail to allow keyword-only search
+          }
+        });
+      }
+
+      await this.sync.commit(`update memory: added wiki page ${name}`);
+    } finally {
+      release();
     }
-
-    await this.sync.commit(`update memory: added wiki page ${name}`);
   }
 
   // ---------------------------------------------------------------------------
@@ -357,24 +374,29 @@ export class Brain {
    * Task id is a timestamp slug. Returns the task id.
    */
   async createTask(title: string, description: string): Promise<string> {
-    const tasksDir = join(this.repoRoot, "cocapn", "tasks");
-    ensureDir(tasksDir);
+    const release = await acquireLock();
+    try {
+      const tasksDir = join(this.repoRoot, "cocapn", "tasks");
+      ensureDir(tasksDir);
 
-    const id = `${Date.now()}-${slugify(title)}`;
-    const filename = `${id}.md`;
-    const content = [
-      `# ${title}`,
-      "",
-      description,
-      "",
-      `---`,
-      `created: ${new Date().toISOString()}`,
-      `status: active`,
-    ].join("\n");
+      const id = `${Date.now()}-${slugify(title)}`;
+      const filename = `${id}.md`;
+      const content = [
+        `# ${title}`,
+        "",
+        description,
+        "",
+        `---`,
+        `created: ${new Date().toISOString()}`,
+        `status: active`,
+      ].join("\n");
 
-    writeFileSync(join(tasksDir, filename), content, "utf8");
-    await this.sync.commit(`update memory: added task "${title}"`);
-    return id;
+      writeFileSync(join(tasksDir, filename), content, "utf8");
+      await this.sync.commit(`update memory: added task "${title}"`);
+      return id;
+    } finally {
+      release();
+    }
   }
 
   /** List all active tasks by scanning cocapn/tasks/*.md files. */
@@ -520,6 +542,41 @@ export class Brain {
       }
     }
     return results;
+  }
+}
+
+// ─── File Lock (advisory, mkdir-based for portability) ─────────────────────────
+
+const LOCK_DIR = join(homedir(), ".cocapn", "brain");
+const LOCK_POLL_INTERVAL = 100; // ms between lock acquisition attempts
+const LOCK_TIMEOUT = 5_000;     // ms before giving up
+
+/**
+ * Acquire an advisory lock for concurrent Git writes.
+ * Uses mkdir-based locking which is atomic on all platforms.
+ * Returns a release function that must be called in a finally block.
+ */
+async function acquireLock(): Promise<() => void> {
+  const lockPath = join(LOCK_DIR, ".lock");
+  const deadline = Date.now() + LOCK_TIMEOUT;
+
+  while (true) {
+    try {
+      mkdirSync(lockPath, { recursive: false });
+      // Lock acquired
+      return () => {
+        try { rmdirSync(lockPath); } catch { /* already released */ }
+      };
+    } catch {
+      // Lock held by another process — wait and retry
+      if (Date.now() >= deadline) {
+        throw new Error(
+          `Brain lock acquisition timed out after ${LOCK_TIMEOUT}ms ` +
+          `(lock: ${lockPath})`
+        );
+      }
+      await new Promise((r) => setTimeout(r, LOCK_POLL_INTERVAL));
+    }
   }
 }
 
