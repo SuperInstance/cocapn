@@ -8,6 +8,7 @@
  *   cocapn-brain wiki add <file>         [--repo <path>]
  *   cocapn-brain task add "<title>"      [--repo <path>] [--desc <text>]
  *   cocapn-brain task list               [--repo <path>]
+ *   cocapn-brain profile export          [--repo <path>] [--public <path>]
  */
 
 import { Command } from "commander";
@@ -15,6 +16,8 @@ import { resolve } from "path";
 import { Brain } from "../brain/index.js";
 import { loadConfig } from "../config/loader.js";
 import { GitSync } from "../git/sync.js";
+import { createProfileManager } from "../publishing/profile.js";
+import type { BridgeConfig } from "../config/types.js";
 
 // ---------------------------------------------------------------------------
 // Root command builder (exported so main.ts can also add as sub-command)
@@ -142,6 +145,49 @@ export function buildBrainCommand(): Command {
 
   cmd.addCommand(task);
 
+  // ── profile sub-commands ──────────────────────────────────────────────────
+
+  const profile = new Command("profile").description("Manage user profile");
+
+  profile
+    .command("generate")
+    .description("Generate profile from private repo (prints JSON)")
+    .option("--repo <path>", "Private repo root", process.cwd())
+    .action((opts: { repo: string }) => {
+      const { brain, config, sync } = makeBrainWithDeps(opts.repo);
+      const manager = createProfileManager(
+        resolve(opts.repo),
+        resolve(opts.repo, "..", "public"),
+        brain,
+        config,
+        sync
+      );
+      const profile = manager.generateProfile();
+      console.log(JSON.stringify(profile, null, 2));
+    });
+
+  profile
+    .command("export")
+    .description("Export signed profile to public repo")
+    .option("--repo <path>", "Private repo root", process.cwd())
+    .option("--public <path>", "Public repo root (default: ../public)")
+    .action(async (opts: { repo: string; public?: string }) => {
+      const { brain, config, sync } = makeBrainWithDeps(opts.repo);
+      const publicRepo = opts.public ?? resolve(opts.repo, "..", "public");
+      const manager = createProfileManager(
+        resolve(opts.repo),
+        publicRepo,
+        brain,
+        config,
+        sync
+      );
+      await manager.exportProfile();
+      const profile = manager.generateProfile();
+      console.log(`✓ Profile exported: ${profile.displayName || "user"}`);
+    });
+
+  cmd.addCommand(profile);
+
   return cmd;
 }
 
@@ -171,6 +217,15 @@ export function runBrainCli(): void {
 // ---------------------------------------------------------------------------
 
 function makeBrain(repoPath: string): Brain {
+  const { brain } = makeBrainWithDeps(repoPath);
+  return brain;
+}
+
+function makeBrainWithDeps(repoPath: string): {
+  brain: Brain;
+  config: BridgeConfig;
+  sync: GitSync;
+} {
   const repoRoot = resolve(repoPath);
   const config = loadConfig(repoRoot);
   // For CLI usage, auto-push is disabled — we only commit locally
@@ -178,5 +233,6 @@ function makeBrain(repoPath: string): Brain {
     ...config,
     sync: { ...config.sync, autoPush: false },
   });
-  return new Brain(repoRoot, config, sync);
+  const brain = new Brain(repoRoot, config, sync);
+  return { brain, config, sync };
 }
