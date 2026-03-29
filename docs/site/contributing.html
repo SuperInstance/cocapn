@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contributing Guide — Cocapn Documentation</title>
+  <meta name="description" content="Learn how to contribute to Cocapn. Code of conduct, development setup, testing, and PR process.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <nav>
+      <a href="index.html" class="logo">cocapn<span>.ai</span></a>
+      <ul class="nav-links">
+        <li><a href="getting-started.html">Getting Started</a></li>
+        <li><a href="architecture.html">Architecture</a></li>
+        <li><a href="plugins.html">Plugins</a></li>
+        <li><a href="templates.html">Templates</a></li>
+        <li><a href="api-reference.html">API</a></li>
+        <li><a href="fleet.html">Fleet</a></li>
+        <li><a href="contributing.html">Contributing</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main>
+    <div class="breadcrumb">
+      <a href="index.html">Home</a> → Contributing
+    </div>
+
+    <section class="hero">
+      <h1>Contributing to Cocapn</h1>
+      <p class="subtitle">Build the npm of AI agents with us</p>
+    </section>
+
+    <section>
+      <div class="callout">
+        <strong>Author: Superinstance</strong> — Cocapn is built by Superinstance. All contributions should acknowledge
+        this attribution.
+      </div>
+    </section>
+
+    <section>
+      <h2>Code of Conduct</h2>
+
+      <h3>Our Pledge</h3>
+      <p>We are committed to making participation in Cocapn a harassment-free experience for everyone, regardless of level of experience, gender, gender identity and expression, sexual orientation, disability, personal appearance, body size, race, ethnicity, age, religion, or nationality.</p>
+
+      <h3>Our Standards</h3>
+      <p>Positive behavior includes:</p>
+      <ul>
+        <li>Using welcoming and inclusive language</li>
+        <li>Being respectful of differing viewpoints and experiences</li>
+        <li>Gracefully accepting constructive criticism</li>
+        <li>Focusing on what is best for the community</li>
+        <li>Showing empathy towards other community members</li>
+      </ul>
+
+      <h3>Unacceptable Behavior</h3>
+      <p>Unacceptable behavior includes:</p>
+      <ul>
+        <li>Use of sexualized language or imagery</li>
+        <li>Trolling, insulting/derogatory comments, or personal/political attacks</li>
+        <li>Public or private harassment</li>
+        <li>Publishing others' private information without explicit permission</li>
+        <li>Unprofessional conduct</li>
+      </ul>
+
+      <h3>Reporting</h3>
+      <p>To report conduct issues, contact <code>team@superinstance.com</code>. All reports will be reviewed and investigated.</p>
+    </section>
+
+    <section>
+      <h2>Development Setup</h2>
+
+      <h3>Prerequisites</h3>
+      <ul>
+        <li><strong>Node.js 18+</strong> — Cocapn runs on Node.js</li>
+        <li><strong>Git</strong> — For version control</li>
+        <li><strong>TypeScript</strong> — For type-safe development</li>
+        <li><strong>Vitest</strong> — Test framework</li>
+      </ul>
+
+      <h3>Fork and Clone</h3>
+      <pre><code># Fork the repository on GitHub
+git clone https://github.com/YOUR_USERNAME/cocapn.git
+cd cocapn</code></pre>
+
+      <h3>Install Dependencies</h3>
+      <pre><code># Install all package dependencies
+npm install
+
+# Install dependencies for local-bridge
+cd packages/local-bridge
+npm install
+
+# Link for local development
+npm link</code></pre>
+
+      <h3>Run Tests</h3>
+      <pre><code># Run all tests
+npm test
+
+# Run tests for local-bridge
+cd packages/local-bridge
+npx vitest run
+
+# Run specific test file
+npx vitest run tests/bridge.test.ts
+
+# Watch mode for development
+npx vitest watch</code></pre>
+
+      <h3>Type Checking</h3>
+      <pre><code># Type check all packages
+npm run typecheck
+
+# Type check local-bridge
+cd packages/local-bridge
+npx tsc --noEmit</code></pre>
+    </section>
+
+    <section>
+      <h2>Project Structure</h2>
+
+      <pre><code>cocapn/
+├── packages/
+│   ├── local-bridge/     # Core bridge (Node.js, WebSocket, Git, agents)
+│   ├── ui/                # React + Vite WebSocket client
+│   ├── protocols/         # MCP (client/server) + A2A protocol
+│   ├── cloud-agents/      # Cloudflare Workers: AdmiralDO
+│   ├── modules/           # Reference modules
+│   └── templates/         # Public and private templates
+├── docs/
+│   ├── site/              # Documentation site (this site)
+│   ├── designs/           # Design documents
+│   └── superpowers/       # Executable implementation plans
+├── tests/                 # Integration tests
+└── scripts/               # Build and utility scripts</code></pre>
+
+      <h3>Key Files</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>File</th>
+            <th>Purpose</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>CLAUDE.md</code></td>
+            <td>Project instructions for Claude Code and agentic workers</td>
+          </tr>
+          <tr>
+            <td><code>packages/local-bridge/src/bridge.ts</code></td>
+            <td>Bridge lifecycle management</td>
+          </tr>
+          <tr>
+            <td><code>packages/local-bridge/src/ws/server.ts</code></td>
+            <td>WebSocket server (being refactored)</td>
+          </tr>
+          <tr>
+            <td><code>packages/local-bridge/src/agents/</code></td>
+            <td>Agent registry, router, spawner</td>
+          </tr>
+          <tr>
+            <td><code>packages/local-bridge/src/brain/</code></td>
+            <td>Memory: facts, wiki, soul, tasks</td>
+          </tr>
+          <tr>
+            <td><code>packages/protocols/src/mcp/</code></td>
+            <td>MCP client/server/transport</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>Testing</h2>
+
+      <h3>Test Status</h3>
+      <p>Cocapn has <strong>196 passing tests</strong> on x86_64. 7 tests fail on ARM64 (Jetson) due to age-encryption libsodium WASM — not a code issue.</p>
+
+      <h3>Writing Tests</h3>
+      <p>Tests are written with <strong>Vitest</strong>. Follow this pattern:</p>
+
+      <pre><code>import { describe, it, expect, beforeEach } from "vitest";
+
+describe("MyComponent", () => {
+  beforeEach(() => {
+    // Setup
+  });
+
+  it("should do something", () => {
+    // Arrange
+    const input = "test";
+
+    // Act
+    const result = myFunction(input);
+
+    // Assert
+    expect(result).toBe("expected");
+  });
+});</code></pre>
+
+      <h3>Test Categories</h3>
+      <ul>
+        <li><strong>Unit tests</strong> — Test individual functions and classes</li>
+        <li><strong>Integration tests</strong> — Test component interactions</li>
+        <li><strong>E2E tests</strong> — Test full workflows (bridge startup, chat flow, skills)</li>
+      </ul>
+
+      <h3>Running E2E Tests</h3>
+      <pre><code># Run E2E tests
+npm run test:e2e
+
+# Run specific E2E test
+npx vitest run tests/e2e/bridge-startup.test.ts</code></pre>
+    </section>
+
+    <section>
+      <h2>Commit Guidelines</h2>
+
+      <h3>Commit Message Format</h3>
+      <p>Follow the Conventional Commits specification:</p>
+
+      <pre><code>&lt;type&gt;(&lt;scope&gt;): &lt;subject&gt;
+
+&lt;body&gt;
+
+&lt;footer&gt;</code></pre>
+
+      <h3>Types</h3>
+      <ul>
+        <li><code>feat</code> — New feature</li>
+        <li><code>fix</code> — Bug fix</li>
+        <li><code>docs</code> — Documentation changes</li>
+        <li><code>style</code> — Code style changes (formatting)</li>
+        <li><code>refactor</code> — Code refactoring</li>
+        <li><code>test</code> — Test changes</li>
+        <li><code>chore</code> — Build process or auxiliary tool changes</li>
+      </ul>
+
+      <h3>Examples</h3>
+      <pre><code>feat(agents): add multi-agent support
+
+Implement the ability to run multiple agents simultaneously
+with routing based on capability and substring matching.
+
+Closes #123</code></pre>
+
+      <pre><code>fix(security): resolve secret references at spawn time
+
+Fix bug where "secret:KEY" env values were not dereferenced
+at spawn time in agent-spawner.ts.
+
+Fixes #456</code></pre>
+
+      <h3>Attribution</h3>
+      <p>All commits must include Superinstance attribution:</p>
+
+      <pre><code>Author: Superinstance
+
+OR
+
+Co-Authored-By: Superinstance &lt;team@superinstance.com&gt;</code></pre>
+    </section>
+
+    <section>
+      <h2>Pull Request Process</h2>
+
+      <h3>Before Submitting</h3>
+      <ol>
+        <li>Run tests: <code>npm test</code></li>
+        <li>Run type check: <code>npm run typecheck</code></li>
+        <li>Update documentation if needed</li>
+        <li>Ensure all commits follow commit guidelines</li>
+      </ol>
+
+      <h3>Creating a PR</h3>
+      <ol>
+        <li>Push your branch to your fork</li>
+        <li>Create a pull request to <code>superinstance/cocapn:main</code></li>
+        <li>Fill out the PR template</li>
+        <li>Link related issues</li>
+        <li>Request review from maintainers</li>
+      </ol>
+
+      <h3>PR Template</h3>
+      <pre><code>## Description
+Brief description of changes
+
+## Type of Change
+- [ ] Bug fix
+- [ ] New feature
+- [ ] Breaking change
+- [ ] Documentation update
+
+## Testing
+- [ ] Tests added/updated
+- [ ] All tests pass
+
+## Checklist
+- [ ] Code follows style guidelines
+- [ ] Self-review completed
+- [ ] Documentation updated
+- [ ] No merge conflicts
+
+## Issues
+Closes #123, #456</code></pre>
+
+      <h3>Review Process</h3>
+      <ul>
+        <li>At least one maintainer approval required</li>
+        <li>All CI checks must pass</li>
+        <li>Code must be up-to-date with main branch</li>
+        <li>Review feedback should be addressed</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Development Workflow</h2>
+
+      <h3>1. Pick an Issue</h3>
+      <p>Browse <a href="https://github.com/CedarBeach2019/cocapn/issues">issues</a> and find something to work on. Labelled issues include:</p>
+      <ul>
+        <li><code>good first issue</code> — Good for newcomers</li>
+        <li><code>help wanted</code> — Community contributions welcome</li>
+        <li><code>enhancement</code> — Feature requests</li>
+        <li><code>bug</code> — Bug reports</li>
+      </ul>
+
+      <h3>2. Create a Branch</h3>
+      <pre><code>git checkout -b feature/your-feature-name
+# or
+git checkout -b fix/your-bug-fix</code></pre>
+
+      <h3>3. Make Changes</h3>
+      <pre><code># Make your changes
+vim packages/local-bridge/src/my-file.ts
+
+# Run tests
+npm test
+
+# Commit changes
+git add .
+git commit -m "feat: add my feature"</code></pre>
+
+      <h3>4. Push and Create PR</h3>
+      <pre><code>git push origin feature/your-feature-name
+# Then create PR on GitHub</code></pre>
+    </section>
+
+    <section>
+      <h2>Documentation</h2>
+
+      <h3>Code Documentation</h3>
+      <p>Use JSDoc comments for functions and classes:</p>
+
+      <pre><code>/**
+ * Query facts from the agent's brain
+ * @param query - Query pattern (supports wildcards)
+ * @returns Object matching the query
+ * @example
+ * const facts = await brain.queryFacts("user.*");
+ */
+async queryFacts(query: string): Promise&lt;Record&lt;string, unknown&gt;&gt; {
+  // Implementation
+}</code></pre>
+
+      <h3>Design Docs</h3>
+      <p>For significant features, create a design doc in <code>docs/designs/</code>:</p>
+
+      <pre><code># Feature Name Design Doc
+
+## Overview
+Brief description of the feature
+
+## Goals
+- Goal 1
+- Goal 2
+
+## Non-Goals
+- What this feature won't do
+
+## Proposed Solution
+Detailed explanation
+
+## Alternatives Considered
+- Alternative 1
+- Alternative 2
+
+## Open Questions
+- Question 1
+- Question 2</code></pre>
+
+      <h3>Documentation Site</h3>
+      <p>Update the documentation site in <code>docs/site/</code>:</p>
+      <ul>
+        <li><code>index.html</code> — Homepage</li>
+        <li><code>getting-started.html</code> — Getting started guide</li>
+        <li><code>architecture.html</code> — Architecture overview</li>
+        <li><code>plugins.html</code> — Plugin development</li>
+        <li><code>api-reference.html</code> — API reference</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Getting Help</h2>
+
+      <h3>Resources</h3>
+      <ul>
+        <li><a href="https://github.com/CedarBeach2019/cocapn">GitHub Repository</a></li>
+        <li><a href="https://github.com/CedarBeach2019/cocapn/issues">Issues</a></li>
+        <li><a href="https://github.com/CedarBeach2019/cocapn/discussions">Discussions</a></li>
+        <li><a href="https://github.com/CedarBeach2019/cocapn/blob/main/docs/troubleshooting.md">Troubleshooting Guide</a></li>
+      </ul>
+
+      <h3>Asking Questions</h3>
+      <p>Before asking a question:</p>
+      <ol>
+        <li>Search existing issues and discussions</li>
+        <li>Read the documentation</li>
+        <li>Try to reproduce the issue</li>
+        <li>Gather relevant information (OS, Node version, steps to reproduce)</li>
+      </ol>
+
+      <h3>Reporting Bugs</h3>
+      <p>When reporting bugs, include:</p>
+      <ul>
+        <li>Clear title and description</li>
+        <li>Steps to reproduce</li>
+        <li>Expected behavior</li>
+        <li>Actual behavior</li>
+        <li>Environment details (OS, Node version, Cocapn version)</li>
+        <li>Logs and error messages</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Recognition</h2>
+      <p>All contributors are recognized in the <code>CONTRIBUTORS.md</code> file and on the GitHub repository. We appreciate all contributions, from bug reports to feature implementations.</p>
+
+      <div class="callout success">
+        <strong>Thank you for contributing to Cocapn!</strong> Together, we're building the npm of AI agents.
+      </div>
+    </section>
+
+    <section>
+      <h2>Further Reading</h2>
+      <ul>
+        <li><a href="https://github.com/CedarBeach2019/cocapn/blob/main/CLAUDE.md">CLAUDE.md — Project Instructions</a></li>
+        <li><a href="https://github.com/CedarBeach2019/cocapn/blob/main/docs/ROADMAP.md">ROADMAP.md — Development Roadmap</a></li>
+        <li><a href="https://github.com/CedarBeach2019/cocapn/blob/main/docs/DEVELOPMENT_PLAN.md">DEVELOPMENT_PLAN.md — Development Plan</a></li>
+        <li><a href="architecture.html">Architecture Overview</a></li>
+        <li><a href="plugins.html">Plugin Development</a></li>
+      </ul>
+    </section>
+  </main>
+
+  <footer>
+    <p>&copy; 2026 Superinstance. Cocapn — The npm of AI Agents.</p>
+    <p style="margin-top: 0.5rem;">
+      <a href="https://github.com/CedarBeach2019/cocapn">GitHub</a> ·
+      <a href="contributing.html">Contributing</a> ·
+      <a href="https://github.com/CedarBeach2019/cocapn/issues">Issues</a>
+    </p>
+  </footer>
+</body>
+</html>

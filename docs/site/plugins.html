@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Plugin Development — Cocapn Documentation</title>
+  <meta name="description" content="Learn how to create and publish Cocapn plugins. Extend agent capabilities with skills and tools.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <nav>
+      <a href="index.html" class="logo">cocapn<span>.ai</span></a>
+      <ul class="nav-links">
+        <li><a href="getting-started.html">Getting Started</a></li>
+        <li><a href="architecture.html">Architecture</a></li>
+        <li><a href="plugins.html">Plugins</a></li>
+        <li><a href="templates.html">Templates</a></li>
+        <li><a href="api-reference.html">API</a></li>
+        <li><a href="fleet.html">Fleet</a></li>
+        <li><a href="contributing.html">Contributing</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main>
+    <div class="breadcrumb">
+      <a href="index.html">Home</a> → Plugins
+    </div>
+
+    <section class="hero">
+      <h1>Plugin Development</h1>
+      <p class="subtitle">Create and publish plugins to extend Cocapn agent capabilities</p>
+    </section>
+
+    <section>
+      <div class="callout">
+        <strong>The npm of AI Agents:</strong> Cocapn plugins are discoverable, installable, and versioned extensions that anyone can publish.
+        Think of them as npm packages for AI agents.
+      </div>
+    </section>
+
+    <section>
+      <h2>What are Plugins?</h2>
+      <p>Plugins are published skill cartridges that extend Cocapn agent capabilities. A plugin bundles one or more skills along with metadata, tests, optional runtime modules, and personality fragments.</p>
+
+      <h3>Why Plugins Matter</h3>
+      <p>The plugin system creates a flywheel effect:</p>
+      <ul>
+        <li><strong>Users</strong> get instant access to specialized capabilities (GitHub, Slack, data analysis)</li>
+        <li><strong>Developers</strong> reach thousands of Cocapn users without building their own agent runtime</li>
+        <li><strong>Ecosystem</strong> grows as useful plugins attract more users, which attracts more developers</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Plugin Package Format</h2>
+      <h3>Directory Structure</h3>
+      <pre><code>my-plugin/
+├── cocapn-plugin.json      # Plugin manifest (required)
+├── README.md               # User-facing documentation (required)
+├── LICENSE                 # License file (recommended)
+├── skills/
+│   ├── my-skill.ts          # Skill implementation
+│   ├── my-skill.test.ts     # Skill tests (required)
+│   └── helpers/
+│       └── github-client.ts # Helper modules
+├── modules/                 # Optional runtime modules
+│   ├── brain/               # Brain modules
+│   ├── ui/                  # UI components
+│   ├── cloud/               # Cloud modules
+│   └── tools/               # MCP tool definitions
+├── personality.md           # Optional personality fragment
+└── assets/                  # Static assets (icons, etc.)
+    └── icon.png</code></pre>
+
+      <h3>Manifest Schema (cocapn-plugin.json)</h3>
+      <pre><code>{
+  "$schema": "cocapn-plugin-schema-v1",
+  "name": "cocapn-plugin-github",
+  "version": "1.2.0",
+  "description": "GitHub integration — issues, PRs, code review",
+  "author": "Superinstance &lt;team@superinstance.com&gt;",
+  "license": "MIT",
+  "repository": "https://github.com/superinstance/cocapn-plugin-github",
+  "homepage": "https://github.com/superinstance/cocapn-plugin-github#readme",
+  "bugs": "https://github.com/superinstance/cocapn-plugin-github/issues",
+  "keywords": ["github", "issues", "pull-requests", "code-review"],
+  "category": "development",
+  "icon": "assets/icon.png",
+
+  "skills": [
+    {
+      "name": "github-issues",
+      "entry": "skills/github-issues.ts",
+      "type": "hot",
+      "tolerance": {
+        "maxTokens": 2000,
+        "timeout": 30000
+      },
+      "triggers": ["issue", "bug", "pr", "pull request", "github"],
+      "description": "List, create, and manage GitHub issues"
+    }
+  ],
+
+  "dependencies": {
+    "cocapn-core": ">=0.1.0"
+  },
+
+  "permissions": [
+    "network:api.github.com",
+    "shell:gh"
+  ],
+
+  "engines": {
+    "node": ">=18.0.0",
+    "cocapn": ">=0.1.0"
+  }
+}</code></pre>
+
+      <h3>Manifest Fields</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Field</th>
+            <th>Required</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>name</code></td>
+            <td><span class="badge required">Yes</span></td>
+            <td>Plugin name (must start with <code>cocapn-plugin-</code>)</td>
+          </tr>
+          <tr>
+            <td><code>version</code></td>
+            <td><span class="badge required">Yes</span></td>
+            <td>Semver version string</td>
+          </tr>
+          <tr>
+            <td><code>description</code></td>
+            <td><span class="badge required">Yes</span></td>
+            <td>Short description (max 200 chars)</td>
+          </tr>
+          <tr>
+            <td><code>author</code></td>
+            <td><span class="badge required">Yes</span></td>
+            <td>Author name or email</td>
+          </tr>
+          <tr>
+            <td><code>license</code></td>
+            <td><span class="badge required">Yes</span></td>
+            <td>SPDX license identifier</td>
+          </tr>
+          <tr>
+            <td><code>skills</code></td>
+            <td><span class="badge required">Yes</span></td>
+            <td>Array of skill definitions</td>
+          </tr>
+          <tr>
+            <td><code>permissions</code></td>
+            <td><span class="badge required">Yes</span></td>
+            <td>Required permissions</td>
+          </tr>
+          <tr>
+            <td><code>repository</code></td>
+            <td><span class="badge optional">No</span></td>
+            <td>Git repository URL</td>
+          </tr>
+          <tr>
+            <td><code>keywords</code></td>
+            <td><span class="badge optional">No</span></td>
+            <td>Search keywords (max 10)</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>Permission Model</h2>
+      <p>Plugins declare required permissions in their manifest. Users approve permissions during installation.</p>
+
+      <h3>Permission Types</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Permission</th>
+            <th>Description</th>
+            <th>Example</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>network:&lt;host&gt;</code></td>
+            <td>Network access to specific host</td>
+            <td><code>network:api.github.com</code></td>
+          </tr>
+          <tr>
+            <td><code>network:*</code></td>
+            <td><span class="badge warning">Dangerous</span> Unrestricted network access</td>
+            <td>—</td>
+          </tr>
+          <tr>
+            <td><code>fs:read:&lt;path&gt;</code></td>
+            <td>Read filesystem under path</td>
+            <td><code>fs:read:~/repos</code></td>
+          </tr>
+          <tr>
+            <td><code>fs:write:&lt;path&gt;</code></td>
+            <td>Write filesystem under path</td>
+            <td><code>fs:write:~/output</code></td>
+          </tr>
+          <tr>
+            <td><code>shell:&lt;cmd&gt;</code></td>
+            <td>Execute specific shell command</td>
+            <td><code>shell:gh</code>, <code>shell:git</code></td>
+          </tr>
+          <tr>
+            <td><code>env:&lt;var&gt;</code></td>
+            <td>Read environment variable</td>
+            <td><code>env:GITHUB_TOKEN</code></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>Permission Flow</h3>
+      <ol>
+        <li>User installs plugin</li>
+        <li>CLI shows required permissions</li>
+        <li>User approves (or denies specific permissions)</li>
+        <li>Approved permissions stored in plugin state</li>
+        <li>Runtime enforces sandbox</li>
+      </ol>
+
+      <div class="callout warning">
+        <strong>Security:</strong> Permissions are enforced at runtime. Hot skills run in the bridge process with permission checks.
+        Cold skills run in isolated subprocesses with permissions as capability flags.
+      </div>
+    </section>
+
+    <section>
+      <h2>Skill Implementation</h2>
+      <h3>Skill Types</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Type</th>
+            <th>When to Use</th>
+            <th>Isolation</th>
+            <th>Performance</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Hot</strong></td>
+            <td>Small, fast, trusted skills</td>
+            <td>Same process</td>
+            <td>Best</td>
+          </tr>
+          <tr>
+            <td><strong>Cold</strong></td>
+            <td>Large, slow, untrusted skills</td>
+            <td>Subprocess</td>
+            <td>Good</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>Example Skill (TypeScript)</h3>
+      <pre><code>import { Octokit } from "octokit";
+
+export interface SkillContext {
+  brain: Brain;
+  logger: Logger;
+  signal: AbortSignal;
+}
+
+export default async function githubIssues(
+  query: string,
+  context: SkillContext
+): Promise&lt;string&gt; {
+  const token = process.env.GITHUB_TOKEN;
+  if (!token) {
+    throw new Error("GITHUB_TOKEN not set");
+  }
+
+  const octokit = new Octokit({ auth: token });
+
+  // Parse query: "issues in superinstance/cocapn"
+  const match = query.match(/issues\s+in\s+(\S+)/);
+  if (!match) {
+    return "Usage: issues in &lt;repo&gt; (e.g., 'issues in superinstance/cocapn')";
+  }
+
+  const [, repo] = match;
+  const [owner, name] = repo.split("/");
+
+  const { data: issues } = await octokit.rest.issues.listForRepo({
+    owner,
+    repo: name,
+    state: "open",
+    per_page: 10,
+  });
+
+  if (issues.length === 0) {
+    return `No open issues in ${repo}`;
+  }
+
+  return `Open issues in ${repo}:\n${issues.map(i =>
+    `• #${i.number}: ${i.title} (${i.user?.login})`
+  ).join("\n")}`;
+}</code></pre>
+
+      <h3>Skill Entry Points</h3>
+      <p>Skills must export a default function that takes a query and context:</p>
+      <pre><code>export default async function mySkill(
+  query: string,
+  context: SkillContext
+): Promise&lt;string&gt; {
+  // Your skill logic here
+  return "Result";
+}</code></pre>
+
+      <p>The <code>SkillContext</code> provides access to:</p>
+      <ul>
+        <li><code>brain</code> — Agent memory (facts, wiki, tasks)</li>
+        <li><code>logger</code> — Structured logging</li>
+        <li><code>signal</code> — AbortSignal for cancellation</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Publishing Plugins</h2>
+      <h3>Step 1: Validate</h3>
+      <pre><code>cocapn plugin validate</code></pre>
+
+      <h3>Step 2: Test</h3>
+      <pre><code>cocapn plugin verify cocapn-plugin-github
+# → Running tests in sandbox...
+# → ✓ 12/12 tests passed</code></pre>
+
+      <h3>Step 3: Publish</h3>
+      <pre><code>cocapn plugin publish
+# → Validating cocapn-plugin.json...
+# → Running tests...
+# → Building artifact...
+# → Uploading to registry...
+# → Published cocapn-plugin-github@1.2.0</code></pre>
+
+      <div class="callout">
+        <strong>Automatic Scans:</strong> On publish, the registry runs security scans for known vulnerabilities, license compatibility, and suspicious code patterns.
+      </div>
+    </section>
+
+    <section>
+      <h2>CLI Commands</h2>
+      <h3>Discovery</h3>
+      <pre><code># Search plugins
+cocapn plugin search github
+
+# Browse by category
+cocapn plugin search --category development
+
+# Get plugin details
+cocapn plugin info cocapn-plugin-github
+
+# List installed plugins
+cocapn plugin list</code></pre>
+
+      <h3>Installation</h3>
+      <pre><code># Install latest version
+cocapn plugin install cocapn-plugin-github
+
+# Install specific version
+cocapn plugin install cocapn-plugin-github@1.1.0</code></pre>
+
+      <h3>Management</h3>
+      <pre><code># Uninstall a plugin
+cocapn plugin uninstall cocapn-plugin-github
+
+# Update all plugins
+cocapn plugin update
+
+# Update specific plugin
+cocapn plugin update cocapn-plugin-github
+
+# Check for updates
+cocapn plugin outdated</code></pre>
+
+      <h3>Permissions</h3>
+      <pre><code># Revoke specific permission
+cocapn plugin revoke-permission cocapn-plugin-github network:api.github.com
+
+# Grant additional permission
+cocapn plugin grant-permission cocapn-plugin-github shell:git
+
+# View plugin permissions
+cocapn plugin permissions cocapn-plugin-github</code></pre>
+    </section>
+
+    <section>
+      <h2>Example Plugins</h2>
+
+      <h3>cocapn-plugin-github</h3>
+      <p>GitHub integration — issues, PRs, code review. Features:</p>
+      <ul>
+        <li>List, create, and manage GitHub issues</li>
+        <li>Analyze and review pull requests</li>
+        <li>Permissions: <code>network:api.github.com</code>, <code>shell:gh</code></li>
+      </ul>
+
+      <h3>cocapn-plugin-slack</h3>
+      <p>Slack messaging — send messages, channels, users. Features:</p>
+      <ul>
+        <li>Send messages to Slack channels or users</li>
+        <li>Permissions: <code>network:api.slack.com</code>, <code>env:SLACK_TOKEN</code></li>
+      </ul>
+
+      <h3>cocapn-plugin-data-analysis</h3>
+      <p>Data analysis — CSV, JSON, statistics. Features:</p>
+      <ul>
+        <li>Analyze CSV files — stats, histograms, correlations</li>
+        <li>Query JSON files using JSONPath</li>
+        <li>Permissions: <code>fs:read</code>, <code>shell:python3</code></li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Registry API</h2>
+      <p>The Cocapn plugin registry provides:</p>
+      <ul>
+        <li><strong>Search:</strong> <code>GET /api/plugins/search?q=github&category=development</code></li>
+        <li><strong>Details:</strong> <code>GET /api/plugins/:name</code></li>
+        <li><strong>Publish:</strong> <code>POST /api/plugins/publish</code></li>
+        <li><strong>Versions:</strong> <code>GET /api/plugins/:name/versions</code></li>
+      </ul>
+
+      <p>Built with Cloudflare Workers, AdmiralDO, R2, and D1.</p>
+    </section>
+
+    <section>
+      <h2>Further Reading</h2>
+      <ul>
+        <li><a href="https://github.com/CedarBeach2019/cocapn/blob/main/docs/designs/plugin-system.md">Plugin System Design Doc</a></li>
+        <li><a href="templates.html">Template Development</a></li>
+        <li><a href="api-reference.html">API Reference</a></li>
+        <li><a href="contributing.html">Contributing Guide</a></li>
+      </ul>
+    </section>
+  </main>
+
+  <footer>
+    <p>&copy; 2026 Superinstance. Cocapn — The npm of AI Agents.</p>
+    <p style="margin-top: 0.5rem;">
+      <a href="https://github.com/CedarBeach2019/cocapn">GitHub</a> ·
+      <a href="contributing.html">Contributing</a> ·
+      <a href="https://github.com/CedarBeach2019/cocapn/issues">Issues</a>
+    </p>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Getting Started — Cocapn Documentation</title>
+  <meta name="description" content="Get started with Cocapn in minutes. Install, create, and deploy your AI instance.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <nav>
+      <a href="index.html" class="logo">cocapn<span>.ai</span></a>
+      <ul class="nav-links">
+        <li><a href="getting-started.html">Getting Started</a></li>
+        <li><a href="architecture.html">Architecture</a></li>
+        <li><a href="plugins.html">Plugins</a></li>
+        <li><a href="templates.html">Templates</a></li>
+        <li><a href="api-reference.html">API</a></li>
+        <li><a href="fleet.html">Fleet</a></li>
+        <li><a href="contributing.html">Contributing</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main>
+    <div class="breadcrumb">
+      <a href="index.html">Home</a> → Getting Started
+    </div>
+
+    <section class="hero">
+      <h1>Getting Started</h1>
+      <p class="subtitle">Deploy your first Cocapn AI instance in 60 seconds</p>
+    </section>
+
+    <section>
+      <h2>Prerequisites</h2>
+      <p>Before you begin, ensure you have the following:</p>
+      <ul>
+        <li><strong>Node.js 18+</strong> — Cocapn runs on Node.js</li>
+        <li><strong>Git</strong> — For version control and Git-backed memory</li>
+        <li><strong>Cloudflare account</strong> — For Workers deployment (free tier works)</li>
+        <li><strong>GitHub account</strong> — For hosting your brain repos (private + public)</li>
+      </ul>
+
+      <div class="callout warning">
+        <strong>Note:</strong> The Cloudflare Workers free tier includes 100,000 requests per day.
+        This is sufficient for personal use and small projects.
+      </div>
+    </section>
+
+    <section>
+      <h2>Installation</h2>
+      <h3>Option 1: Global CLI (Recommended)</h3>
+      <p>Install the Cocapn CLI globally:</p>
+      <pre><code>npm install -g cocapn</code></pre>
+
+      <h3>Option 2: Create Cocapn (Scaffold)</h3>
+      <p>Create a new Cocapn instance without global installation:</p>
+      <pre><code>npx create-cocapn my-instance</code></pre>
+
+      <h3>Option 3: Development Mode</h3>
+      <p>If you want to contribute or run from source:</p>
+      <pre><code>git clone https://github.com/CedarBeach2019/cocapn.git
+cd cocapn/packages/local-bridge
+npm install
+npm link</code></pre>
+    </section>
+
+    <section>
+      <h2>Create Your Instance</h2>
+      <h3>Step 1: Initialize</h3>
+      <p>Create a new Cocapn instance:</p>
+      <pre><code>cocapn init my-instance
+cd my-instance</code></pre>
+
+      <p>This creates:</p>
+      <ul>
+        <li><code>cocapn.yml</code> — Public configuration (agents, modules, templates)</li>
+        <li><code>cocapn-private.yml</code> — Private configuration (secrets, API keys)</li>
+        <li><code>soul.md</code> — Agent personality and system prompt</li>
+        <li><code>brain/</code> — Private Git repo for agent memory</li>
+        <li><code>public/</code> — Public Git repo for published content</li>
+      </ul>
+
+      <h3>Step 2: Configure</h3>
+      <p>Edit <code>cocapn.yml</code> to customize your instance:</p>
+      <pre><code># Public configuration
+domain: my-instance.ai
+title: "My AI Instance"
+description: "A personal AI assistant"
+
+agents:
+  default:
+    model: claude-sonnet-4
+    temperature: 0.7
+    maxTokens: 4096
+
+modules:
+  - name: habit-tracker
+    type: brain
+  - name: perplexity-search
+    type: tool</code></pre>
+
+      <h3>Step 3: Initialize Private Brain</h3>
+      <p>Create your private brain repository:</p>
+      <pre><code># Create private repo on GitHub first, then:
+cd brain
+git init
+git remote add origin git@github.com:your-username/your-brain.git
+cocapn brain init  # Sets up memory structure
+git add .
+git commit -m "Initial brain"
+git push -u origin main</code></pre>
+
+      <div class="callout">
+        <strong>Security:</strong> Your private brain repo contains encrypted secrets.
+        Never commit <code>cocapn-private.yml</code> to a public repository.
+      </div>
+    </section>
+
+    <section>
+      <h2>Deploy to Cloudflare Workers</h2>
+      <h3>Step 1: Authenticate with Cloudflare</h3>
+      <pre><code>cocapn cloudflare:login</code></pre>
+
+      <h3>Step 2: Deploy</h3>
+      <pre><code>cocapn deploy</code></pre>
+
+      <p>This command:</p>
+      <ol>
+        <li>Bundles your instance for Workers</li>
+        <li>Creates a Cloudflare Worker</li>
+        <li>Deploys to <code>your-instance.workers.dev</code></li>
+        <li>Sets up environment variables and secrets</li>
+        <li>Prints your Workers URL</li>
+      </ol>
+
+      <h3>Step 3: Verify</h3>
+      <p>Visit your Workers URL to verify deployment:</p>
+      <pre><code>https://your-instance.subdomain.workers.dev</code></pre>
+
+      <div class="callout success">
+        <strong>Success!</strong> Your AI instance is now live on Cloudflare Workers.
+        It's accessible 24/7, even when your local machine is offline.
+      </div>
+    </section>
+
+    <section>
+      <h2>Run Locally</h2>
+      <p>For development or when you don't need cloud deployment:</p>
+      <pre><code>cocapn start</code></pre>
+
+      <p>This starts the local bridge server on <code>ws://localhost:8787</code>.</p>
+
+      <h3>Connect a Client</h3>
+      <p>Use the React UI or any WebSocket client:</p>
+      <pre><code># From another terminal
+cd packages/ui
+npm install
+npm run dev</code></pre>
+
+      <p>Visit <code>http://localhost:5173</code> to interact with your agent.</p>
+    </section>
+
+    <section>
+      <h2>Custom Domain</h2>
+      <p>To use a custom domain with Cloudflare Workers:</p>
+
+      <ol>
+        <li>Add your domain to Cloudflare</li>
+        <li>Update <code>cocapn.yml</code>:</li>
+      </ol>
+
+      <pre><code>domain: my-instance.ai
+customDomain: true</code></pre>
+
+      <ol start="3">
+        <li>Deploy again:</li>
+      </ol>
+
+      <pre><code>cocapn deploy --domain my-instance.ai</code></pre>
+
+      <div class="callout warning">
+        <strong>Note:</strong> Custom domains require a Cloudflare account with the domain added.
+        The free Cloudflare tier works great for this.
+      </div>
+    </section>
+
+    <section>
+      <h2>Next Steps</h2>
+      <ul>
+        <li><a href="architecture.html">Learn about Cocapn architecture</a></li>
+        <li><a href="plugins.html">Create your first plugin</a></li>
+        <li><a href="templates.html">Customize templates</a></li>
+        <li><a href="fleet.html">Set up multi-device fleet</a></li>
+        <li><a href="api-reference.html">Explore the API</a></li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Troubleshooting</h2>
+      <h3>Deployment Fails</h3>
+      <p>Ensure you're authenticated with Cloudflare:</p>
+      <pre><code>cocapn cloudflare:login
+cocaln cloudflare:whoami</code></pre>
+
+      <h3>Bridge Won't Start</h3>
+      <p>Check that port 8787 is available:</p>
+      <pre><code>lsof -i :8787  # macOS/Linux
+netstat -ano | findstr :8787  # Windows</code></pre>
+
+      <h3>Agent Not Responding</h3>
+      <p>Check bridge logs:</p>
+      <pre><code>cocapn logs</code></pre>
+
+      <p>For more troubleshooting tips, see <a href="https://github.com/CedarBeach2019/cocapn/blob/main/docs/troubleshooting.md">Troubleshooting.md</a>.</p>
+    </section>
+  </main>
+
+  <footer>
+    <p>&copy; 2026 Superinstance. Cocapn — The npm of AI Agents.</p>
+    <p style="margin-top: 0.5rem;">
+      <a href="https://github.com/CedarBeach2019/cocapn">GitHub</a> ·
+      <a href="contributing.html">Contributing</a> ·
+      <a href="https://github.com/CedarBeach2019/cocapn/issues">Issues</a>
+    </p>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Architecture Overview — Cocapn Documentation</title>
+  <meta name="description" content="Learn about Cocapn's architecture: components, data flow, and system design.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <nav>
+      <a href="index.html" class="logo">cocapn<span>.ai</span></a>
+      <ul class="nav-links">
+        <li><a href="getting-started.html">Getting Started</a></li>
+        <li><a href="architecture.html">Architecture</a></li>
+        <li><a href="plugins.html">Plugins</a></li>
+        <li><a href="templates.html">Templates</a></li>
+        <li><a href="api-reference.html">API</a></li>
+        <li><a href="fleet.html">Fleet</a></li>
+        <li><a href="contributing.html">Contributing</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main>
+    <div class="breadcrumb">
+      <a href="index.html">Home</a> → Architecture
+    </div>
+
+    <section class="hero">
+      <h1>Architecture Overview</h1>
+      <p class="subtitle">Understanding how Cocapn works under the hood</p>
+    </section>
+
+    <section>
+      <div class="callout">
+        <strong>Core Principle:</strong> Git is the database, your machine is the compute, Cloudflare is optional.
+      </div>
+    </section>
+
+    <section>
+      <h2>System Layers</h2>
+      <div class="ascii-diagram">
+┌──────────────────────────────────────────────────────────┐
+│  Browser (you.domain.ai — GitHub Pages)                  │
+│  React SPA, domain-skinned, connects via WebSocket       │
+└───────────────────────┬──────────────────────────────────┘
+                        │
+                WebSocket (ws://localhost:8787)
+                or Cloudflare Tunnel (wss://…)
+                        │
+┌───────────────────────▼──────────────────────────────────┐
+│  Local Bridge (cocapn-bridge)                            │
+│  Node.js process on your machine                         │
+│                                                          │
+│  ┌─────────────┐  ┌──────────────┐  ┌────────────────┐  │
+│  │ BridgeServer│  │ AgentSpawner │  │ GitSync        │  │
+│  │ (WebSocket) │  │ (child_proc) │  │ (auto-commit)  │  │
+│  └─────────────┘  └──────────────┘  └────────────────┘  │
+│  ┌─────────────┐  ┌──────────────┐  ┌────────────────┐  │
+│  │ SecretMgr   │  │ ModuleManager│  │ FleetKeyManager│  │
+│  │ (age crypto)│  │ (submodules) │  │ (JWT auth)     │  │
+│  └─────────────┘  └──────────────┘  └────────────────┘  │
+└────────┬──────────────────────┬──────────────────────────┘
+         │                      │
+┌────────▼────────┐   ┌─────────▼──────────────┐
+│ Private Git Repo│   │ Cloudflare Workers       │
+│ (encrypted)     │   │ (optional, 24/7 agents)  │
+│                 │   │                          │
+│ secrets/*.age   │   │ cloud-agents/            │
+│ cocapn/agents/  │   │ Admiral DO               │
+│ wiki/, tasks/   │   │ Vectorize, D1, KV        │
+└─────────────────┘   └──────────────────────────┘
+         │
+┌────────▼────────┐
+│ Public Git Repo │
+│ (GitHub Pages)  │
+│ cocapn.yml      │
+│ skin/           │
+│ index.html      │
+└─────────────────┘
+      </div>
+    </section>
+
+    <section>
+      <h2>Package Structure</h2>
+      <pre><code>cocapn/
+├── packages/
+│   ├── local-bridge/     # Core bridge (Node.js, WebSocket, Git, agents)
+│   │   ├── src/
+│   │   │   ├── bridge.ts          # Bridge lifecycle
+│   │   │   ├── ws/server.ts       # WebSocket server
+│   │   │   ├── agents/            # Agent registry, router, spawner
+│   │   │   ├── brain/             # Memory: facts, wiki, soul, procedures
+│   │   │   ├── config/            # YAML config loading, types
+│   │   │   ├── git/               # Git sync, publishing
+│   │   │   ├── security/          # JWT, fleet keys, age encryption
+│   │   │   ├── modules/           # Module manager, sandbox, hooks
+│   │   │   └── handlers/          # Request handlers
+│   │   └── tests/                 # 203 tests
+│   ├── ui/                # React + Vite WebSocket client
+│   ├── protocols/         # MCP (client/server) + A2A protocol
+│   ├── cloud-agents/      # Cloudflare Workers: AdmiralDO Durable Object
+│   ├── modules/           # Reference modules
+│   └── templates/         # Public (Vite app) + Private (soul.md, config)
+└── docs/                  # Documentation and design docs</code></pre>
+    </section>
+
+    <section>
+      <h2>Data Flow</h2>
+
+      <h3>Chat Message Flow</h3>
+      <ol>
+        <li><strong>Browser</strong> sends <code>{ type: "CHAT", agentId: "default", content: "Hello" }</code> over WebSocket</li>
+        <li><strong>BridgeServer.dispatchTyped</strong> routes to <code>handleChat</code></li>
+        <li><strong>AgentRouter</strong> selects the target agent (local or cloud)</li>
+        <li><strong>AgentSpawner</strong> spawns the CLI process with:
+          <ul>
+            <li><code>COCAPN_SOUL</code> = contents of <code>cocapn/soul.md</code></li>
+            <li><code>COCAPN_*</code> project vars</li>
+            <li>Stripped host env (no AWS/OpenAI/GitHub tokens)</li>
+          </ul>
+        </li>
+        <li>Streamed output → <code>STREAM_CHUNK</code> messages → Browser terminal</li>
+        <li>On completion: <code>STREAM_END</code>, agent is stopped or kept warm</li>
+      </ol>
+
+      <h3>Git Sync Flow</h3>
+      <ol>
+        <li><strong>RepoWatcher</strong> (chokidar) detects file changes in the private repo</li>
+        <li>After a debounce delay, <strong>GitSync</strong> stages + commits changed files</li>
+        <li>Every N seconds, <strong>GitSync</strong> pulls from <code>origin</code> then pushes</li>
+        <li>Events: <code>committed</code>, <code>pushed</code>, <code>pulled</code>, <code>conflict</code>, <code>error</code></li>
+      </ol>
+
+      <h3>Secret Access Flow</h3>
+      <ol>
+        <li>Agent requests a secret via <code>COCAPN_SECRET_NAME</code> env var (pre-injected at spawn)</li>
+        <li>Bridge decrypts <code>secrets/NAME.age</code> using the identity loaded from OS keychain</li>
+        <li>Secret value is passed as env var — never logged, never stored in plaintext</li>
+      </ol>
+    </section>
+
+    <section>
+      <h2>Key Components</h2>
+
+      <h3>BridgeServer (src/ws/server.ts)</h3>
+      <p>WebSocket server built on the <code>ws</code> library. Handles:</p>
+      <ul>
+        <li><strong>Authentication:</strong> GitHub PAT or JWT fleet token</li>
+        <li><strong>Message dispatch:</strong> Typed message router for CHAT, BASH, FILE_EDIT, RPC, MODULE_INSTALL</li>
+        <li><strong>Agent streaming:</strong> Pipes agent subprocess stdout/stderr as <code>STREAM_CHUNK</code> messages</li>
+        <li><strong>Module RPC:</strong> Proxies <code>module/*</code> methods to ModuleManager</li>
+        <li><strong>Audit logging:</strong> Every action goes to AuditLogger</li>
+      </ul>
+
+      <h3>AgentSpawner (src/agents/spawner.ts)</h3>
+      <p>Manages child processes for CLI agents. Features:</p>
+      <ul>
+        <li><code>filterEnv</code>: Strips all host secrets, passes only <code>COCAPN_*</code> + safe system vars</li>
+        <li>Process lifecycle: spawn, stream, stop, stopAll</li>
+        <li>Per-agent env injection (secrets, soul, project vars)</li>
+      </ul>
+
+      <h3>GitSync (src/git/sync.ts)</h3>
+      <p>Auto-commit/push/pull loop using <code>simple-git</code>. Events emitted for the bridge to log.</p>
+
+      <h3>SecretManager (src/secret-manager.ts)</h3>
+      <p>age encryption wrapper. Uses the <code>age-encryption</code> npm package (WASM-based). Identity stored in:</p>
+      <ul>
+        <li>OS keychain via <code>keytar</code> (preferred)</li>
+        <li><code>~/.config/cocapn/identity.age</code> mode 0600 (fallback)</li>
+      </ul>
+
+      <h3>ModuleManager (src/modules/manager.ts)</h3>
+      <p>Git-submodule-based extension system. Supports four module types with type-specific install logic and sandbox enforcement.</p>
+
+      <h3>FleetKeyManager (src/security/fleet.ts)</h3>
+      <p>Manages the fleet JWT signing key stored in <code>secrets/fleet-key.age</code>. Enables multi-device and multi-bridge authentication without GitHub PAT sharing.</p>
+    </section>
+
+    <section>
+      <h2>Memory Architecture (Brain)</h2>
+      <p>The Brain is Cocapn's memory system, Git-backed for persistence and versioning:</p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Component</th>
+            <th>Description</th>
+            <th>Storage</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Facts</strong></td>
+            <td>Structured data about your world (people, projects, preferences)</td>
+            <td><code>brain/facts.json</code></td>
+          </tr>
+          <tr>
+            <td><strong>Wiki</strong></td>
+            <td>Markdown pages for long-form knowledge</td>
+            <td><code>brain/wiki/*.md</code></td>
+          </tr>
+          <tr>
+            <td><strong>Soul</strong></td>
+            <td>Agent personality and system prompt</td>
+            <td><code>cocapn/soul.md</code></td>
+          </tr>
+          <tr>
+            <td><strong>Tasks</strong></td>
+            <td>TODO items with metadata and tags</td>
+            <td><code>brain/tasks.json</code></td>
+          </tr>
+          <tr>
+            <td><strong>Procedures</strong></td>
+            <td>Reusable workflows and recipes</td>
+            <td><code>brain/procedures/*.md</code></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="callout">
+        <strong>Privacy by Design:</strong> Facts marked with <code>private.*</code> prefix never leave the private repo.
+        Env filtering strips secrets from agent contexts.
+      </div>
+    </section>
+
+    <section>
+      <h2>Multi-Device Fleet</h2>
+      <p>Multiple bridge instances (e.g. desktop + laptop + cloud) form a fleet:</p>
+
+      <ol>
+        <li>One device runs <code>cocapn-bridge secret init</code> → generates fleet key → stores in <code>secrets/fleet-key.age</code></li>
+        <li>Other devices pull the repo → load the fleet key via <code>FleetKeyManager.load(decryptFn)</code></li>
+        <li>Bridges authenticate each other with fleet JWTs (HMAC-SHA256, 1 hour TTL)</li>
+        <li>A2A messages route between bridges via <code>AgentRouter</code></li>
+      </ol>
+
+      <p>See <a href="fleet.html">Fleet Protocol</a> for details.</p>
+    </section>
+
+    <section>
+      <h2>Cloud Tier (Optional)</h2>
+      <p>When <code>cocapn/cocapn-cloud.yml</code> is present, the bridge loads <code>CloudAdapterRegistry</code> which proxies agent requests to Cloudflare Workers. The Admiral Durable Object provides:</p>
+
+      <ul>
+        <li>Heartbeat tracking (which bridges are online)</li>
+        <li>Git commit notifications (cloud agents pull latest repo state)</li>
+        <li>24/7 background task execution via Alarms API</li>
+      </ul>
+
+      <div class="callout">
+        <strong>Hybrid Architecture:</strong> Local bridge does most work. Cloud is optional for 24/7 availability and fleet coordination.
+      </div>
+    </section>
+
+    <section>
+      <h2>Design Principles</h2>
+
+      <h3>1. Git is the Database</h3>
+      <p>All agent memory lives in Git repos. Two repos per user: private (brain) + public (published content). This provides:</p>
+      <ul>
+        <li>Version control and history</li>
+        <li>Offline-first operation</li>
+        <li>Easy backup and sync</li>
+        <li>Collaboration-friendly workflows</li>
+      </ul>
+
+      <h3>2. Offline-First</h3>
+      <p>The bridge runs locally; cloud is optional enhancement. Your AI agent works even without internet access.</p>
+
+      <h3>3. Privacy by Design</h3>
+      <p><code>private.*</code> facts never leave the private repo. Env filtering strips secrets from agent contexts.</p>
+
+      <h3>4. ESM Only</h3>
+      <p>All packages use <code>"type": "module"</code> in package.json for modern JavaScript.</p>
+
+      <h3>5. TypeScript Strict</h3>
+      <p>All packages use <code>"strict": true</code> in tsconfig for type safety.</p>
+    </section>
+
+    <section>
+      <h2>Further Reading</h2>
+      <ul>
+        <li><a href="fleet.html">Fleet Protocol</a> — Multi-agent coordination</li>
+        <li><a href="plugins.html">Plugin System</a> — Extending Cocapn</li>
+        <li><a href="api-reference.html">API Reference</a> — WebSocket and REST APIs</li>
+        <li><a href="https://github.com/CedarBeach2019/cocapn/blob/main/docs/architecture.md">Full Architecture Docs</a></li>
+      </ul>
+    </section>
+  </main>
+
+  <footer>
+    <p>&copy; 2026 Superinstance. Cocapn — The npm of AI Agents.</p>
+    <p style="margin-top: 0.5rem;">
+      <a href="https://github.com/CedarBeach2019/cocapn">GitHub</a> ·
+      <a href="contributing.html">Contributing</a> ·
+      <a href="https://github.com/CedarBeach2019/cocapn/issues">Issues</a>
+    </p>
+  </footer>
+</body>
+</html>

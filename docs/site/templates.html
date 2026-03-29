@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Template Guide — Cocapn Documentation</title>
+  <meta name="description" content="Learn about Cocapn templates: built-in templates, customization, and publishing.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <nav>
+      <a href="index.html" class="logo">cocapn<span>.ai</span></a>
+      <ul class="nav-links">
+        <li><a href="getting-started.html">Getting Started</a></li>
+        <li><a href="architecture.html">Architecture</a></li>
+        <li><a href="plugins.html">Plugins</a></li>
+        <li><a href="templates.html">Templates</a></li>
+        <li><a href="api-reference.html">API</a></li>
+        <li><a href="fleet.html">Fleet</a></li>
+        <li><a href="contributing.html">Contributing</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main>
+    <div class="breadcrumb">
+      <a href="index.html">Home</a> → Templates
+    </div>
+
+    <section class="hero">
+      <h1>Template Guide</h1>
+      <p class="subtitle">Themed AI deployments for every use case</p>
+    </section>
+
+    <section>
+      <h2>What are Templates?</h2>
+      <p>Cocapn templates are curated starting points for AI deployments. Each template includes:</p>
+      <ul>
+        <li><strong>Personality</strong> — A unique <code>soul.md</code> that defines the agent's character</li>
+        <li><strong>Configuration</strong> — Pre-configured <code>cocapn.yml</code> with agents and modules</li>
+        <li><strong>Memory Structure</strong> — Initial facts, wiki pages, and tasks</li>
+        <li><strong>Skills</strong> — Domain-specific capabilities pre-installed</li>
+        <li><strong>UI Theme</strong> — Custom styling and layout</li>
+      </ul>
+
+      <div class="callout">
+        <strong>All features are installable on any domain.</strong> Templates are just curated starting points.
+        You can mix and match features across templates.
+      </div>
+    </section>
+
+    <section>
+      <h2>Built-in Templates</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Template</th>
+            <th>Domain</th>
+            <th>Focus</th>
+            <th>Features</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>personallog</strong></td>
+            <td>personallog.ai</td>
+            <td>Generic personal assistant</td>
+            <td>Simplest starting point, general-purpose</td>
+          </tr>
+          <tr>
+            <td><strong>businesslog</strong></td>
+            <td>businesslog.ai</td>
+            <td>Professional/enterprise</td>
+            <td>Docker defaults, enterprise add-ons</td>
+          </tr>
+          <tr>
+            <td><strong>makerlog</strong></td>
+            <td>makerlog.ai</td>
+            <td>Developers & manufacturers</td>
+            <td>Dev templates, GitHub integration, coding tools</td>
+          </tr>
+          <tr>
+            <td><strong>studylog</strong></td>
+            <td>studylog.ai</td>
+            <td>Education & research</td>
+            <td>Education templates, research tools, citation management</td>
+          </tr>
+          <tr>
+            <td><strong>dmlog</strong></td>
+            <td>DMlog.ai</td>
+            <td>TTRPG campaigns</td>
+            <td>Game console UI, character sheets, campaign management</td>
+          </tr>
+          <tr>
+            <td><strong>activelog</strong></td>
+            <td>activelog.ai</td>
+            <td>Health & fitness</td>
+            <td>Fitness tracking, workout plans, health metrics</td>
+          </tr>
+          <tr>
+            <td><strong>activeledger</strong></td>
+            <td>activeledger.ai</td>
+            <td>Finance & crypto</td>
+            <td>Finance tools, portfolio tracking, crypto analysis</td>
+          </tr>
+          <tr>
+            <td><strong>fishinglog</strong></td>
+            <td>fishinglog.ai</td>
+            <td>Commercial & recreational fishing</td>
+            <td>Commercial vs recreational fork, catch tracking</td>
+          </tr>
+          <tr>
+            <td><strong>playerlog</strong></td>
+            <td>playerlog.ai</td>
+            <td>Video gamers</td>
+            <td>Gaming focus, achievement tracking, game stats</td>
+          </tr>
+          <tr>
+            <td><strong>reallog</strong></td>
+            <td>reallog.ai</td>
+            <td>Journalists & documentarians</td>
+            <td>Media tools, interview notes, fact-checking</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>Template Anatomy</h2>
+      <h3>Directory Structure</h3>
+      <pre><code>templates/my-template/
+├── public/                 # Public template assets (Vite app)
+│   ├── index.html
+│   ├── main.tsx
+│   └── style.css
+├── private/                # Private template assets
+│   ├── soul.md             # Agent personality
+│   ├── config.yml          # Cocapn configuration
+│   ├── facts.json          # Initial facts
+│   ├── wiki/               # Initial wiki pages
+│   │   └── welcome.md
+│   └── procedures/         # Initial procedures
+│       └── onboarding.md
+├── modules/                # Bundled modules
+│   └── custom-module/
+└── README.md               # Template documentation</code></pre>
+
+      <h3>soul.md — Agent Personality</h3>
+      <p>The <code>soul.md</code> file defines the agent's personality, system prompt, and behavior:</p>
+      <pre><code># You are a Dungeon Master AI
+
+You are an expert TTRPG dungeon master with decades of experience running
+engaging campaigns across multiple systems (D&D 5e, Pathfinder, Call of Cthulhu).
+
+## Your Expertise
+
+- World-building and narrative design
+- Rule systems and mechanics
+- Improvisation and player engagement
+- Character development and storytelling
+
+## Your Style
+
+- Descriptive and immersive
+- Fair and consistent
+- Player-focused (not adversarial)
+- Flexible (adapt to player choices)
+
+## Boundaries
+
+- Never make decisions for players
+- Always explain rules when asked
+- Keep the game fun and engaging
+- Respect the table's tone preferences</code></pre>
+
+      <h3>config.yml — Cocapn Configuration</h3>
+      <pre><code># Template: DMlog
+domain: dmlog.ai
+title: "DMlog AI — Your Dungeon Master Assistant"
+description: "AI-powered TTRPG campaign management"
+
+agents:
+  default:
+    model: claude-sonnet-4
+    temperature: 0.8
+    maxTokens: 4096
+    systemPromptFile: soul.md
+
+modules:
+  - name: character-sheet
+    type: brain
+  - name: dice-roller
+    type: tool
+  - name: campaign-manager
+    type: brain
+
+skills:
+  - name: create-npc
+    entry: skills/create-npc.ts
+    type: hot
+    triggers: ["npc", "character", "create character"]
+    description: "Create detailed NPCs for your campaign"</code></pre>
+    </section>
+
+    <section>
+      <h2>Using Templates</h2>
+      <h3>Create from Template</h3>
+      <pre><code># Use a built-in template
+npx create-cocapn my-campaign --template dmlog
+
+# Use a custom template
+npx create-cocapn my-instance --template /path/to/template</code></pre>
+
+      <h3>Apply Template to Existing Instance</h3>
+      <pre><code>cocapn template apply dmlog</code></pre>
+
+      <h3>List Available Templates</h3>
+      <pre><code>cocapn template list
+# → personallog    — Generic personal assistant
+# → makerlog       — Developers & manufacturers
+# → dmlog          — TTRPG campaigns
+# → studylog       — Education & research</code></pre>
+    </section>
+
+    <section>
+      <h2>Creating Custom Templates</h2>
+      <h3>Step 1: Initialize Template</h3>
+      <pre><code>mkdir my-template
+cd my-template
+cocapn template init</code></pre>
+
+      <h3>Step 2: Configure Personality</h3>
+      <p>Edit <code>private/soul.md</code> to define your agent's personality:</p>
+      <pre><code># You are a specialized AI assistant
+
+Your purpose is to [describe purpose].
+
+## Your Expertise
+
+- [List key areas]
+- [List key areas]
+
+## Your Style
+
+- [Describe tone and approach]
+- [Describe interaction style]</code></pre>
+
+      <h3>Step 3: Configure Skills</h3>
+      <p>Add skills to <code>private/config.yml</code>:</p>
+      <pre><code>skills:
+  - name: my-custom-skill
+    entry: skills/my-custom-skill.ts
+    type: hot
+    triggers: ["trigger", "keyword"]
+    description: "What this skill does"</code></pre>
+
+      <h3>Step 4: Add Initial Memory</h3>
+      <p>Create initial facts and wiki pages:</p>
+      <pre><code># private/facts.json
+{
+  "user.name": "Your Name",
+  "user.goal": "Template goal",
+  "template.version": "1.0.0"
+}</code></pre>
+
+      <h3>Step 5: Test Template</h3>
+      <pre><code>cocapn template validate
+cocapn template test</code></pre>
+
+      <h3>Step 6: Publish Template</h3>
+      <pre><code>cocapn template publish
+# → Validates template structure
+# → Bundles template assets
+# → Publishes to registry
+# → Template URL: https://templates.cocapn.ai/my-template</code></pre>
+    </section>
+
+    <section>
+      <h2>Template Customization</h2>
+      <h3>Override Personality</h3>
+      <p>After creating from a template, you can customize the personality:</p>
+      <pre><code># Edit soul.md
+vim ~/my-instance/cocapn/soul.md
+
+# Restart bridge to apply changes
+cocapn restart</code></pre>
+
+      <h3>Add Modules</h3>
+      <pre><code>cocapn module add habit-tracker
+cocapn module add perplexity-search</code></pre>
+
+      <h3>Configure Domain</h3>
+      <p>Edit <code>cocapn.yml</code> to use a custom domain:</p>
+      <pre><code>domain: my-custom-domain.ai
+customDomain: true</code></pre>
+    </section>
+
+    <section>
+      <h2>Template Publishing</h2>
+      <h3>Template Registry</h3>
+      <p>Publish templates to the Cocapn template registry for others to discover:</p>
+
+      <pre><code>cocapn template publish --public
+# → Validates template
+# → Runs tests
+# → Publishes to registry
+# → https://templates.cocapn.ai/username/my-template</code></pre>
+
+      <h3>Template Metadata</h3>
+      <p>Create a <code>template.json</code> file in your template:</p>
+      <pre><code>{
+  "name": "my-template",
+  "version": "1.0.0",
+  "description": "A specialized AI template for...",
+  "author": "Your Name &lt;you@example.com&gt;",
+  "license": "MIT",
+  "repository": "https://github.com/you/my-template",
+  "keywords": ["ai", "assistant", "specialized"],
+  "category": "productivity",
+  "icon": "assets/icon.png"
+}</code></pre>
+
+      <h3>Template Categories</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Category</th>
+            <th>Description</th>
+            <th>Example</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>productivity</code></td>
+            <td>Task management and productivity</td>
+            <td>Personal assistant</td>
+          </tr>
+          <tr>
+            <td><code>development</code></td>
+            <td>Software development tools</td>
+            <td>Code assistant</td>
+          </tr>
+          <tr>
+            <td><code>education</code></td>
+            <td>Learning and research</td>
+            <td>Study buddy</td>
+          </tr>
+          <tr>
+            <td><code>entertainment</code></td>
+            <td>Games and entertainment</td>
+            <td>Dungeon master</td>
+          </tr>
+          <tr>
+            <td><code>health</code></td>
+            <td>Health and fitness</td>
+            <td>Fitness coach</td>
+          </tr>
+          <tr>
+            <td><code>finance</code></td>
+            <td>Finance and crypto</td>
+            <td>Portfolio tracker</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>Template Best Practices</h2>
+
+      <h3>1. Start Simple</h3>
+      <p>Begin with the <code>personallog</code> template and customize incrementally.</p>
+
+      <h3>2. Document Everything</h3>
+      <p>Include a comprehensive <code>README.md</code> explaining your template's purpose and usage.</p>
+
+      <h3>3. Test Thoroughly</h3>
+      <p>Use <code>cocapn template test</code> to validate your template before publishing.</p>
+
+      <h3>4. Version Control</h3>
+      <p>Track template versions in <code>template.json</code> and follow semantic versioning.</p>
+
+      <h3>5. Respect User Privacy</h3>
+      <p>Never include sensitive data or secrets in public templates.</p>
+    </section>
+
+    <section>
+      <h2>Further Reading</h2>
+      <ul>
+        <li><a href="plugins.html">Plugin Development</a></li>
+        <li><a href="getting-started.html">Getting Started Guide</a></li>
+        <li><a href="architecture.html">Architecture Overview</a></li>
+        <li><a href="https://github.com/CedarBeach2019/cocapn/blob/main/docs/designs/template-migration.md">Template Migration Design</a></li>
+      </ul>
+    </section>
+  </main>
+
+  <footer>
+    <p>&copy; 2026 Superinstance. Cocapn — The npm of AI Agents.</p>
+    <p style="margin-top: 0.5rem;">
+      <a href="https://github.com/CedarBeach2019/cocapn">GitHub</a> ·
+      <a href="contributing.html">Contributing</a> ·
+      <a href="https://github.com/CedarBeach2019/cocapn/issues">Issues</a>
+    </p>
+  </footer>
+</body>
+</html>

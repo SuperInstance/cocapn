@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fleet Protocol — Cocapn Documentation</title>
+  <meta name="description" content="Learn about Cocapn fleet protocol for multi-agent coordination across devices and domains.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <nav>
+      <a href="index.html" class="logo">cocapn<span>.ai</span></a>
+      <ul class="nav-links">
+        <li><a href="getting-started.html">Getting Started</a></li>
+        <li><a href="architecture.html">Architecture</a></li>
+        <li><a href="plugins.html">Plugins</a></li>
+        <li><a href="templates.html">Templates</a></li>
+        <li><a href="api-reference.html">API</a></li>
+        <li><a href="fleet.html">Fleet</a></li>
+        <li><a href="contributing.html">Contributing</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main>
+    <div class="breadcrumb">
+      <a href="index.html">Home</a> → Fleet Protocol
+    </div>
+
+    <section class="hero">
+      <h1>Fleet Protocol</h1>
+      <p class="subtitle">Multi-agent coordination across devices and domains</p>
+    </section>
+
+    <section>
+      <h2>What is a Fleet?</h2>
+      <p>A <strong>fleet</strong> is a group of Cocapn bridge instances that trust each other. Fleet members can:</p>
+
+      <ul>
+        <li><strong>Route A2A messages</strong> — Send messages between domains</li>
+        <li><strong>Share fleet keys</strong> — No GitHub PAT sharing needed</li>
+        <li><strong>Sync via Git</strong> — Stay in sync via shared private repo or cross-repo Git refs</li>
+      </ul>
+
+      <div class="callout">
+        <strong>Use Cases:</strong> Personal multi-device (desktop + laptop + cloud), multi-domain (makerlog ↔ studylog),
+        team collaboration (multiple people's bridges working together).
+      </div>
+    </section>
+
+    <section>
+      <h2>Fleet Topologies</h2>
+
+      <h3>Personal Multi-Device</h3>
+      <p>Same private repo, multiple machines:</p>
+      <div class="ascii-diagram">
+┌─────────────┐         ┌─────────────┐         ┌─────────────┐
+│   Desktop   │         │   Laptop    │         │   Cloud VM  │
+│             │         │             │         │             │
+│  cocapn     │         │  cocapn     │         │  cocapn     │
+│  bridge     │◄────────┤  bridge     │◄────────┤  bridge     │
+│             │  A2A    │             │  A2A    │             │
+└──────┬──────┘         └──────┬──────┘         └──────┬──────┘
+       │                       │                       │
+       └───────────────────────┴───────────────────────┘
+                               │
+                    ┌──────────▼──────────┐
+                    │  Shared Private     │
+                    │  Git Repo           │
+                    │  (fleet-key.age)    │
+                    └─────────────────────┘
+      </div>
+
+      <h3>Multi-Domain</h3>
+      <p>Different repos, cross-domain queries:</p>
+      <div class="ascii-diagram">
+┌─────────────────────┐         ┌─────────────────────┐
+│   makerlog.ai       │         │   studylog.ai       │
+│                     │         │                     │
+│  cocapn             │         │  cocapn             │
+│  bridge             │◄────────┤  bridge             │
+│                     │  A2A    │                     │
+└──────┬──────────────┘         └──────┬──────────────┘
+       │                              │
+┌──────▼──────────┐          ┌───────▼──────────┐
+│ maker-brain     │          │ study-brain      │
+│ (private repo)  │          │ (private repo)   │
+└─────────────────┘          └──────────────────┘
+
+         │                              │
+         └──────────┬───────────────────┘
+                    │
+         ┌──────────▼──────────┐
+         │  DNS Verification   │
+         │  _cocapn.* CNAME    │
+         └─────────────────────┘
+      </div>
+
+      <h3>Team Fleet</h3>
+      <p>Multiple people's bridges collaborating on shared tasks:</p>
+      <div class="ascii-diagram">
+┌─────────────┐         ┌─────────────┐         ┌─────────────┐
+│  Alice's    │         │  Bob's      │         │  Carol's    │
+│  Bridge     │◄────────┤  Bridge     │◄────────┤  Bridge     │
+│             │  A2A    │             │  A2A    │             │
+└──────┬──────┘         └──────┬──────┘         └──────┬──────┘
+       │                       │                       │
+       └───────────────────────┴───────────────────────┘
+                               │
+                    ┌──────────▼──────────┐
+                    │  Team Shared Repo   │
+                    │  (tasks, wiki)      │
+                    └─────────────────────┘
+      </div>
+    </section>
+
+    <section>
+      <h2>Fleet Authentication</h2>
+
+      <h3>Fleet Keys</h3>
+      <p>Fleet members authenticate with short-lived JWTs signed by a shared fleet key:</p>
+
+      <pre><code>Header: { "alg": "HS256", "typ": "JWT" }
+Payload: {
+  "sub": "bridge-&lt;instance-id&gt;",
+  "iss": "cocapn",
+  "iat": &lt;unix-seconds&gt;,
+  "exp": &lt;iat + 3600&gt;,
+  "dom": "makerlog.ai"   // optional: domain claim
+}
+Signature: HMAC-SHA256(header + payload, fleet-key)</code></pre>
+
+      <p>Tokens are valid for 1 hour. The bridge auto-refreshes them before expiry.</p>
+
+      <h3>Fleet Key Storage</h3>
+      <p>The fleet key is stored in <code>secrets/fleet-key.age</code> (age-encrypted):</p>
+
+      <ul>
+        <li>Generated on first bridge init</li>
+        <li>Synced via Git to all fleet members</li>
+        <li>Decrypted with the bridge's identity key</li>
+        <li>Never transmitted over the network</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Setting Up a Fleet</h2>
+
+      <h3>Personal Fleet (Same Repo)</h3>
+
+      <h4>Machine 1 (Primary)</h4>
+      <pre><code># Initialize the bridge — this generates the fleet key
+cocapn-bridge --repo ~/brain
+
+# The fleet key is generated on first run
+ls ~/brain/secrets/fleet-key.age</code></pre>
+
+      <h4>Machine 2 (Secondary)</h4>
+      <pre><code># Pull the private repo (fleet-key.age is already in it)
+git clone git@github.com:you/your-brain.git ~/brain
+
+# Restore your age identity key
+# Option A: copy ~/.config/cocapn/identity.age from Machine 1
+# Option B: export from OS keychain
+
+# Start the bridge — it loads the fleet key automatically
+cocapn-bridge --repo ~/brain</code></pre>
+
+      <p>Both bridges now accept fleet JWTs signed by the shared key.</p>
+
+      <h3>Cross-Domain Fleet (Different Repos)</h3>
+
+      <h4>Step 1: Generate Fleet Keys</h4>
+      <pre><code># On bridge A (makerlog.ai)
+cocapn-bridge secret init
+
+# On bridge B (studylog.ai)
+cocapn-bridge secret init</code></pre>
+
+      <h4>Step 2: Exchange Public Keys</h4>
+      <pre><code># On bridge A
+cocapn-bridge fleet show-public-key
+# → fleet-pubkey-makerlog.ai
+
+# On bridge B
+cocapn-bridge fleet add-trusted-key makerlog.ai &lt;public-key&gt;</code></pre>
+
+      <h4>Step 3: DNS Verification</h4>
+      <pre><code># Add DNS record on studylog.ai
+_cocapn.studylog.ai CNAME fleet.cocapn.io</code></pre>
+
+      <h4>Step 4: Configure Trusted Domains</h4>
+      <pre><code># cocapn/config.yml — fleet section
+fleet:
+  acceptedSuffixes:
+    - fleet.cocapn.io
+    - fleet.yourdomain.com
+  trustedDomains:
+    - studylog.ai
+    - activelog.ai</code></pre>
+    </section>
+
+    <section>
+      <h2>A2A Messaging</h2>
+
+      <h3>Message Format</h3>
+      <p>Agent-to-Agent (A2A) messages use JSON over HTTP POST:</p>
+
+      <pre><code>{
+  "type": "A2A",
+  "targetDomain": "studylog.ai",
+  "agentId": "default",
+  "content": "What were my study goals for this week?",
+  "replyTo": "makerlog.ai",
+  "messageId": "msg-123",
+  "timestamp": "2026-03-29T12:00:00Z"
+}</code></pre>
+
+      <h3>Routing Flow</h3>
+
+      <ol>
+        <li>Local bridge receives A2A request</li>
+        <li>Verifies <code>targetDomain</code> is in <code>trustedDomains</code></li>
+        <li>Checks DNS CNAME for <code>_cocapn.&lt;domain&gt;</code></li>
+        <li>Signs request with fleet JWT</li>
+        <li>POSTs to remote bridge's A2A endpoint</li>
+        <li>Streams response back to requester</li>
+      </ol>
+
+      <h3>Example Request</h3>
+      <pre><code># From makerlog.ai bridge
+curl -X POST https://studylog.ai/api/a2a \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer &lt;fleet-jwt&gt;" \
+  -d '{
+    "type": "A2A",
+    "targetDomain": "studylog.ai",
+    "agentId": "default",
+    "content": "What were my study goals for this week?",
+    "replyTo": "makerlog.ai"
+  }'</code></pre>
+
+      <h3>Response</h3>
+      <pre><code>{
+  "type": "A2A_RESPONSE",
+  "content": "Your study goals for this week:...",
+  "agentId": "default",
+  "domain": "studylog.ai",
+  "messageId": "msg-123",
+  "timestamp": "2026-03-29T12:00:01Z"
+}</code></pre>
+    </section>
+
+    <section>
+      <h2>Fleet Configuration</h2>
+
+      <h3>config.yml Fleet Section</h3>
+      <pre><code># cocapn/config.yml
+fleet:
+  # Accepted CNAME suffixes for DNS verification
+  acceptedSuffixes:
+    - fleet.cocapn.io
+    - fleet.yourdomain.com
+
+  # Trusted domains (can send A2A messages)
+  trustedDomains:
+    - studylog.ai
+    - activelog.ai
+    - makerlog.ai
+
+  # Fleet message timeout (seconds)
+  messageTimeout: 30
+
+  # Enable fleet logging
+  logMessages: true</code></pre>
+
+      <h3>Environment Variables</h3>
+      <pre><code># Fleet key path (default: secrets/fleet-key.age)
+COCAPN_FLEET_KEY_PATH=/custom/path/fleet-key.age
+
+# Fleet JWT TTL (default: 3600 seconds)
+COCAPN_FLEET_JWT_TTL=7200</code></pre>
+    </section>
+
+    <section>
+      <h2>Cloudflare Admiral (Optional)</h2>
+
+      <p>When <code>cocapn/cocapn-cloud.yml</code> is present with an <code>admiralUrl</code>, all bridges in the fleet register their heartbeats with the Admiral Durable Object.</p>
+
+      <h3>Admiral Features</h3>
+
+      <ul>
+        <li><strong>Heartbeat tracking</strong> — See which bridges are online</li>
+        <li><strong>Automatic routing</strong> — Route to nearest available bridge</li>
+        <li><strong>Session continuity</strong> — Resume conversations on different machines</li>
+        <li><strong>Task queue</strong> — Distributed task execution</li>
+      </ul>
+
+      <h3>Configuration</h3>
+      <pre><code># cocapn/cocapn-cloud.yml
+cloudflare:
+  admiralUrl: https://admiral.yourdomain.workers.dev
+  apiToken: "secret:CLOUDFLARE_API_TOKEN"
+
+  # Heartbeat interval (seconds)
+  heartbeatInterval: 30
+
+  # Enable automatic routing
+  autoRouting: true</code></pre>
+
+      <h3>Fleet Status Endpoint</h3>
+      <pre><code>GET /fleet/status</code></pre>
+
+      <h4>Response</h4>
+      <pre><code>{
+  "bridges": [
+    {
+      "instanceId": "bridge-123",
+      "domain": "makerlog.ai",
+      "status": "online",
+      "lastSeen": "2026-03-29T12:00:00Z"
+    },
+    {
+      "instanceId": "bridge-456",
+      "domain": "studylog.ai",
+      "status": "online",
+      "lastSeen": "2026-03-29T12:00:01Z"
+    }
+  ],
+  "total": 2
+}</code></pre>
+    </section>
+
+    <section>
+      <h2>Testing Fleet Locally</h2>
+
+      <h3>Test Fleet Script</h3>
+      <pre><code># Spin up two bridges on different ports
+scripts/test-fleet.sh</code></pre>
+
+      <p>This starts:</p>
+      <ul>
+        <li>Bridge A on port 8787 (makerlog domain)</li>
+        <li>Bridge B on port 8788 (studylog domain)</li>
+        <li>Prints test A2A curl commands</li>
+      </ul>
+
+      <h3>Manual A2A Test</h3>
+      <pre><code># Send message from bridge A to bridge B
+curl -X POST http://localhost:8788/api/a2a \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer &lt;fleet-jwt&gt;" \
+  -d '{
+    "type": "A2A",
+    "targetDomain": "studylog.ai",
+    "agentId": "default",
+    "content": "Hello from makerlog!"
+  }'</code></pre>
+    </section>
+
+    <section>
+      <h2>Security Considerations</h2>
+
+      <div class="callout warning">
+        <h4>Fleet Key Security</h4>
+        <ul>
+          <li>Never commit fleet keys to public repos</li>
+          <li>Use age encryption (default) for fleet key storage</li>
+          <li>Rotate fleet keys periodically</li>
+          <li>Revoke compromised keys immediately</li>
+        </ul>
+      </div>
+
+      <div class="callout warning">
+        <h4>DNS Verification</h4>
+        <ul>
+          <li>Always verify DNS CNAME before routing</li>
+          <li>Use <code>acceptedSuffixes</code> to limit allowed CNAMEs</li>
+          <li>Monitor for unauthorized DNS changes</li>
+        </ul>
+      </div>
+
+      <div class="callout warning">
+        <h4>Message Validation</h4>
+        <ul>
+          <li>Verify JWT signature on every A2A message</li>
+          <li>Check message timestamp (prevent replay attacks)</li>
+          <li>Validate <code>targetDomain</code> is in <code>trustedDomains</code></li>
+        </ul>
+      </div>
+    </section>
+
+    <section>
+      <h2>Further Reading</h2>
+      <ul>
+        <li><a href="https://github.com/CedarBeach2019/cocapn/blob/main/docs/fleet.md">Full Fleet Documentation</a></li>
+        <li><a href="https://github.com/CedarBeach2019/cocapn/blob/main/docs/designs/fleet-protocol.md">Fleet Protocol Design</a></li>
+        <li><a href="architecture.html">Architecture Overview</a></li>
+        <li><a href="api-reference.html">API Reference</a></li>
+      </ul>
+    </section>
+  </main>
+
+  <footer>
+    <p>&copy; 2026 Superinstance. Cocapn — The npm of AI Agents.</p>
+    <p style="margin-top: 0.5rem;">
+      <a href="https://github.com/CedarBeach2019/cocapn">GitHub</a> ·
+      <a href="contributing.html">Contributing</a> ·
+      <a href="https://github.com/CedarBeach2019/cocapn/issues">Issues</a>
+    </p>
+  </footer>
+</body>
+</html>

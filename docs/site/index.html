@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cocapn — The npm of AI Agents</title>
+  <meta name="description" content="An open-source agent runtime by Superinstance. Deploy themed AI instances in 60 seconds.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <nav>
+      <a href="index.html" class="logo">cocapn<span>.ai</span></a>
+      <ul class="nav-links">
+        <li><a href="getting-started.html">Getting Started</a></li>
+        <li><a href="architecture.html">Architecture</a></li>
+        <li><a href="plugins.html">Plugins</a></li>
+        <li><a href="templates.html">Templates</a></li>
+        <li><a href="api-reference.html">API</a></li>
+        <li><a href="fleet.html">Fleet</a></li>
+        <li><a href="contributing.html">Contributing</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <h1><span class="highlight">Cocapn</span> — The npm of AI Agents</h1>
+      <p class="subtitle">An open-source agent runtime by Superinstance. Deploy themed AI instances in 60 seconds.</p>
+      <div>
+        <a href="getting-started.html" class="btn">Get Started</a>
+        <a href="https://github.com/CedarBeach2019/cocapn" class="btn btn-secondary">View on GitHub</a>
+      </div>
+    </section>
+
+    <section class="quick-start">
+      <h3>Quick Start</h3>
+      <code>npx create-cocapn my-instance && cd my-instance && cocapn deploy</code>
+      <p style="margin-top: 1rem; color: var(--text-secondary);">
+        Your AI instance live on Cloudflare Workers in under a minute.
+      </p>
+    </section>
+
+    <section>
+      <h2>Features</h2>
+      <div class="features">
+        <div class="feature-card">
+          <h3>🔧 Self-Assembly</h3>
+          <p>Agents automatically install skills, tools, and cloud modules based on your project context. Zero configuration required.</p>
+        </div>
+        <div class="feature-card">
+          <h3>🔍 Hybrid Search</h3>
+          <p>Combines semantic vector search with keyword matching. Find anything in your codebase, notes, or documents instantly.</p>
+        </div>
+        <div class="feature-card">
+          <h3>🌳 Tree Search</h3>
+          <p>Explore your knowledge graph with tree-based search. Follow connections between facts, wiki pages, and tasks.</p>
+        </div>
+        <div class="feature-card">
+          <h3>🔌 Plugin System</h3>
+          <p>Extend agents with npm-style plugins. GitHub integration, Slack notifications, data analysis — installable in seconds.</p>
+        </div>
+        <div class="feature-card">
+          <h3>🚀 Fleet Protocol</h3>
+          <p>Multi-agent coordination across devices and domains. Your desktop, laptop, and cloud working as one team.</p>
+        </div>
+        <div class="feature-card">
+          <h3>🎨 Template Marketplace</h3>
+          <p>Themed deployments for every use case: personallog.ai, makerlog.ai, studylog.ai, DMlog.ai, and more.</p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Why Cocapn?</h2>
+      <p style="font-size: 1.1rem; color: var(--text-secondary);">
+        Cocapn is <strong>repo-first</strong> and <strong>offline-first</strong>. Your AI agent's memory lives in Git —
+        private repo for secrets, public repo for published content. The bridge runs locally on your machine.
+        Cloudflare Workers is optional, available for 24/7 background tasks and fleet coordination.
+      </p>
+      <p style="font-size: 1.1rem; color: var(--text-secondary);">
+        Unlike closed-source AI assistants, Cocapn gives you <strong>full control</strong> over your data,
+        <strong>extensibility</strong> through plugins, and <strong>freedom</strong> to deploy anywhere.
+      </p>
+    </section>
+
+    <section>
+      <h2>Themed Deployments</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Domain</th>
+            <th>Focus</th>
+            <th>Template</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>personallog.ai</strong></td>
+            <td>Generic personal assistant</td>
+            <td>Simplest starting point</td>
+          </tr>
+          <tr>
+            <td><strong>businesslog.ai</strong></td>
+            <td>Professional/enterprise</td>
+            <td>Docker defaults, enterprise add-ons</td>
+          </tr>
+          <tr>
+            <td><strong>makerlog.ai</strong></td>
+            <td>Developers & manufacturers</td>
+            <td>Dev templates</td>
+          </tr>
+          <tr>
+            <td><strong>studylog.ai</strong></td>
+            <td>Education & research</td>
+            <td>Education templates</td>
+          </tr>
+          <tr>
+            <td><strong>DMlog.ai</strong></td>
+            <td>TTRPG campaigns</td>
+            <td>Game console UI</td>
+          </tr>
+          <tr>
+            <td><strong>activelog.ai</strong></td>
+            <td>Health & fitness</td>
+            <td>Fitness tracking</td>
+          </tr>
+          <tr>
+            <td><strong>activeledger.ai</strong></td>
+            <td>Finance & crypto</td>
+            <td>Finance tools</td>
+          </tr>
+          <tr>
+            <td><strong>fishinglog.ai</strong></td>
+            <td>Commercial & recreational fishing</td>
+            <td>Commercial vs recreational fork</td>
+          </tr>
+          <tr>
+            <td><strong>playerlog.ai</strong></td>
+            <td>Video gamers</td>
+            <td>Gaming focus</td>
+          </tr>
+          <tr>
+            <td><strong>reallog.ai</strong></td>
+            <td>Journalists & documentarians</td>
+            <td>Media tools</td>
+          </tr>
+        </tbody>
+      </table>
+      <p style="margin-top: 1rem; color: var(--text-secondary);">
+        All features are installable on any domain. Templates are curated starting points with personality, prompts, and default modules pre-configured.
+      </p>
+    </section>
+
+    <section>
+      <h2>Architecture</h2>
+      <div class="ascii-diagram">
+┌──────────────────────────────────────────────────────────┐
+│  Browser (you.domain.ai — GitHub Pages)                  │
+│  React SPA, domain-skinned, connects via WebSocket       │
+└───────────────────────┬──────────────────────────────────┘
+                        │
+                WebSocket (ws://localhost:8787)
+                or Cloudflare Tunnel (wss://…)
+                        │
+┌───────────────────────▼──────────────────────────────────┐
+│  Local Bridge (cocapn-bridge)                            │
+│  Node.js process on your machine                         │
+│                                                          │
+│  ┌─────────────┐  ┌──────────────┐  ┌────────────────┐  │
+│  │ BridgeServer│  │ AgentSpawner │  │ GitSync        │  │
+│  │ (WebSocket) │  │ (child_proc) │  │ (auto-commit)  │  │
+│  └─────────────┘  └──────────────┘  └────────────────┘  │
+│  ┌─────────────┐  ┌──────────────┐  ┌────────────────┐  │
+│  │ SecretMgr   │  │ ModuleManager│  │ FleetKeyManager│  │
+│  │ (age crypto)│  │ (submodules) │  │ (JWT auth)     │  │
+│  └─────────────┘  └──────────────┘  └────────────────┘  │
+└────────┬──────────────────────┬──────────────────────────┘
+         │                      │
+┌────────▼────────┐   ┌─────────▼──────────────┐
+│ Private Git Repo│   │ Cloudflare Workers       │
+│ (encrypted)     │   │ (optional, 24/7 agents)  │
+│                 │   │                          │
+│ secrets/*.age   │   │ cloud-agents/            │
+│ cocapn/agents/  │   │ Admiral DO               │
+│ wiki/, tasks/   │   │ Vectorize, D1, KV        │
+└─────────────────┘   └──────────────────────────┘
+      </div>
+    </section>
+
+    <section>
+      <h2>Learn More</h2>
+      <div style="display: flex; flex-wrap: wrap; gap: 1rem;">
+        <a href="getting-started.html" class="btn">Getting Started Guide</a>
+        <a href="architecture.html" class="btn">Architecture Overview</a>
+        <a href="plugins.html" class="btn">Plugin Development</a>
+        <a href="templates.html" class="btn">Template Guide</a>
+        <a href="api-reference.html" class="btn">API Reference</a>
+        <a href="fleet.html" class="btn">Fleet Protocol</a>
+        <a href="contributing.html" class="btn">Contributing</a>
+      </div>
+    </section>
+
+    <section>
+      <div class="callout">
+        <strong>Open Source:</strong> Cocapn is AGPL-3.0 licensed. Fork it, customize it, deploy it anywhere.
+        <strong>Author: Superinstance</strong> — Building the npm of AI agents.
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>&copy; 2026 Superinstance. Cocapn — The npm of AI Agents.</p>
+    <p style="margin-top: 0.5rem;">
+      <a href="https://github.com/CedarBeach2019/cocapn">GitHub</a> ·
+      <a href="contributing.html">Contributing</a> ·
+      <a href="https://github.com/CedarBeach2019/cocapn/issues">Issues</a>
+    </p>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>API Reference — Cocapn Documentation</title>
+  <meta name="description" content="Complete API reference for Cocapn: WebSocket methods, REST endpoints, MCP tools, and CLI commands.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <nav>
+      <a href="index.html" class="logo">cocapn<span>.ai</span></a>
+      <ul class="nav-links">
+        <li><a href="getting-started.html">Getting Started</a></li>
+        <li><a href="architecture.html">Architecture</a></li>
+        <li><a href="plugins.html">Plugins</a></li>
+        <li><a href="templates.html">Templates</a></li>
+        <li><a href="api-reference.html">API</a></li>
+        <li><a href="fleet.html">Fleet</a></li>
+        <li><a href="contributing.html">Contributing</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main>
+    <div class="breadcrumb">
+      <a href="index.html">Home</a> → API Reference
+    </div>
+
+    <section class="hero">
+      <h1>API Reference</h1>
+      <p class="subtitle">Complete API documentation for Cocapn</p>
+    </section>
+
+    <section>
+      <h2>WebSocket Protocol</h2>
+      <p>Cocapn uses WebSocket for real-time communication between clients and the bridge. All messages are JSON.</p>
+
+      <h3>Connection</h3>
+      <pre><code>ws://localhost:8787  # Local bridge
+wss://your-instance.workers.dev  # Cloudflare Workers</code></pre>
+
+      <h3>Authentication</h3>
+      <p>Authenticate by sending an <code>AUTH</code> message as the first message:</p>
+      <pre><code>{
+  "type": "AUTH",
+  "token": "github_pat_...",  // GitHub PAT or fleet JWT
+  "version": "1.0.0"
+}</code></pre>
+
+      <h3>Message Types</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Type</th>
+            <th>Direction</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>AUTH</code></td>
+            <td>Client → Server</td>
+            <td>Authenticate with GitHub PAT or fleet JWT</td>
+          </tr>
+          <tr>
+            <td><code>AUTH_SUCCESS</code></td>
+            <td>Server → Client</td>
+            <td>Authentication successful</td>
+          </tr>
+          <tr>
+            <td><code>AUTH_ERROR</code></td>
+            <td>Server → Client</td>
+            <td>Authentication failed</td>
+          </tr>
+          <tr>
+            <td><code>CHAT</code></td>
+            <td>Client → Server</td>
+            <td>Send chat message to agent</td>
+          </tr>
+          <tr>
+            <td><code>STREAM_CHUNK</code></td>
+            <td>Server → Client</td>
+            <td>Stream chunk from agent</td>
+          </tr>
+          <tr>
+            <td><code>STREAM_END</code></td>
+            <td>Server → Client</td>
+            <td>Agent finished streaming</td>
+          </tr>
+          <tr>
+            <td><code>BASH</code></td>
+            <td>Client → Server</td>
+            <td>Execute shell command</td>
+          </tr>
+          <tr>
+            <td><code>BASH_OUTPUT</code></td>
+            <td>Server → Client</td>
+            <td>Shell command output</td>
+          </tr>
+          <tr>
+            <td><code>FILE_EDIT</code></td>
+            <td>Client → Server</td>
+            <td>Edit a file</td>
+          </tr>
+          <tr>
+            <td><code>FILE_EDIT_RESULT</code></td>
+            <td>Server → Client</td>
+            <td>File edit result</td>
+          </tr>
+          <tr>
+            <td><code>RPC</code></td>
+            <td>Client → Server</td>
+            <td>Remote procedure call</td>
+          </tr>
+          <tr>
+            <td><code>RPC_RESULT</code></td>
+            <td>Server → Client</td>
+            <td>RPC result</td>
+          </tr>
+          <tr>
+            <td><code>MODULE_INSTALL</code></td>
+            <td>Client → Server</td>
+            <td>Install a module</td>
+          </tr>
+          <tr>
+            <td><code>MODULE_INSTALL_RESULT</code></td>
+            <td>Server → Client</td>
+            <td>Module install result</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>WebSocket Methods</h2>
+
+      <h3>CHAT</h3>
+      <p>Send a chat message to an agent:</p>
+      <pre><code>{
+  "type": "CHAT",
+  "agentId": "default",
+  "content": "Hello, agent!",
+  "stream": true,
+  "temperature": 0.7,
+  "maxTokens": 4096
+}</code></pre>
+
+      <h4>Response (Streaming)</h4>
+      <pre><code>// Stream chunks
+{
+  "type": "STREAM_CHUNK",
+  "agentId": "default",
+  "content": "Hello",
+  "done": false
+}
+
+// Stream end
+{
+  "type": "STREAM_END",
+  "agentId": "default",
+  "tokensUsed": 42
+}</code></pre>
+
+      <h3>BASH</h3>
+      <p>Execute a shell command:</p>
+      <pre><code>{
+  "type": "BASH",
+  "command": "ls -la",
+  "cwd": "/home/user/projects"
+}</code></pre>
+
+      <h4>Response</h4>
+      <pre><code>{
+  "type": "BASH_OUTPUT",
+  "stdout": "total 8...",
+  "stderr": "",
+  "exitCode": 0
+}</code></pre>
+
+      <h3>FILE_EDIT</h3>
+      <p>Edit a file:</p>
+      <pre><code>{
+  "type": "FILE_EDIT",
+  "path": "/path/to/file.txt",
+  "oldText": "old text",
+  "newText": "new text"
+}</code></pre>
+
+      <h4>Response</h4>
+      <pre><code>{
+  "type": "FILE_EDIT_RESULT",
+  "success": true,
+  "path": "/path/to/file.txt"
+}</code></pre>
+
+      <h3>RPC</h3>
+      <p>Remote procedure call:</p>
+      <pre><code>{
+  "type": "RPC",
+  "method": "brain.queryFacts",
+  "params": {
+    "query": "user.name"
+  }
+}</code></pre>
+
+      <h4>Response</h4>
+      <pre><code>{
+  "type": "RPC_RESULT",
+  "result": "John Doe",
+  "error": null
+}</code></pre>
+
+      <h3>MODULE_INSTALL</h3>
+      <p>Install a module:</p>
+      <pre><code>{
+  "type": "MODULE_INSTALL",
+  "name": "habit-tracker",
+  "type": "brain",
+  "url": "https://github.com/cocapn-modules/habit-tracker"
+}</code></pre>
+
+      <h4>Response</h4>
+      <pre><code>{
+  "type": "MODULE_INSTALL_RESULT",
+  "success": true,
+  "module": {
+    "name": "habit-tracker",
+    "type": "brain",
+    "version": "1.0.0"
+  }
+}</code></pre>
+    </section>
+
+    <section>
+      <h2>REST API (Cloud Worker)</h2>
+      <p>When deployed to Cloudflare Workers, Cocapn exposes a REST API for HTTP clients.</p>
+
+      <h3>Base URL</h3>
+      <pre><code>https://your-instance.workers.dev/api</code></pre>
+
+      <h3>Authentication</h3>
+      <p>Include a Bearer token in the Authorization header:</p>
+      <pre><code>Authorization: Bearer github_pat_...</code></pre>
+
+      <h3>Endpoints</h3>
+
+      <h4>POST /api/chat</h4>
+      <p>Send a chat message (non-streaming):</p>
+      <pre><code>POST /api/chat
+Content-Type: application/json
+
+{
+  "agentId": "default",
+  "content": "Hello, agent!",
+  "temperature": 0.7,
+  "maxTokens": 4096
+}</code></pre>
+
+      <h4>Response</h4>
+      <pre><code>{
+  "content": "Hello! How can I help you?",
+  "tokensUsed": 42,
+  "agentId": "default"
+}</code></pre>
+
+      <h4>POST /api/brain/facts</h4>
+      <p>Query or update facts:</p>
+      <pre><code>POST /api/brain/facts
+Content-Type: application/json
+
+{
+  "action": "query",
+  "query": "user.*"
+}</code></pre>
+
+      <h4>Response</h4>
+      <pre><code>{
+  "facts": {
+    "user.name": "John Doe",
+    "user.email": "john@example.com"
+  }
+}</code></pre>
+
+      <h4>GET /api/brain/wiki</h4>
+      <p>List wiki pages:</p>
+      <pre><code>GET /api/brain/wiki</code></pre>
+
+      <h4>Response</h4>
+      <pre><code>{
+  "pages": [
+    {
+      "title": "Welcome",
+      "path": "wiki/welcome.md",
+      "updatedAt": "2026-03-29T12:00:00Z"
+    }
+  ]
+}</code></pre>
+
+      <h4>GET /api/brain/wiki/:page</h4>
+      <p>Get wiki page content:</p>
+      <pre><code>GET /api/brain/wiki/welcome.md</code></pre>
+
+      <h4>Response</h4>
+      <pre><code>{
+  "title": "Welcome",
+  "content": "# Welcome\n\nThis is your wiki...",
+  "path": "wiki/welcome.md"
+}</code></pre>
+
+      <h4>POST /api/brain/tasks</h4>
+      <p>Manage tasks:</p>
+      <pre><code>POST /api/brain/tasks
+Content-Type: application/json
+
+{
+  "action": "create",
+  "task": {
+    "content": "Build documentation site",
+    "tags": ["docs", "priority"]
+  }
+}</code></pre>
+
+      <h4>Response</h4>
+      <pre><code>{
+  "task": {
+    "id": "task-123",
+    "content": "Build documentation site",
+    "status": "pending",
+    "tags": ["docs", "priority"],
+    "createdAt": "2026-03-29T12:00:00Z"
+  }
+}</code></pre>
+
+      <h4>GET /api/status</h4>
+      <p>Get bridge status:</p>
+      <pre><code>GET /api/status</code></pre>
+
+      <h4>Response</h4>
+      <pre><code>{
+  "status": "online",
+  "version": "1.0.0",
+  "uptime": 3600,
+  "agents": ["default", "coder"],
+  "modules": ["habit-tracker", "perplexity-search"]
+}</code></pre>
+
+      <h4>GET /api/health</h4>
+      <p>Health check endpoint:</p>
+      <pre><code>GET /api/health</code></pre>
+
+      <h4>Response</h4>
+      <pre><code>{
+  "healthy": true,
+  "timestamp": "2026-03-29T12:00:00Z"
+}</code></pre>
+    </section>
+
+    <section>
+      <h2>MCP Tools</h2>
+      <p>Cocapn exposes agent capabilities through the Model Context Protocol (MCP).</p>
+
+      <h3>Available Tools</h3>
+
+      <h4>mcp_brain_query_facts</h4>
+      <p>Query the agent's fact database:</p>
+      <pre><code>{
+  "name": "mcp_brain_query_facts",
+  "arguments": {
+    "query": "user.name"
+  }
+}</code></pre>
+
+      <h4>mcp_brain_set_fact</h4>
+      <p>Set a fact in the agent's memory:</p>
+      <pre><code>{
+  "name": "mcp_brain_set_fact",
+  "arguments": {
+    "key": "user.preference",
+    "value": "dark-mode"
+  }
+}</code></pre>
+
+      <h4>mcp_brain_search_wiki</h4>
+      <p>Search the agent's wiki:</p>
+      <pre><code>{
+  "name": "mcp_brain_search_wiki",
+  "arguments": {
+    "query": "project setup"
+  }
+}</code></pre>
+
+      <h4>mcp_git_commit</h4>
+      <p>Commit changes to Git:</p>
+      <pre><code>{
+  "name": "mcp_git_commit",
+  "arguments": {
+    "message": "Update documentation"
+  }
+}</code></pre>
+
+      <h4>mcp_git_push</h4>
+      <p>Push changes to remote:</p>
+      <pre><code>{
+  "name": "mcp_git_push",
+  "arguments": {}
+}</code></pre>
+
+      <h4>mcp_shell_exec</h4>
+      <p>Execute a shell command:</p>
+      <pre><code>{
+  "name": "mcp_shell_exec",
+  "arguments": {
+    "command": "npm test",
+    "cwd": "/path/to/project"
+  }
+}</code></pre>
+    </section>
+
+    <section>
+      <h2>CLI Commands</h2>
+
+      <h3>Instance Management</h3>
+
+      <h4>cocapn init</h4>
+      <pre><code>cocapn init &lt;instance-name&gt;
+  --template &lt;template&gt;    # Template to use
+  --domain &lt;domain&gt;         # Custom domain</code></pre>
+
+      <h4>cocapn start</h4>
+      <pre><code>cocapn start
+  --port &lt;port&gt;              # Port (default: 8787)
+  --debug                    # Enable debug logging</code></pre>
+
+      <h4>cocapn stop</h4>
+      <pre><code>cocapn stop</code></pre>
+
+      <h4>cocapn restart</h4>
+      <pre><code>cocapn restart</code></pre>
+
+      <h3>Deployment</h3>
+
+      <h4>cocapn deploy</h4>
+      <pre><code>cocapn deploy
+  --domain &lt;domain&gt;         # Custom domain
+  --env &lt;environment&gt;       # Environment (dev, prod)</code></pre>
+
+      <h4>cocapn cloudflare:login</h4>
+      <pre><code>cocapn cloudflare:login</code></pre>
+
+      <h3>Brain Management</h3>
+
+      <h4>cocapn brain init</h4>
+      <pre><code>cocapn brain init
+  --private &lt;path&gt;          # Private repo path
+  --public &lt;path&gt;           # Public repo path</code></pre>
+
+      <h4>cocapn brain query</h4>
+      <pre><code>cocapn brain query &lt;query-pattern&gt;</code></pre>
+
+      <h4>cocapn brain sync</h4>
+      <pre><code>cocapn brain sync
+  --force                    # Force sync</code></pre>
+
+      <h3>Module Management</h3>
+
+      <h4>cocapn module add</h4>
+      <pre><code>cocapn module add &lt;module-name&gt;
+  --type &lt;type&gt;             # brain, ui, cloud, tool
+  --url &lt;url&gt;               # Git URL</code></pre>
+
+      <h4>cocapn module remove</h4>
+      <pre><code>cocapn module remove &lt;module-name&gt;</code></pre>
+
+      <h4>cocapn module list</h4>
+      <pre><code>cocapn module list</code></pre>
+
+      <h4>cocapn module update</h4>
+      <pre><code>cocapn module update &lt;module-name&gt;</code></pre>
+
+      <h3>Plugin Management</h3>
+
+      <h4>cocapn plugin install</h4>
+      <pre><code>cocapn plugin install &lt;plugin-name&gt;
+  --version &lt;version&gt;       # Specific version</code></pre>
+
+      <h4>cocapn plugin uninstall</h4>
+      <pre><code>cocapn plugin uninstall &lt;plugin-name&gt;</code></pre>
+
+      <h4>cocapn plugin list</h4>
+      <pre><code>cocapn plugin list</code></pre>
+
+      <h4>cocapn plugin search</h4>
+      <pre><code>cocapn plugin search &lt;query&gt;
+  --category &lt;category&gt;     # Filter by category</code></pre>
+
+      <h4>cocapn plugin publish</h4>
+      <pre><code>cocapn plugin publish
+  --sign                     # Sign plugin</code></pre>
+
+      <h3>Template Management</h3>
+
+      <h4>cocapn template apply</h4>
+      <pre><code>cocapn template apply &lt;template-name&gt;</code></pre>
+
+      <h4>cocapn template list</h4>
+      <pre><code>cocapn template list</code></pre>
+
+      <h4>cocapn template validate</h4>
+      <pre><code>cocapn template validate</code></pre>
+
+      <h4>cocapn template publish</h4>
+      <pre><code>cocapn template publish
+  --public                   # Publish to registry</code></pre>
+
+      <h3>Diagnostics</h3>
+
+      <h4>cocapn logs</h4>
+      <pre><code>cocapn logs
+  --follow                  # Follow logs
+  --tail &lt;lines&gt;           # Number of lines</code></pre>
+
+      <h4>cocapn status</h4>
+      <pre><code>cocapn status</code></pre>
+
+      <h4>cocapn doctor</h4>
+      <pre><code>cocapn doctor</code></pre>
+    </section>
+
+    <section>
+      <h2>Error Codes</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Code</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>AUTH_FAILED</code></td>
+            <td>Authentication failed</td>
+          </tr>
+          <tr>
+            <td><code>AGENT_NOT_FOUND</code></td>
+            <td>Agent not found</td>
+          </tr>
+          <tr>
+            <td><code>AGENT_START_FAILED</code></td>
+            <td>Failed to start agent</td>
+          </tr>
+          <tr>
+            <td><code>INVALID_REQUEST</code></td>
+            <td>Invalid request format</td>
+          </tr>
+          <tr>
+            <td><code>PERMISSION_DENIED</code></td>
+            <td>Permission denied</td>
+          </tr>
+          <tr>
+            <td><code>MODULE_NOT_FOUND</code></td>
+            <td>Module not found</td>
+          </tr>
+          <tr>
+            <td><code>MODULE_INSTALL_FAILED</code></td>
+            <td>Module installation failed</td>
+          </tr>
+          <tr>
+            <td><code>FILE_NOT_FOUND</code></td>
+            <td>File not found</td>
+          </tr>
+          <tr>
+            <td><code>FILE_EDIT_FAILED</code></td>
+            <td>File edit failed</td>
+          </tr>
+          <tr>
+            <td><code>COMMAND_FAILED</code></td>
+            <td>Command execution failed</td>
+          </tr>
+          <tr>
+            <td><code>BRAIN_ERROR</code></td>
+            <td>Brain operation error</td>
+          </tr>
+          <tr>
+            <td><code>GIT_ERROR</code></td>
+            <td>Git operation error</td>
+          </tr>
+          <tr>
+            <td><code>RATE_LIMITED</code></td>
+            <td>Rate limit exceeded</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p>See <a href="https://github.com/CedarBeach2019/cocapn/blob/main/docs/ERROR-CODES.md">ERROR-CODES.md</a> for complete error reference.</p>
+    </section>
+
+    <section>
+      <h2>Further Reading</h2>
+      <ul>
+        <li><a href="architecture.html">Architecture Overview</a></li>
+        <li><a href="plugins.html">Plugin Development</a></li>
+        <li><a href="fleet.html">Fleet Protocol</a></li>
+        <li><a href="https://github.com/CedarBeach2019/cocapn/blob/main/docs/ERROR-CODES.md">Error Codes Reference</a></li>
+      </ul>
+    </section>
+  </main>
+
+  <footer>
+    <p>&copy; 2026 Superinstance. Cocapn — The npm of AI Agents.</p>
+    <p style="margin-top: 0.5rem;">
+      <a href="https://github.com/CedarBeach2019/cocapn">GitHub</a> ·
+      <a href="contributing.html">Contributing</a> ·
+      <a href="https://github.com/CedarBeach2019/cocapn/issues">Issues</a>
+    </p>
+  </footer>
+</body>
+</html>
