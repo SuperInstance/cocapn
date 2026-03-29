@@ -1,5 +1,4 @@
 name: CI
-
 on:
   push:
     branches: [main]
@@ -8,40 +7,20 @@ on:
 
 jobs:
   test:
-    name: Test (Node ${{ matrix.node-version }})
     runs-on: ubuntu-latest
-
     strategy:
       matrix:
-        node-version: [20, 22]
-
+        node-version: [18, 20, 22]
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
+      - uses: actions/checkout@v4
       - name: Setup Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-          cache: npm
-          cache-dependency-path: packages/local-bridge/package-lock.json
-
-      - name: Install dependencies (local-bridge)
-        working-directory: packages/local-bridge
-        run: npm ci
-
-      - name: Typecheck (local-bridge)
-        working-directory: packages/local-bridge
-        run: npm run typecheck
-
-      - name: Test (local-bridge)
-        working-directory: packages/local-bridge
-        run: npm test
-
-      - name: Install dependencies (protocols)
-        working-directory: packages/protocols
-        run: npm ci
-
-      - name: Typecheck (protocols)
-        working-directory: packages/protocols
-        run: npm run typecheck
+      - run: npm install
+      - run: npm test
+      - name: Upload coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ matrix.node-version }}
+          path: coverage/
