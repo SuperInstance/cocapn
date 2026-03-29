@@ -72,6 +72,7 @@ import { SettingsManager } from "../settings/index.js";
 import { handleChatStream } from "../handlers/llm.js";
 import { handleMemoryListTyped, handleMemoryAddTyped, handleMemoryDeleteTyped, handleWikiListTyped, handleWikiReadTyped, handleSoulGetTyped } from "../handlers/memory.js";
 import { handleFleetJoin, handleFleetSubmitTask, handleFleetTaskStatus, handleFleetListAgents, handleFleetHeartbeat } from "../handlers/fleet.js";
+import { handleQueueStatus, handleQueueCancel } from "../handlers/queue.js";
 
 // Re-export types for backward compatibility
 export type { BridgeServerOptions, BridgeServerEventMap, TypedMessage, JsonRpcRequest, SessionState };
@@ -168,6 +169,8 @@ export class BridgeServer extends EventEmitter<BridgeServerEventMap> {
       ["FLEET_TASK_STATUS", handleFleetTaskStatus],
       ["FLEET_LIST_AGENTS", handleFleetListAgents],
       ["FLEET_HEARTBEAT", handleFleetHeartbeat],
+      ["QUEUE_STATUS", handleQueueStatus],
+      ["QUEUE_CANCEL", handleQueueCancel],
     ]);
 
     // ChatHandler needs broadcast and moduleManager
@@ -284,6 +287,9 @@ export class BridgeServer extends EventEmitter<BridgeServerEventMap> {
       analytics: this.options.analytics,
       llmRouter: this.options.llmRouter,
       personalityManager: this.options.personalityManager,
+      tenantRegistry: this.options.tenantRegistry,
+      tenantBridge: this.options.tenantBridge,
+      requestQueue: this.options.requestQueue,
       getModuleManager: () => {
         if (!moduleManagerRef.current) {
           moduleManagerRef.current = new ModuleManager(this.options.repoRoot);
@@ -382,8 +388,168 @@ export class BridgeServer extends EventEmitter<BridgeServerEventMap> {
       return;
     }
 
+    // Handle multi-tenant API endpoints
+    if (url.startsWith('/api/tenant/')) {
+      await this.handleTenantHttpRequest(req, res, url);
+      return;
+    }
+
     // Handle A2A peer endpoints
     await handleHttpPeerRequest(req, res, this.handlerCtx);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Multi-tenant HTTP API
+  // ---------------------------------------------------------------------------
+
+  /**
+   * HTTP endpoints for multi-tenant management.
+   *
+   *   GET  /api/tenant/list           → list all tenants
+   *   GET  /api/tenant/:id            → get tenant by ID
+   *   POST /api/tenant/create         → create a new tenant
+   *   PUT  /api/tenant/:id            → update tenant
+   *   DEL  /api/tenant/:id            → delete tenant
+   *   GET  /api/tenant/:id/status     → tenant status
+   *   GET  /api/tenant/:id/usage      → tenant usage
+   *   POST /api/tenant/:id/chat       → chat with tenant brain
+   *
+   * All endpoints accept X-Tenant-ID header for tenant identification.
+   */
+  private async handleTenantHttpRequest(
+    req: IncomingMessage,
+    res: ServerResponse,
+    url: string,
+  ): Promise<void> {
+    const setJson = (code: number, body: unknown) => {
+      res.writeHead(code, { "Content-Type": "application/json" });
+      res.end(JSON.stringify(body));
+    };
+
+    const registry = this.options.tenantRegistry;
+    const tBridge = this.options.tenantBridge;
+
+    if (!registry) {
+      setJson(503, { error: "Multi-tenancy not enabled" });
+      return;
+    }
+
+    // Parse URL path
+    const path = url.replace("/api/tenant/", "");
+    const segments = path.split("/").filter(Boolean);
+    const method = req.method || "GET";
+
+    try {
+      // GET /api/tenant/list
+      if (segments[0] === "list" && method === "GET") {
+        const tenants = await registry.listTenants();
+        setJson(200, { tenants, count: tenants.length });
+        return;
+      }
+
+      // Extract tenant ID from path or header
+      const tenantId = segments[0] || req.headers["x-tenant-id"] as string | undefined;
+
+      // POST /api/tenant/create
+      if (segments[0] === "create" && method === "POST") {
+        const body = await readBody(req);
+        const data = JSON.parse(body) as Record<string, unknown>;
+        if (!data.name || typeof data.name !== "string") {
+          setJson(400, { error: "Missing required field: name" });
+          return;
+        }
+        const tenant = await registry.createTenant({
+          name: data.name,
+          plan: data.plan as "free" | "pro" | "enterprise" | undefined,
+          config: data.config as Record<string, unknown> | undefined,
+          allowedOrigins: data.allowedOrigins as string[] | undefined,
+        });
+        if (tBridge) {
+          await tBridge.initializeTenant(tenant.id);
+        }
+        setJson(201, { ok: true, tenant });
+        return;
+      }
+
+      if (!tenantId) {
+        setJson(400, { error: "Tenant ID required" });
+        return;
+      }
+
+      // GET /api/tenant/:id
+      if (segments.length === 1 && method === "GET") {
+        const tenant = await registry.getTenant(tenantId);
+        if (!tenant) {
+          setJson(404, { error: `Tenant not found: ${tenantId}` });
+          return;
+        }
+        setJson(200, tenant);
+        return;
+      }
+
+      // PUT /api/tenant/:id
+      if (segments.length === 1 && method === "PUT") {
+        const body = await readBody(req);
+        const data = JSON.parse(body) as Record<string, unknown>;
+        const updated = await registry.updateTenant(tenantId, {
+          name: data.name as string | undefined,
+          plan: data.plan as "free" | "pro" | "enterprise" | undefined,
+          config: data.config as Record<string, unknown> | undefined,
+          allowedOrigins: data.allowedOrigins as string[] | undefined,
+        });
+        setJson(200, { ok: true, tenant: updated });
+        return;
+      }
+
+      // DELETE /api/tenant/:id
+      if (segments.length === 1 && method === "DELETE") {
+        await registry.deleteTenant(tenantId);
+        if (tBridge) tBridge.disposeContext(tenantId);
+        setJson(200, { ok: true });
+        return;
+      }
+
+      // GET /api/tenant/:id/status
+      if (segments[1] === "status" && method === "GET") {
+        if (!tBridge) {
+          setJson(503, { error: "Multi-tenancy not enabled" });
+          return;
+        }
+        const status = await tBridge.getStatus(tenantId);
+        setJson(200, { ok: true, ...status });
+        return;
+      }
+
+      // GET /api/tenant/:id/usage
+      if (segments[1] === "usage" && method === "GET") {
+        const usage = await registry.getUsage(tenantId);
+        setJson(200, { ok: true, usage });
+        return;
+      }
+
+      // POST /api/tenant/:id/chat
+      if (segments[1] === "chat" && method === "POST") {
+        if (!tBridge) {
+          setJson(503, { error: "Multi-tenancy not enabled" });
+          return;
+        }
+        const body = await readBody(req);
+        const data = JSON.parse(body) as Record<string, unknown>;
+        if (!data.message || typeof data.message !== "string") {
+          setJson(400, { error: "Missing required field: message" });
+          return;
+        }
+        const response = await tBridge.chat(tenantId, data.message);
+        setJson(200, { ok: true, response });
+        return;
+      }
+
+      setJson(404, { error: "Not found" });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      const code = message.includes("not found") ? 404 : 500;
+      setJson(code, { error: message });
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -597,4 +763,15 @@ export class BridgeServer extends EventEmitter<BridgeServerEventMap> {
   async findTokenWaste(): Promise<ReturnType<TokenTracker['findWaste']>> {
     return this.tokenTracker.findWaste();
   }
+}
+
+// ─── HTTP helpers ────────────────────────────────────────────────────────────
+
+function readBody(req: IncomingMessage): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const chunks: Buffer[] = [];
+    req.on("data", (chunk: Buffer) => chunks.push(chunk));
+    req.on("end", () => resolve(Buffer.concat(chunks).toString("utf8")));
+    req.on("error", reject);
+  });
 }

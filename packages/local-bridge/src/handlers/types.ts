@@ -31,6 +31,9 @@ import type { SettingsManager } from "../settings/index.js";
 import type { Analytics } from "../analytics/index.js";
 import type { LLMRouter } from "../llm/index.js";
 import type { PersonalityManager } from "../personality/index.js";
+import type { RequestQueue } from "../queue/index.js";
+import type { TenantRegistry } from "../multi-tenant/tenant-registry.js";
+import type { TenantBridge } from "../multi-tenant/tenant-bridge.js";
 
 // Forward declaration for Bridge to avoid circular dependency
 export interface BridgeLike {
@@ -92,6 +95,9 @@ export interface HandlerContext {
   readonly analytics: Analytics | undefined;
   readonly llmRouter: LLMRouter | undefined;
   readonly personalityManager: PersonalityManager | undefined;
+  readonly tenantRegistry: TenantRegistry | undefined;
+  readonly tenantBridge: TenantBridge | undefined;
+  readonly requestQueue: RequestQueue | undefined;
 
   // Mutable — lazily created
   getModuleManager(): ModuleManager;

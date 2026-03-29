@@ -23,6 +23,8 @@ import type { Analytics } from "../analytics/index.js";
 import type { LLMRouter } from "../llm/index.js";
 import type { ConversationMemory } from "../brain/conversation-memory.js";
 import type { PersonalityManager } from "../personality/index.js";
+import type { TenantRegistry } from "../multi-tenant/tenant-registry.js";
+import type { TenantBridge } from "../multi-tenant/tenant-bridge.js";
 
 // Forward declaration for Bridge to avoid circular dependency
 export interface BridgeLike {
@@ -100,6 +102,12 @@ export interface BridgeServerOptions {
   conversationMemory?: ConversationMemory;
   /** Personality manager — agent personality customization */
   personalityManager?: PersonalityManager;
+  /** Tenant registry — multi-tenant brain isolation */
+  tenantRegistry?: TenantRegistry;
+  /** Tenant bridge — tenant-scoped brain contexts */
+  tenantBridge?: TenantBridge;
+  /** Request queue — LLM request queue with backpressure */
+  requestQueue?: import('../queue/index.js').RequestQueue;
 }
 
 // ─── Event map ───────────────────────────────────────────────────────────────
@@ -151,7 +159,9 @@ export type TypedMessageType =
   | "FLEET_SUBMIT_TASK"
   | "FLEET_TASK_STATUS"
   | "FLEET_LIST_AGENTS"
-  | "FLEET_HEARTBEAT";
+  | "FLEET_HEARTBEAT"
+  | "QUEUE_STATUS"
+  | "QUEUE_CANCEL";
 
 export interface TypedMessage {
   type: TypedMessageType;

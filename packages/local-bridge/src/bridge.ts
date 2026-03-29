@@ -42,6 +42,9 @@ import { CloudConnector, type CloudConnectorConfig } from "./cloud-bridge/connec
 import { LLMRouter, type LLMRouterConfig } from "./llm/index.js";
 import { PersonalityManager } from "./personality/index.js";
 import { Telemetry, getSystemProperties } from "./telemetry/index.js";
+import { RequestQueue } from "./queue/index.js";
+import { TenantRegistry } from "./multi-tenant/tenant-registry.js";
+import { TenantBridge } from "./multi-tenant/tenant-bridge.js";
 import type { BridgeConfig } from "./config/types.js";
 import type { AssemblyResult } from "./assembly/index.js";
 
@@ -102,6 +105,9 @@ export class Bridge {
   private llmRouter:     LLMRouter | undefined;
   private personalityManager: PersonalityManager;
   private telemetry:      Telemetry;
+  private tenantRegistry: TenantRegistry;
+  private tenantBridge:   TenantBridge;
+  private requestQueue:   RequestQueue;
 
   constructor(options: BridgeOptions) {
     this.options    = options;
@@ -160,6 +166,13 @@ export class Bridge {
     // Initialize telemetry (opt-in, off by default)
     this.telemetry = new Telemetry();
 
+    // Initialize multi-tenant system
+    this.tenantRegistry = new TenantRegistry();
+    this.tenantBridge = new TenantBridge(this.tenantRegistry, this.skillLoader);
+
+    // Initialize LLM request queue with backpressure
+    this.requestQueue = new RequestQueue();
+
     this.router = new AgentRouter(
       {
         rules:         [],
@@ -191,6 +204,9 @@ export class Bridge {
       llmRouter:      this.llmRouter,
       personalityManager: this.personalityManager,
       conversationMemory: new ConversationMemory(this.brain),
+      tenantRegistry: this.tenantRegistry,
+      tenantBridge:   this.tenantBridge,
+      requestQueue:   this.requestQueue,
     });
   }
 
@@ -318,6 +334,7 @@ export class Bridge {
     await this.watcher.stop();
     await this.spawner.stopAll();
     this.cloudConnector?.destroy();
+    await this.requestQueue.shutdown();
     await this.telemetry.shutdown();
     await this.server.stop();
     this.secrets.clearCache();
@@ -330,6 +347,7 @@ export class Bridge {
   getAssembly():    AssemblyResult | undefined { return this.assembly; }
   getLLMRouter():   LLMRouter | undefined { return this.llmRouter; }
   getTelemetry():   Telemetry            { return this.telemetry; }
+  getRequestQueue(): RequestQueue        { return this.requestQueue; }
 
   // ---------------------------------------------------------------------------
   // LLM initialization

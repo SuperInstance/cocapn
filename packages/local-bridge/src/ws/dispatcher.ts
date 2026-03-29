@@ -119,7 +119,7 @@ async function dispatchRpc(
 ): Promise<void> {
   const { method, params, id } = req;
 
-  if (method.startsWith("bridge/") || method.startsWith("skill/") || method.startsWith("llm/") || method.startsWith("memory/") || method.startsWith("knowledge/") || method.startsWith("settings/") || method.startsWith("webhook/") || method.startsWith("graph/") || method.startsWith("tree/") || method.startsWith("personality/")) {
+  if (method.startsWith("bridge/") || method.startsWith("skill/") || method.startsWith("llm/") || method.startsWith("memory/") || method.startsWith("knowledge/") || method.startsWith("settings/") || method.startsWith("webhook/") || method.startsWith("graph/") || method.startsWith("tree/") || method.startsWith("personality/") || method.startsWith("tenant/")) {
     const result = await handleBridgeMethod(method, params, ctx);
     ctx.sender.result(ws, id, result);
     return;
@@ -853,6 +853,119 @@ async function handleBridgeMethod(method: string, params: unknown, ctx: HandlerC
       return { soulPath };
     }
 
+    // ── Tenant methods ────────────────────────────────────────────────────────
+    case "tenant/create": {
+      if (!ctx.tenantRegistry) {
+        return { error: "Multi-tenancy not enabled" };
+      }
+      const name = p.name as string | undefined;
+      if (!name) {
+        return { error: "Missing tenant name" };
+      }
+      const tenant = await ctx.tenantRegistry.createTenant({
+        name,
+        plan: p.plan as "free" | "pro" | "enterprise" | undefined,
+        config: p.config as Record<string, unknown> | undefined,
+        allowedOrigins: p.allowedOrigins as string[] | undefined,
+      });
+      if (ctx.tenantBridge) {
+        await ctx.tenantBridge.initializeTenant(tenant.id);
+      }
+      return { ok: true, tenant: sanitizeTenant(tenant) };
+    }
+
+    case "tenant/get": {
+      if (!ctx.tenantRegistry) {
+        return { error: "Multi-tenancy not enabled" };
+      }
+      const id = p.id as string | undefined;
+      if (!id) {
+        return { error: "Missing tenant id" };
+      }
+      const tenant = await ctx.tenantRegistry.getTenant(id);
+      if (!tenant) {
+        return { error: `Tenant not found: ${id}` };
+      }
+      return sanitizeTenant(tenant);
+    }
+
+    case "tenant/list": {
+      if (!ctx.tenantRegistry) {
+        return { error: "Multi-tenancy not enabled" };
+      }
+      const tenants = await ctx.tenantRegistry.listTenants();
+      return { tenants: tenants.map(sanitizeTenant), count: tenants.length };
+    }
+
+    case "tenant/update": {
+      if (!ctx.tenantRegistry) {
+        return { error: "Multi-tenancy not enabled" };
+      }
+      const updateId = p.id as string | undefined;
+      if (!updateId) {
+        return { error: "Missing tenant id" };
+      }
+      const updates: Record<string, unknown> = {};
+      if (p.name !== undefined) updates.name = p.name;
+      if (p.plan !== undefined) updates.plan = p.plan;
+      if (p.config !== undefined) updates.config = p.config;
+      if (p.allowedOrigins !== undefined) updates.allowedOrigins = p.allowedOrigins;
+      const updated = await ctx.tenantRegistry.updateTenant(updateId, updates);
+      return { ok: true, tenant: sanitizeTenant(updated) };
+    }
+
+    case "tenant/delete": {
+      if (!ctx.tenantRegistry) {
+        return { error: "Multi-tenancy not enabled" };
+      }
+      const deleteId = p.id as string | undefined;
+      if (!deleteId) {
+        return { error: "Missing tenant id" };
+      }
+      await ctx.tenantRegistry.deleteTenant(deleteId);
+      if (ctx.tenantBridge) {
+        ctx.tenantBridge.disposeContext(deleteId);
+      }
+      return { ok: true };
+    }
+
+    case "tenant/status": {
+      if (!ctx.tenantBridge) {
+        return { error: "Multi-tenancy not enabled" };
+      }
+      const statusId = p.id as string | undefined;
+      if (!statusId) {
+        return { error: "Missing tenant id" };
+      }
+      const status = await ctx.tenantBridge.getStatus(statusId);
+      return { ok: true, ...status, tenant: sanitizeTenant(status.tenant) };
+    }
+
+    case "tenant/chat": {
+      if (!ctx.tenantBridge) {
+        return { error: "Multi-tenancy not enabled" };
+      }
+      const chatId = p.id as string | undefined;
+      const message = p.message as string | undefined;
+      if (!chatId || !message) {
+        return { error: "Missing tenant id or message" };
+      }
+      const response = await ctx.tenantBridge.chat(chatId, message);
+      return { ok: true, response };
+    }
+
+    case "tenant/usage": {
+      if (!ctx.tenantRegistry) {
+        return { error: "Multi-tenancy not enabled" };
+      }
+      const usageId = p.id as string | undefined;
+      if (!usageId) {
+        return { error: "Missing tenant id" };
+      }
+      const usage = await ctx.tenantRegistry.getUsage(usageId);
+      return { ok: true, usage };
+    }
+
     default:
       throw Object.assign(new Error(`Unknown bridge method: ${method}`), { code: -32601 });
   }
@@ -960,5 +1073,21 @@ function getBridgeStatus(ctx: HandlerContext): Record<string, unknown> {
     // sessionCount would need to be added to HandlerContext if needed
     sessionCount: 0,
     uptime: process.uptime(),
+  };
+}
+
+/**
+ * Strip internal paths from a tenant object before sending to clients.
+ */
+function sanitizeTenant(tenant: import("../multi-tenant/types.js").Tenant): Record<string, unknown> {
+  return {
+    id: tenant.id,
+    name: tenant.name,
+    plan: tenant.plan,
+    config: tenant.config,
+    createdAt: tenant.createdAt,
+    lastActive: tenant.lastActive,
+    usage: tenant.usage,
+    allowedOrigins: tenant.allowedOrigins,
   };
 }
