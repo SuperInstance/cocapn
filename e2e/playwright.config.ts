@@ -37,10 +37,10 @@ export default defineConfig({
     //   use: { ...devices['Desktop Safari'] },
     // },
   ],
-  // webServer: {
-  //   command: 'node ./mocks/server.js',
-  //   url: 'http://localhost:5173',
-  //   reuseExistingServer: !process.env.CI,
-  //   timeout: 120 * 1000,
-  // },
+  webServer: {
+    command: 'node ./mocks/server.js',
+    url: 'http://localhost:5173',
+    reuseExistingServer: !process.env.CI,
+    timeout: 120 * 1000,
+  },
 });

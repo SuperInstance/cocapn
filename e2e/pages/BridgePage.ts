@@ -29,9 +29,11 @@ export class BridgePage {
    */
   async waitForConnection(): Promise<void> {
     await this.statusIndicator.waitFor({ state: 'visible' });
+    const handle = await this.statusIndicator.elementHandle();
+    if (!handle) throw new Error('Status indicator not found');
     await this.page.waitForFunction(
       (el) => el.classList.contains('connected'),
-      await this.statusIndicator.elementHandle()
+      handle
     );
   }
 
