@@ -29,7 +29,7 @@ import type { CloudAdapterRegistry } from "../CloudAdapter.js";
 import type { Brain } from "../brain/index.js";
 import { ModuleManager } from "../modules/manager.js";
 import { AuditLogger } from "../security/audit.js";
-import { verifyJwt } from "../security/jwt.js";
+import { authenticateConnection, verifyPeerAuth as verifyPeerAuthHandler } from "../security/auth-handler.js";
 import { ChatRouter } from "./chat-router.js";
 import { sanitizeRepoPath, SanitizationError } from "../utils/path-sanitizer.js";
 import { ChatHandler } from "../handlers/chat-handler.js";
@@ -48,7 +48,6 @@ export type { BridgeServerOptions, BridgeServerEventMap, TypedMessage, JsonRpcRe
 // Constants
 // ---------------------------------------------------------------------------
 
-const GITHUB_API = "https://api.github.com";
 let clientCounter = 0;
 
 // ---------------------------------------------------------------------------
@@ -208,17 +207,7 @@ export class BridgeServer extends EventEmitter<BridgeServerEventMap> {
 
   /** Verify fleet JWT in Authorization header. Returns true when auth is disabled (skipAuth). */
   private verifyPeerAuth(req: IncomingMessage): boolean {
-    if (this.options.skipAuth) return true;
-    if (!this.options.fleetKey) return false;
-
-    const auth = req.headers["authorization"] ?? "";
-    const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
-    try {
-      verifyJwt(token, this.options.fleetKey);
-      return true;
-    } catch {
-      return false;
-    }
+    return verifyPeerAuthHandler(req, this.options.skipAuth, this.options.fleetKey);
   }
 
   // ---------------------------------------------------------------------------
@@ -230,55 +219,19 @@ export class BridgeServer extends EventEmitter<BridgeServerEventMap> {
     req: IncomingMessage,
     clientId: string
   ): Promise<void> {
-    let githubLogin: string | undefined;
-    let githubToken: string | undefined;
+    const authResult = await authenticateConnection(ws, req, {
+      skipAuth: this.options.skipAuth,
+      fleetKey: this.options.fleetKey,
+      audit: this.audit,
+      onGithubToken: (token) => this.options.cloudAdapters?.setGitHubToken(token),
+    });
 
-    const rawToken = this.extractToken(req.url ?? "");
-
-    if (!this.options.skipAuth) {
-      if (!rawToken) {
-        this.audit.log({ action: "auth.reject", agent: undefined, user: undefined,
-          command: undefined, files: undefined, result: "denied",
-          detail: "Missing token", durationMs: undefined });
-        ws.close(4001, "Missing token — provide ?token=<github-pat> or ?token=<fleet-jwt>");
-        return;
-      }
-
-      // ── Fleet JWT auth (starts with "eyJ") ──────────────────────────────
-      if (rawToken.startsWith("eyJ") && this.options.fleetKey) {
-        try {
-          const payload = verifyJwt(rawToken, this.options.fleetKey);
-          githubLogin = payload.sub;
-          console.info(`[bridge] Fleet JWT authenticated: ${githubLogin} → ${clientId}`);
-          this.audit.log({ action: "auth.connect", agent: undefined, user: githubLogin,
-            command: undefined, files: undefined, result: "ok",
-            detail: "fleet-jwt", durationMs: undefined });
-        } catch (err) {
-          const detail = err instanceof Error ? err.message : String(err);
-          this.audit.log({ action: "auth.reject", agent: undefined, user: undefined,
-            command: undefined, files: undefined, result: "denied", detail, durationMs: undefined });
-          ws.close(4001, "Invalid fleet JWT");
-          return;
-        }
-      } else {
-        // ── GitHub PAT auth ────────────────────────────────────────────────
-        githubLogin = await this.validateGithubPat(rawToken);
-        if (!githubLogin) {
-          this.audit.log({ action: "auth.reject", agent: undefined, user: undefined,
-            command: undefined, files: undefined, result: "denied",
-            detail: "Invalid GitHub PAT", durationMs: undefined });
-          ws.close(4001, "Invalid or expired GitHub PAT");
-          return;
-        }
-        githubToken = rawToken;
-        console.info(`[bridge] Authenticated: ${githubLogin} → ${clientId}`);
-        this.audit.log({ action: "auth.connect", agent: undefined, user: githubLogin,
-          command: undefined, files: undefined, result: "ok",
-          detail: "github-pat", durationMs: undefined });
-        // Forward the token to cloud adapters so they can call GitHub API
-        this.options.cloudAdapters?.setGitHubToken(rawToken);
-      }
+    if (!authResult) {
+      // WebSocket already closed by authenticateConnection
+      return;
     }
+
+    const { githubLogin, githubToken } = authResult;
 
     this.sessions.set(clientId, {
       clientId,
@@ -289,32 +242,6 @@ export class BridgeServer extends EventEmitter<BridgeServerEventMap> {
 
     this.emit("connection", clientId);
     this.handleConnection(ws, clientId);
-  }
-
-  private extractToken(url: string): string | undefined {
-    try {
-      // url may be a path like /?token=ghp_...
-      const params = new URLSearchParams(url.includes("?") ? url.slice(url.indexOf("?") + 1) : "");
-      return params.get("token") ?? undefined;
-    } catch {
-      return undefined;
-    }
-  }
-
-  private async validateGithubPat(token: string): Promise<string | undefined> {
-    try {
-      const res = await fetch(`${GITHUB_API}/user`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "User-Agent": "cocapn-bridge/0.1.0",
-        },
-      });
-      if (!res.ok) return undefined;
-      const body = (await res.json()) as { login?: string };
-      return body.login ?? undefined;
-    } catch {
-      return undefined;
-    }
   }
 
   // ---------------------------------------------------------------------------

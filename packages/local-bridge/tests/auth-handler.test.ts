@@ -3,19 +3,41 @@
  *
  * Covers:
  *   1. extractToken — pure URL parsing
- *   2. verifyFleetJwt — wraps jwt.ts, rejects bad signature / expired tokens
- *   3. createAuthMiddleware — skipAuth, missing token (4001 close), valid fleet JWT
+ *   2. validateGithubPat — GitHub PAT validation (mocked fetch)
+ *   3. authenticateConnection — skipAuth, missing token (4001 close), valid fleet JWT
+ *   4. verifyPeerAuth — HTTP Authorization header verification
  */
 
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { WebSocket } from "ws";
 import type { IncomingMessage } from "http";
 import {
   extractToken,
-  verifyFleetJwt,
-  createAuthMiddleware,
+  validateGithubPat,
+  authenticateConnection,
+  verifyPeerAuth,
 } from "../src/security/auth-handler.js";
-import { signJwt, generateJwtSecret } from "../src/security/jwt.js";
+import { signJwt, generateJwtSecret, verifyJwt } from "../src/security/jwt.js";
+import { AuditLogger } from "../src/security/audit.js";
+
+// ─── Test fixtures ───────────────────────────────────────────────────────────
+
+function makeWs(): { ws: WebSocket; closeSpy: ReturnType<typeof vi.fn> } {
+  const closeSpy = vi.fn();
+  const ws = { close: closeSpy } as unknown as WebSocket;
+  return { ws, closeSpy };
+}
+
+function makeReq(url: string): IncomingMessage {
+  return { url } as unknown as IncomingMessage;
+}
+
+function makeAuditLog(): AuditLogger {
+  return {
+    log: vi.fn(),
+    start: vi.fn(() => vi.fn()),
+  } as unknown as AuditLogger;
+}
 
 // ─── extractToken ─────────────────────────────────────────────────────────────
 
@@ -32,87 +54,209 @@ describe("extractToken", () => {
   });
 });
 
-// ─── verifyFleetJwt ───────────────────────────────────────────────────────────
+// ─── validateGithubPat ────────────────────────────────────────────────────────
 
-describe("verifyFleetJwt", () => {
-  const secret = generateJwtSecret();
-
-  it("returns sub from a valid fleet JWT", () => {
-    const token = signJwt({ sub: "bridge-test" }, secret);
-    const result = verifyFleetJwt(token, secret);
-    expect(result.sub).toBe("bridge-test");
+describe("validateGithubPat", () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
   });
 
-  it("throws on wrong key", () => {
-    const token = signJwt({ sub: "bridge-test" }, secret);
-    const wrongKey = generateJwtSecret();
-    expect(() => verifyFleetJwt(token, wrongKey)).toThrow();
+  it("returns login on successful GitHub API response", async () => {
+    global.fetch = vi.fn(() =>
+      Promise.resolve({
+        ok: true,
+        json: async () => ({ login: "testuser" }),
+      } as Response)
+    );
+
+    const login = await validateGithubPat("ghp_testtoken");
+    expect(login).toBe("testuser");
   });
 
-  it("throws on expired token", () => {
-    // ttlSeconds: -1 produces a token that expired 1s in the past
-    const token = signJwt({ sub: "bridge-test" }, secret, { ttlSeconds: -1 });
-    expect(() => verifyFleetJwt(token, secret)).toThrow(/expired/i);
+  it("returns undefined on failed GitHub API response", async () => {
+    global.fetch = vi.fn(() =>
+      Promise.resolve({
+        ok: false,
+      } as Response)
+    );
+
+    const login = await validateGithubPat("ghp_badtoken");
+    expect(login).toBeUndefined();
+  });
+
+  it("returns undefined on network error", async () => {
+    global.fetch = vi.fn(() => Promise.reject(new Error("Network error")));
+
+    const login = await validateGithubPat("ghp_testtoken");
+    expect(login).toBeUndefined();
   });
 });
 
-// ─── createAuthMiddleware ─────────────────────────────────────────────────────
+// ─── verifyPeerAuth ────────────────────────────────────────────────────────────
 
-describe("createAuthMiddleware", () => {
-  /** Minimal fake WebSocket that records close calls. */
-  function makeWs(): { ws: WebSocket; closeSpy: ReturnType<typeof vi.fn> } {
-    const closeSpy = vi.fn();
-    const ws = { close: closeSpy } as unknown as WebSocket;
-    return { ws, closeSpy };
-  }
+describe("verifyPeerAuth", () => {
+  it("returns true when skipAuth is true", () => {
+    const req = { headers: {} } as unknown as IncomingMessage;
+    expect(verifyPeerAuth(req, true, undefined)).toBe(true);
+  });
 
-  /** Minimal IncomingMessage with a URL. */
-  function makeReq(url: string): IncomingMessage {
-    return { url } as IncomingMessage;
-  }
+  it("returns false when fleetKey is undefined", () => {
+    const req = { headers: { authorization: "Bearer token" } } as unknown as IncomingMessage;
+    expect(verifyPeerAuth(req, false, undefined)).toBe(false);
+  });
 
-  it("skipAuth: true returns authMethod 'none' without closing the socket", async () => {
-    const authenticate = createAuthMiddleware({ skipAuth: true });
+  it("returns true for valid fleet JWT", () => {
+    const fleetKey = generateJwtSecret();
+    const token = signJwt({ sub: "peer-bridge" }, fleetKey);
+    const req = {
+      headers: { authorization: `Bearer ${token}` },
+    } as unknown as IncomingMessage;
+
+    expect(verifyPeerAuth(req, false, fleetKey)).toBe(true);
+  });
+
+  it("returns false for invalid fleet JWT", () => {
+    const fleetKey = generateJwtSecret();
+    const badToken = signJwt({ sub: "attacker" }, generateJwtSecret());
+    const req = {
+      headers: { authorization: `Bearer ${badToken}` },
+    } as unknown as IncomingMessage;
+
+    expect(verifyPeerAuth(req, false, fleetKey)).toBe(false);
+  });
+
+  it("returns false when Authorization header is missing", () => {
+    const fleetKey = generateJwtSecret();
+    const req = { headers: {} } as unknown as IncomingMessage;
+
+    expect(verifyPeerAuth(req, false, fleetKey)).toBe(false);
+  });
+});
+
+// ─── authenticateConnection ────────────────────────────────────────────────────
+
+describe("authenticateConnection", () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("skipAuth: true returns AuthResult without closing the socket", async () => {
     const { ws, closeSpy } = makeWs();
+    const audit = makeAuditLog();
 
-    const ctx = await authenticate(ws, makeReq("/"));
+    const result = await authenticateConnection(ws, makeReq("/"), {
+      skipAuth: true,
+      fleetKey: undefined,
+      audit,
+    });
 
-    expect(ctx).toEqual({ authMethod: "none" });
+    expect(result).toEqual({ githubLogin: undefined, githubToken: undefined });
     expect(closeSpy).not.toHaveBeenCalled();
   });
 
   it("closes with 4001 when token is missing and auth is required", async () => {
-    const authenticate = createAuthMiddleware({ skipAuth: false });
     const { ws, closeSpy } = makeWs();
+    const audit = makeAuditLog();
 
-    const ctx = await authenticate(ws, makeReq("/ws"));
+    const result = await authenticateConnection(ws, makeReq("/ws"), {
+      skipAuth: false,
+      fleetKey: undefined,
+      audit,
+    });
 
-    expect(ctx).toBeUndefined();
+    expect(result).toBeUndefined();
     expect(closeSpy).toHaveBeenCalledOnce();
     expect(closeSpy).toHaveBeenCalledWith(4001, expect.stringContaining("Missing token"));
+    expect(audit.log).toHaveBeenCalledWith(
+      expect.objectContaining({ action: "auth.reject", result: "denied" })
+    );
   });
 
-  it("authenticates with a valid fleet JWT and returns authMethod 'fleet'", async () => {
+  it("authenticates with a valid fleet JWT", async () => {
     const fleetKey = generateJwtSecret();
     const token = signJwt({ sub: "peer-bridge" }, fleetKey, { ttlSeconds: 60 });
-    const authenticate = createAuthMiddleware({ skipAuth: false, fleetKey });
     const { ws, closeSpy } = makeWs();
+    const audit = makeAuditLog();
 
-    const ctx = await authenticate(ws, makeReq(`/?token=${token}`));
+    const result = await authenticateConnection(ws, makeReq(`/?token=${token}`), {
+      skipAuth: false,
+      fleetKey,
+      audit,
+    });
 
-    expect(ctx).toMatchObject({ githubLogin: "peer-bridge", authMethod: "fleet" });
+    expect(result).toMatchObject({ githubLogin: "peer-bridge", githubToken: undefined });
     expect(closeSpy).not.toHaveBeenCalled();
+    expect(audit.log).toHaveBeenCalledWith(
+      expect.objectContaining({ action: "auth.connect", result: "ok", detail: "fleet-jwt" })
+    );
   });
 
   it("closes with 4001 on invalid fleet JWT signature", async () => {
     const fleetKey = generateJwtSecret();
-    const badToken = signJwt({ sub: "attacker" }, generateJwtSecret()); // signed with different key
-    const authenticate = createAuthMiddleware({ skipAuth: false, fleetKey });
+    const badToken = signJwt({ sub: "attacker" }, generateJwtSecret());
     const { ws, closeSpy } = makeWs();
+    const audit = makeAuditLog();
 
-    const ctx = await authenticate(ws, makeReq(`/?token=${badToken}`));
+    const result = await authenticateConnection(ws, makeReq(`/?token=${badToken}`), {
+      skipAuth: false,
+      fleetKey,
+      audit,
+    });
 
-    expect(ctx).toBeUndefined();
+    expect(result).toBeUndefined();
     expect(closeSpy).toHaveBeenCalledWith(4001, expect.stringContaining("Invalid fleet JWT"));
+    expect(audit.log).toHaveBeenCalledWith(
+      expect.objectContaining({ action: "auth.reject", result: "denied" })
+    );
+  });
+
+  it("authenticates with a valid GitHub PAT", async () => {
+    const { ws, closeSpy } = makeWs();
+    const audit = makeAuditLog();
+
+    global.fetch = vi.fn(() =>
+      Promise.resolve({
+        ok: true,
+        json: async () => ({ login: "testuser" }),
+      } as Response)
+    );
+
+    const onGithubToken = vi.fn();
+    const result = await authenticateConnection(ws, makeReq(`/?token=ghp_testtoken`), {
+      skipAuth: false,
+      fleetKey: undefined,
+      audit,
+      onGithubToken,
+    });
+
+    expect(result).toMatchObject({ githubLogin: "testuser", githubToken: "ghp_testtoken" });
+    expect(closeSpy).not.toHaveBeenCalled();
+    expect(onGithubToken).toHaveBeenCalledWith("ghp_testtoken");
+    expect(audit.log).toHaveBeenCalledWith(
+      expect.objectContaining({ action: "auth.connect", result: "ok", detail: "github-pat" })
+    );
+  });
+
+  it("closes with 4001 on invalid GitHub PAT", async () => {
+    const { ws, closeSpy } = makeWs();
+    const audit = makeAuditLog();
+
+    global.fetch = vi.fn(() =>
+      Promise.resolve({
+        ok: false,
+      } as Response)
+    );
+
+    const result = await authenticateConnection(ws, makeReq(`/?token=ghp_badtoken`), {
+      skipAuth: false,
+      fleetKey: undefined,
+      audit,
+    });
+
+    expect(result).toBeUndefined();
+    expect(closeSpy).toHaveBeenCalledWith(4001, expect.stringContaining("Invalid or expired GitHub PAT"));
+    expect(audit.log).toHaveBeenCalledWith(
+      expect.objectContaining({ action: "auth.reject", result: "denied" })
+    );
   });
 });
