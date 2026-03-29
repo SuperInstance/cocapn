@@ -55,7 +55,7 @@ export class FleetManager {
     this.registry.registerAgent(
       initialLeaderId,
       { name: `${name}-leader`, url: '' },
-      { skills: [], leadershipPriority: 100 },
+      { skills: [], modules: [], leadershipPriority: 100 },
       fleet.id,
       'leader'
     );
@@ -87,7 +87,8 @@ export class FleetManager {
       { name: agentInfo.name, url: agentInfo.url },
       {
         skills: agentInfo.skills,
-        leadershipPriority: agentInfo.leadershipPriority,
+        modules: [],
+        ...(agentInfo.leadershipPriority !== undefined && { leadershipPriority: agentInfo.leadershipPriority }),
       },
       fleetId,
       preferredRole
@@ -130,7 +131,7 @@ export class FleetManager {
   /**
    * Assign task to best-fit agent in fleet
    */
-  assignTask(fleetId: string, task: Omit<FleetTask, 'id' | 'createdAt' | 'retryCount'>): FleetTask {
+  assignTask(fleetId: string, task: Omit<FleetTask, 'id' | 'createdAt' | 'retryCount' | 'maxRetries'>): FleetTask {
     const fleet = this.registry.getFleet(fleetId);
     if (!fleet) {
       throw new Error(`Fleet not found: ${fleetId}`);
@@ -164,7 +165,11 @@ export class FleetManager {
       throw new Error('No suitable agents found for task');
     }
 
-    const bestAgentId = scores[0].agentId;
+    const bestAgentId = scores[0]?.agentId;
+
+    if (!bestAgentId) {
+      throw new Error('No suitable agents found for task');
+    }
 
     // Create task with assigned agent
     const newTask = this.registry.createTask({
@@ -213,7 +218,6 @@ export class FleetManager {
       status: 'running',
       timeout: this.config.defaultTaskTimeout,
       onTimeout: 'abort',
-      retryCount: 0,
       maxRetries: this.config.taskRetryLimit,
     });
 
@@ -229,8 +233,6 @@ export class FleetManager {
         status: 'pending',
         timeout: subtask.timeout,
         onTimeout: 'retry',
-        retryCount: 0,
-        maxRetries: this.config.taskRetryLimit,
       });
       subtasks.push(fleetTask);
     }
@@ -264,7 +266,7 @@ export class FleetManager {
       if (task?.assignedTo) {
         const agent = this.registry.getAgent(task.assignedTo);
         if (agent) {
-          agent.currentTask = undefined;
+          delete agent.currentTask;
           agent.status = 'idle';
         }
       }
@@ -291,17 +293,19 @@ export class FleetManager {
 
     for (const task of tasksToRedistribute) {
       try {
-        // Reassign task
+        // Reassign task - create a new task object without the excluded fields
+        const { id, createdAt, retryCount, assignedTo, ...taskData } = task;
         const newTask = this.assignTask(fleetId, {
-          ...task,
-          assignedTo: undefined,
+          ...taskData,
+          assignedTo: '' as string, // Temporary, will be reassigned
           status: 'pending',
         });
 
         // Update original task
+        const newAssignedTo = newTask.assignedTo;
         this.registry.updateTask(task.id, {
-          assignedTo: newTask.assignedTo,
-          status: 'assigned',
+          ...(newAssignedTo !== undefined && { assignedTo: newAssignedTo }),
+          status: newAssignedTo !== undefined ? 'assigned' : 'pending',
         });
 
         redistributed++;
@@ -354,6 +358,10 @@ export class FleetManager {
     });
 
     const newLeader = candidates[0];
+
+    if (!newLeader) {
+      throw new Error('No candidates for leader election');
+    }
 
     // Update fleet
     this.registry.updateFleet(fleetId, { leaderId: newLeader.id });

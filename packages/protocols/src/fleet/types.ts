@@ -55,11 +55,11 @@ export type AgentStatus = 'idle' | 'busy' | 'offline' | 'degraded';
 
 export interface AgentCapabilities {
   skills: string[];
-  modules: string[];
-  compute: {
+  modules?: string[] | undefined;
+  compute?: {
     cpu?: string;
     memory?: string;
-  };
+  } | undefined;
   leadershipPriority?: number;
 }
 
@@ -100,7 +100,7 @@ export interface FleetTask {
   startedAt?: number;
   timeout: number;
   retryCount: number;
-  maxRetries: number;
+  maxRetries?: number;
   onTimeout: TimeoutAction;
 }
 
@@ -148,10 +148,10 @@ export interface Subtask {
   id: string;
   description: string;
   input: TaskMessage;
-  requiredSkills?: string[];
+  requiredSkills?: string[] | undefined;
   timeout: number;
   priority: TaskPriority;
-  onTimeout?: TimeoutAction;
+  onTimeout?: TimeoutAction | undefined;
 }
 
 export interface Assignment {

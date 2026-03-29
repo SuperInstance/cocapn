@@ -25,7 +25,7 @@ export class FleetClient {
   private config: FleetClientConfig;
   private manager: FleetManager;
   private state: FleetClientState;
-  private heartbeatInterval?: NodeJS.Timeout;
+  private heartbeatInterval?: NodeJS.Timeout | undefined;
   private messageHandlers: Map<string, (message: FleetMessage) => void>;
 
   constructor(config: FleetClientConfig, manager?: FleetManager) {
@@ -59,7 +59,12 @@ export class FleetClient {
           name: this.config.agentCard.name,
           url: this.config.agentCard.url,
         },
-        this.config.capabilities,
+        {
+          skills: this.config.capabilities.skills,
+          modules: this.config.capabilities.modules || [],
+          compute: this.config.capabilities.compute || {},
+          ...(this.config.capabilities.leadershipPriority !== undefined && { leadershipPriority: this.config.capabilities.leadershipPriority }),
+        },
         this.config.desiredFleetId,
         this.config.preferredRole
       );
@@ -135,8 +140,8 @@ export class FleetClient {
       from: this.config.agentId,
       timestamp: Date.now(),
       metadata: {
-        priority: message.metadata?.priority || 5,
         ...message.metadata,
+        priority: message.metadata?.priority || 5,
       },
     };
 
@@ -360,7 +365,7 @@ export class FleetClient {
     this.sendError(taskId, {
       code: 'TASK_FAILED',
       message: error.message,
-      stack: error.stack,
+      ...(error.stack && { stack: error.stack }),
       recoverable: false,
       escalationLevel: 'abort',
     });
@@ -394,7 +399,7 @@ export class FleetClient {
   /**
    * Get agent info
    */
-  getAgentInfo(): { id: string; name: string; role?: string } {
+  getAgentInfo(): { id: string; name: string; role: string | undefined } {
     return {
       id: this.config.agentId,
       name: this.config.agentCard.name,

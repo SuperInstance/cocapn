@@ -15,6 +15,7 @@ import type {
   AuditLog,
   TaskDedup,
   FleetConfig,
+  FleetTopology,
 } from './types.js';
 import { DEFAULT_FLEET_CONFIG } from './types.js';
 
@@ -208,7 +209,12 @@ export class FleetRegistry {
         fleetId,
         agentId,
         role,
-        capabilities,
+        capabilities: {
+          skills: capabilities.skills,
+          modules: capabilities.modules || [],
+          compute: capabilities.compute || {},
+          ...(capabilities.leadershipPriority !== undefined && { leadershipPriority: capabilities.leadershipPriority }),
+        },
         endpoint: agentCard.url,
         lastSeen: now,
         status: 'idle' as AgentStatus,
@@ -259,7 +265,12 @@ export class FleetRegistry {
         fleetId,
         agentId,
         role,
-        capabilities,
+        capabilities: {
+          skills: capabilities.skills,
+          modules: capabilities.modules || [],
+          compute: capabilities.compute || {},
+          ...(capabilities.leadershipPriority !== undefined && { leadershipPriority: capabilities.leadershipPriority }),
+        },
         endpoint: agentCard.url,
         lastSeen: now,
         status: 'idle' as AgentStatus,
@@ -364,7 +375,9 @@ export class FleetRegistry {
     const now = Date.now();
     agent.lastHeartbeat = now;
     agent.status = status;
-    agent.currentTask = currentTaskId;
+    if (currentTaskId !== undefined) {
+      agent.currentTask = currentTaskId;
+    }
     agent.load = load;
     agent.uptime = Math.floor((now - (agent.lastHeartbeat - agent.uptime * 1000)) / 1000);
 
@@ -473,7 +486,7 @@ export class FleetRegistry {
     // Mark tasks for reassignment
     for (const task of activeTasks) {
       task.status = 'pending';
-      task.assignedTo = undefined;
+      delete task.assignedTo;
 
       this.addAuditLog({
         id: this.generateId('audit'),

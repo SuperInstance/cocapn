@@ -25,7 +25,7 @@ export class TaskSplitter {
   splitTask(
     description: string,
     strategy: DecompositionStrategy,
-    input: any
+    input?: any
   ): TaskSplitResult {
     switch (strategy.type) {
       case 'parallel':
@@ -33,7 +33,7 @@ export class TaskSplitter {
       case 'sequential':
         return this.splitSequential(description, strategy);
       case 'map-reduce':
-        return this.splitMapReduce(description, strategy, input);
+        return this.splitMapReduce(description, strategy);
       default:
         throw new Error(`Unknown decomposition strategy: ${(strategy as any).type}`);
     }
@@ -47,7 +47,7 @@ export class TaskSplitter {
     strategy: Extract<DecompositionStrategy, { type: 'parallel' }>
   ): TaskSplitResult {
     const subtasks = strategy.subtasks;
-    const estimatedDuration = Math.max(...subtasks.map(st => st.timeout));
+    const estimatedDuration = subtasks.length > 0 ? Math.max(...subtasks.map(st => st.timeout)) : 0;
 
     return {
       subtasks,
@@ -63,17 +63,22 @@ export class TaskSplitter {
     description: string,
     strategy: Extract<DecompositionStrategy, { type: 'sequential' }>
   ): TaskSplitResult {
-    const subtasks: Subtask[] = strategy.stages.map((stage, index) => ({
-      id: `${this.generateId()}-${index}`,
-      description: `${stage.name}: ${description}`,
-      input: {
-        role: 'user' as const,
-        parts: [{ type: 'text' as const, text: description }],
-      },
-      requiredSkills: stage.assignedTo ? [stage.assignedTo] : undefined,
-      timeout: 300000, // 5 minutes default per stage
-      priority: 5,
-    }));
+    const subtasks: Subtask[] = strategy.stages.map((stage, index) => {
+      const subtask: Subtask = {
+        id: `${this.generateId()}-${index}`,
+        description: `${stage.name}: ${description}`,
+        input: {
+          role: 'user' as const,
+          parts: [{ type: 'text' as const, text: description }],
+        },
+        timeout: 300000, // 5 minutes default per stage
+        priority: 5,
+      };
+      if (stage.assignedTo) {
+        subtask.requiredSkills = [stage.assignedTo];
+      }
+      return subtask;
+    });
 
     const estimatedDuration = subtasks.reduce((sum, st) => sum + st.timeout, 0);
 

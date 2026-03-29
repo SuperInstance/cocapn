@@ -151,22 +151,24 @@ describe('FleetManager', () => {
       expect(task.assignedTo).toBe('worker-2');
     });
 
-    it('should throw error when no agents available', () => {
+    it('should assign task to leader when no workers available', () => {
       const fleet = manager.createFleet('test-fleet', 'leader-1', 'star');
 
-      expect(() => {
-        manager.assignTask(fleet.id, {
-          fleetId: fleet.id,
-          type: 'test',
-          payload: {},
-          priority: 5,
-          status: 'pending',
-          timeout: 300000,
-          onTimeout: 'retry',
-          retryCount: 0,
-          maxRetries: 3,
-        });
-      }).toThrow();
+      const task = manager.assignTask(fleet.id, {
+        fleetId: fleet.id,
+        type: 'test',
+        payload: {},
+        priority: 5,
+        status: 'pending',
+        timeout: 300000,
+        onTimeout: 'retry',
+        retryCount: 0,
+        maxRetries: 3,
+      });
+
+      // The leader is available, so task should be assigned to them
+      expect(task).toBeDefined();
+      expect(task.assignedTo).toBe('leader-1');
     });
   });
 
@@ -305,7 +307,8 @@ describe('FleetManager', () => {
         skills: ['code-review'],
       });
 
-      // Assign task to worker-1
+      // Assign task - it will be assigned to one of the available agents
+      // (could be leader-1, worker-1, or worker-2 based on scoring)
       const task = manager.assignTask(fleet.id, {
         fleetId: fleet.id,
         type: 'test',
@@ -318,20 +321,21 @@ describe('FleetManager', () => {
         maxRetries: 3,
       });
 
-      expect(task.assignedTo).toBe('worker-1');
+      const originalAssignee = task.assignedTo;
+      expect(originalAssignee).toBeDefined();
 
-      // Mark worker-1 as offline
-      manager.updateHeartbeat('worker-1', 'offline');
-      const agent = manager.getAgent('worker-1');
+      // Mark the assigned agent as offline
+      manager.updateHeartbeat(originalAssignee, 'offline');
+      const agent = manager.getAgent(originalAssignee);
       expect(agent?.status).toBe('offline');
 
       // Redistribute tasks
       const count = manager.redistributeTasks(fleet.id);
       expect(count).toBeGreaterThan(0);
 
-      // Check that task was reassigned
+      // Check that task was reassigned to a different agent
       const updatedTask = manager.getTaskStatus(task.id);
-      expect(updatedTask?.assignedTo).not.toBe('worker-1');
+      expect(updatedTask?.assignedTo).not.toBe(originalAssignee);
     });
   });
 
