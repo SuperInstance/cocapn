@@ -48,6 +48,7 @@ export type BridgeServerEventMap = {
   connection: [clientId: string];
   disconnection: [clientId: string];
   error: [err: Error];
+  'health-change': [status: import('../health/index.js').SystemHealthStatus];
 };
 
 // ─── Protocol messages ───────────────────────────────────────────────────────

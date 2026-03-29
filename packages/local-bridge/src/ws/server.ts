@@ -45,6 +45,8 @@ import { handleA2aRequest } from "../handlers/a2a.js";
 import { handleModuleInstall } from "../handlers/module.js";
 import { handleChangeSkin } from "../handlers/skin.js";
 import { handleHttpPeerRequest } from "../handlers/peer.js";
+import { HealthChecker, checkGit, checkBrain, checkDisk, checkWebSocket, type SystemHealthStatus } from "../health/index.js";
+import { createOfflineQueue, type OfflineQueue } from "../cloud-bridge/offline-queue.js";
 
 // Re-export types for backward compatibility
 export type { BridgeServerOptions, BridgeServerEventMap, TypedMessage, JsonRpcRequest, SessionState };
@@ -70,6 +72,9 @@ export class BridgeServer extends EventEmitter<BridgeServerEventMap> {
   private sender:        Sender;
   private handlerCtx:    HandlerContext;
   private handlerRegistry: HandlerRegistry;
+  private healthChecker: HealthChecker;
+  private offlineQueue:  OfflineQueue;
+  private healthInterval?: ReturnType<typeof setInterval>;
 
   constructor(options: BridgeServerOptions) {
     super();
@@ -77,6 +82,16 @@ export class BridgeServer extends EventEmitter<BridgeServerEventMap> {
     this.audit      = new AuditLogger(options.repoRoot);
     this.chatRouter = new ChatRouter();
     this.sender     = createSender();
+
+    // Initialize HealthChecker with standard checks
+    this.healthChecker = new HealthChecker();
+    this.setupHealthChecks();
+
+    // Initialize OfflineQueue
+    this.offlineQueue = new OfflineQueue(options.repoRoot);
+    this.offlineQueue.load().catch((err) => {
+      console.error('[bridge] Failed to load offline queue:', err);
+    });
 
     // Build HandlerContext with all services
     this.handlerCtx = this.buildHandlerContext();
@@ -104,6 +119,26 @@ export class BridgeServer extends EventEmitter<BridgeServerEventMap> {
       ...(options.brain        !== undefined ? { brain:        options.brain        } : {}),
       ...(options.fleetKey     !== undefined ? { fleetKey:     options.fleetKey     } : {}),
     });
+  }
+
+  /**
+   * Setup standard health checks
+   */
+  private setupHealthChecks(): void {
+    const port = this.options.config.config.port;
+
+    // Git repository check
+    this.healthChecker.addCheck('git', checkGit(this.options.repoRoot));
+
+    // Brain/facts check
+    const factsPath = this.options.config.config.facts || 'cocapn/memory/facts.json';
+    this.healthChecker.addCheck('brain', checkBrain(this.options.repoRoot, factsPath));
+
+    // Disk write check
+    this.healthChecker.addCheck('disk', checkDisk(this.options.repoRoot));
+
+    // WebSocket server check
+    this.healthChecker.addCheck('websocket', checkWebSocket(port));
   }
 
   /**
@@ -205,11 +240,25 @@ export class BridgeServer extends EventEmitter<BridgeServerEventMap> {
    *   GET /.well-known/cocapn/peer   → peer card (domain, capabilities, publicKey)
    *   GET /api/peer/fact?key=<k>     → { key, value } from Brain facts
    *   GET /api/peer/facts            → all facts (requires fleet JWT)
+   *   GET /health                    → health status JSON
    */
   private async handleHttpRequest(
     req: IncomingMessage,
     res: ServerResponse
   ): Promise<void> {
+    const url = req.url || '';
+
+    // Handle health check endpoint
+    if (url === '/health') {
+      const health = await this.getHealthStatus();
+      const statusCode = health.status === 'unhealthy' ? 503 :
+                        health.status === 'degraded' ? 200 : 200;
+      res.writeHead(statusCode, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(health, null, 2));
+      return;
+    }
+
+    // Handle A2A peer endpoints
     await handleHttpPeerRequest(req, res, this.handlerCtx);
   }
 
@@ -284,5 +333,112 @@ export class BridgeServer extends EventEmitter<BridgeServerEventMap> {
       sessionCount: this.sessions.size,
       uptime: process.uptime(),
     };
+  }
+
+  // ---------------------------------------------------------------------------
+  // Health Check API
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Get the current health status of the bridge
+   */
+  async getHealthStatus(): Promise<SystemHealthStatus> {
+    return this.healthChecker.runAll();
+  }
+
+  /**
+   * Get the HealthChecker instance for custom checks
+   */
+  getHealthChecker(): HealthChecker {
+    return this.healthChecker;
+  }
+
+  /**
+   * Start periodic health checks (emits events on status change)
+   * @param intervalMs - Check interval in milliseconds (default: 30000)
+   */
+  startHealthMonitoring(intervalMs: number = 30000): void {
+    if (this.healthInterval) {
+      clearInterval(this.healthInterval);
+    }
+
+    let lastStatus: 'healthy' | 'degraded' | 'unhealthy' | null = null;
+
+    this.healthInterval = setInterval(async () => {
+      const health = await this.getHealthStatus();
+
+      if (lastStatus !== health.status) {
+        this.emit('health-change', health);
+        lastStatus = health.status;
+      }
+    }, intervalMs);
+  }
+
+  /**
+   * Stop periodic health monitoring
+   */
+  stopHealthMonitoring(): void {
+    if (this.healthInterval) {
+      clearInterval(this.healthInterval);
+      this.healthInterval = undefined;
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Offline Queue API
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Get the offline queue instance
+   */
+  getOfflineQueue(): OfflineQueue {
+    return this.offlineQueue;
+  }
+
+  /**
+   * Process pending offline queue operations
+   */
+  async flushOfflineQueue(): Promise<{ succeeded: number; failed: number; remaining: number }> {
+    const stats = this.offlineQueue.getStats();
+
+    if (stats.ready === 0) {
+      return { succeeded: 0, failed: 0, remaining: stats.total };
+    }
+
+    // Define operation executor based on operation type
+    const executor = async (op: import('../cloud-bridge/offline-queue.js').QueuedOperation) => {
+      // Operations will be executed based on their type
+      // This is a placeholder - actual implementation depends on the operation type
+      switch (op.type) {
+        case 'chat':
+        case 'complete':
+          // These would be retried via the cloud bridge
+          throw new Error('Cloud operation not yet implemented');
+        case 'fact_set':
+          if (!this.options.brain) {
+            throw new Error('Brain not available');
+          }
+          const { key, value } = op.payload as { key: string; value: string };
+          await this.options.brain.setFact(key, value);
+          break;
+        case 'wiki_update':
+          // Wiki updates would be retried here
+          throw new Error('Wiki update not yet implemented');
+        case 'a2a_send':
+          // A2A messages would be retried here
+          throw new Error('A2A send not yet implemented');
+        default:
+          throw new Error(`Unknown operation type: ${(op as any).type}`);
+      }
+    };
+
+    return this.offlineQueue.retryAll(executor);
+  }
+
+  /**
+   * Get offline queue statistics
+   */
+  getOfflineQueueStats(): ReturnType<OfflineQueue['getStats']> {
+    return this.offlineQueue.getStats();
   }
 }
