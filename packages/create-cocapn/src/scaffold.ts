@@ -4,7 +4,7 @@
  * All functions are individually exported so they can be tested in isolation.
  */
 
-import { execSync } from "child_process";
+import { execSync, execFileSync } from "child_process";
 import {
   mkdirSync,
   writeFileSync,
@@ -32,6 +32,31 @@ export interface ScaffoldOptions {
 const GH_API = "https://api.github.com";
 const UA = "create-cocapn/0.1.0";
 
+/**
+ * Validate that a GitHub PAT contains only safe characters.
+ * GitHub PATs are alphanumeric (plus underscores for fine-grained tokens).
+ * Rejects any value containing shell metacharacters to prevent command injection.
+ */
+function isValidPat(pat: string): boolean {
+  return /^[A-Za-z0-9_]{1,255}$/.test(pat);
+}
+
+/**
+ * Validate that a GitHub username contains only safe characters.
+ * GitHub usernames allow alphanumeric and hyphens (no consecutive hyphens, no leading/trailing hyphens).
+ */
+function isValidUsername(user: string): boolean {
+  return /^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38}[A-Za-z0-9])?$/.test(user);
+}
+
+/**
+ * Validate that a repo name contains only safe characters.
+ * GitHub repo names allow alphanumeric, hyphens, underscores, and dots.
+ */
+function isValidRepoName(name: string): boolean {
+  return /^[A-Za-z0-9._-]{1,100}$/.test(name);
+}
+
 function ghHeaders(token: string): Record<string, string> {
   return {
     Authorization: `Bearer ${token}`,
@@ -47,6 +72,7 @@ function ghHeaders(token: string): Record<string, string> {
  * Returns undefined if the token is invalid.
  */
 export async function validateToken(token: string): Promise<string | undefined> {
+  if (!isValidPat(token)) return undefined;
   try {
     const res = await fetch(`${GH_API}/user`, { headers: ghHeaders(token) });
     if (!res.ok) return undefined;
@@ -140,6 +166,17 @@ export function cloneRepos(
   repos: RepoNames,
   baseDir: string
 ): { publicDir: string; privateDir: string } {
+  // Validate inputs to prevent command injection
+  if (!isValidPat(token)) {
+    throw new Error("Invalid GitHub PAT format — token must be alphanumeric");
+  }
+  if (!isValidUsername(username)) {
+    throw new Error("Invalid GitHub username format");
+  }
+  if (!isValidRepoName(repos.publicRepo) || !isValidRepoName(repos.privateRepo)) {
+    throw new Error("Invalid repo name format");
+  }
+
   const publicDir = join(baseDir, repos.publicRepo);
   const privateDir = join(baseDir, repos.privateRepo);
 
@@ -149,9 +186,10 @@ export function cloneRepos(
   ] as const) {
     const url = `https://oauth2:${token}@github.com/${username}/${repoName}.git`;
     mkdirSync(destDir, { recursive: true });
-    execSync(`git clone "${url}" "${destDir}"`, { stdio: "pipe" });
+    // Use execFileSync to avoid shell injection even with validated inputs
+    execFileSync("git", ["clone", url, destDir], { stdio: "pipe" });
     // SECURITY: Remove PAT from .git/config to prevent plaintext credential leak
-    execSync(`git -C "${destDir}" remote set-url origin "https://github.com/${username}/${repoName}.git"`, { stdio: "pipe" });
+    execFileSync("git", ["-C", destDir, "remote", "set-url", "origin", `https://github.com/${username}/${repoName}.git`], { stdio: "pipe" });
   }
 
   return { publicDir, privateDir };
@@ -278,7 +316,8 @@ export function commitAll(dir: string, username: string, message: string): void 
   };
   try {
     execSync("git add -A", { cwd: dir, stdio: "pipe", env: { ...process.env, ...env } });
-    execSync(`git commit -m "${message.replace(/"/g, '\\"')}"`, {
+    // Use execFileSync to prevent shell injection via commit message
+    execSync("git", ["commit", "-m", message], {
       cwd: dir,
       stdio: "pipe",
       env: { ...process.env, ...env },

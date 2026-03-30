@@ -5,9 +5,16 @@ dist/
 *.d.ts.map
 .env
 .env.*
+.env.local
+.env.production
 *.secret.yml
 secrets/*.yml
 !secrets/*.yml.example
 *.age
 .DS_Store
 .remember/
+.idea/
+.vscode/
+*.swp
+*.swo
+*~

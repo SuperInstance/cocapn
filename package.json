@@ -9,7 +9,8 @@
   "scripts": {
     "build": "npm run build --workspaces",
     "test": "npm run test --workspaces",
-    "typecheck": "npm run typecheck --workspaces"
+    "typecheck": "npm run typecheck --workspaces",
+    "lint": "eslint packages/*/src/ --ext .ts"
   },
   "author": "Superinstance <team@superinstance.com>",
   "license": "MIT",

@@ -25,6 +25,29 @@ import { filterEnv } from '../agents/spawner.js';
 
 const logger = createLogger('plugins:sandbox');
 
+/**
+ * Validate that a path does not escape its base directory (directory traversal check)
+ * and only contains safe characters.
+ */
+function validatePath(basePath: string, targetPath: string, label: string): void {
+  const resolved = join(basePath, targetPath);
+
+  // Must resolve to a path within basePath
+  if (!resolved.startsWith(basePath)) {
+    throw new Error(`Sandbox security: ${label} path escapes plugin directory`);
+  }
+
+  // Block null bytes and shell metacharacters that could be exploited via -e flag
+  if (resolved.includes('\0')) {
+    throw new Error(`Sandbox security: ${label} path contains null byte`);
+  }
+
+  // Only allow .js, .mjs, .cjs extensions
+  if (!/\.(js|mjs|cjs)$/.test(resolved)) {
+    throw new Error(`Sandbox security: ${label} must be a .js/.mjs/.cjs file`);
+  }
+}
+
 // ─── Sandbox Options ───────────────────────────────────────────────────────────
 
 export interface SandboxOptions {
@@ -58,6 +81,9 @@ export class PluginSandbox {
   ): Promise<SandboxResult> {
     const startTime = Date.now();
     const skillPath = join(pluginPath, skillEntry);
+
+    // Validate paths to prevent directory traversal and code injection
+    validatePath(pluginPath, skillEntry, 'skill entry');
 
     // Build environment with permission-based filtering
     const env = this.buildEnv(context);
@@ -132,6 +158,9 @@ export class PluginSandbox {
   ): Promise<unknown> {
     const startTime = Date.now();
     const skillPath = join(pluginPath, skillEntry);
+
+    // Validate paths to prevent directory traversal and code injection
+    validatePath(pluginPath, skillEntry, 'skill entry');
 
     const env = this.buildEnv(context);
 
