@@ -86,7 +86,8 @@ export interface BackupListEntry {
 function formatTimestamp(): string {
   const now = new Date();
   const pad = (n: number) => String(n).padStart(2, "0");
-  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`;
+  const ms = String(now.getMilliseconds()).padStart(3, "0");
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}-${ms}`;
 }
 
 function formatSize(bytes: number): string {

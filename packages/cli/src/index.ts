@@ -39,6 +39,10 @@
  *   cocapn config validate     — Validate config
  *   cocapn logs                — Show recent agent logs
  *   cocapn logs search <query> — Search logs
+ *   cocapn backup create       — Create full backup
+ *   cocapn backup list         — List backups
+ *   cocapn backup restore <n>  — Restore from backup
+ *   cocapn backup clean        — Remove old backups
  *   cocapn version             — Show version
  */
 
@@ -148,6 +152,9 @@ export function createCLI(): Command {
 
   // Serve command
   program.addCommand(createServeCommand());
+
+  // Backup command
+  program.addCommand(createBackupCommand());
 
   return program;
 }
