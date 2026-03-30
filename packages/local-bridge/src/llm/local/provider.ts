@@ -178,7 +178,7 @@ export class OllamaProvider implements LLMProvider {
 
   private prepareMessages(messages: ChatMessage[], systemPrompt?: string): ChatMessage[] {
     if (!systemPrompt) return messages;
-    if (messages.length > 0 && messages[0].role === 'system') return messages;
+    if (messages.length > 0 && messages[0]?.role === 'system') return messages;
     return [{ role: 'system', content: systemPrompt }, ...messages];
   }
 
