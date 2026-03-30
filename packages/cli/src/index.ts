@@ -68,6 +68,7 @@ import { createConfigCommand } from "./commands/config.js";
 import { createLogsCommand } from "./commands/logs.js";
 import { createDoctorCommand } from "./commands/doctor.js";
 import { createUpgradeCommand } from "./commands/upgrade.js";
+import { createResetCommand } from "./commands/reset.js";
 
 const VERSION = "0.1.0";
 
@@ -138,6 +139,9 @@ export function createCLI(): Command {
 
   // Upgrade command
   program.addCommand(createUpgradeCommand());
+
+  // Reset command
+  program.addCommand(createResetCommand());
 
   return program;
 }
