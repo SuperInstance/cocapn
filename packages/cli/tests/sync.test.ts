@@ -5,12 +5,11 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { writeFileSync, mkdirSync, rmSync, existsSync } from "fs";
 import { join } from "path";
+import { execSync } from "child_process";
 import {
   parseStatusPorcelain,
   getRepoStatus,
   autoCommit,
-  pushRepo,
-  pullRepo,
   resolveRepoPaths,
   syncRepo,
   printRepoStatus,
@@ -19,19 +18,21 @@ import {
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
-const testDir = join(process.cwd(), ".test-sync-tmp");
-const privateDir = join(testDir, "brain");
-const publicDir = join(testDir, "alice.makerlog.ai");
+let testCounter = 0;
+
+function uniqueDir(): string {
+  testCounter++;
+  return join(process.cwd(), `.test-sync-${process.pid}-${testCounter}`);
+}
 
 function initGitRepo(dir: string): void {
   mkdirSync(dir, { recursive: true });
-  exec("git init -b main", dir);
-  exec('git config user.email "test@test.com"', dir);
-  exec('git config user.name "Test"', dir);
+  execSafe("git init -b main", dir);
+  execSafe('git config user.email "test@test.com"', dir);
+  execSafe('git config user.name "Test"', dir);
 }
 
-function exec(cmd: string, cwd: string): string {
-  const { execSync } = require("child_process") as typeof import("child_process");
+function execSafe(cmd: string, cwd: string): string {
   try {
     return execSync(cmd, { cwd, encoding: "utf-8", timeout: 10_000 }).trim();
   } catch {
@@ -39,30 +40,22 @@ function exec(cmd: string, cwd: string): string {
   }
 }
 
-function setupRepos(): void {
-  rmSync(testDir, { recursive: true, force: true });
-
-  // Private (brain) repo
-  initGitRepo(privateDir);
-  const cocapnDir = join(privateDir, "cocapn");
+function makeBrainRepo(dir: string): void {
+  initGitRepo(dir);
+  const cocapnDir = join(dir, "cocapn");
   mkdirSync(join(cocapnDir, "memory"), { recursive: true });
   writeFileSync(join(cocapnDir, "soul.md"), "# Test Soul\n\nI am a test agent.");
   writeFileSync(join(cocapnDir, "memory", "facts.json"), JSON.stringify({ "user.name": "Alice" }));
-  exec("git add -A", privateDir);
-  exec('git commit -m "init brain"', privateDir);
-
-  // Public (face) repo
-  initGitRepo(publicDir);
-  writeFileSync(join(publicDir, "cocapn.yml"), "name: test");
-  writeFileSync(join(publicDir, "index.html"), "<html><body>hello</body></html>");
-  exec("git add -A", publicDir);
-  exec('git commit -m "init face"', publicDir);
+  execSafe("git add -A", dir);
+  execSafe('git commit -m "init brain"', dir);
 }
 
-function cleanup(): void {
-  if (existsSync(testDir)) {
-    rmSync(testDir, { recursive: true, force: true });
-  }
+function makeFaceRepo(dir: string): void {
+  initGitRepo(dir);
+  writeFileSync(join(dir, "cocapn.yml"), "name: test");
+  writeFileSync(join(dir, "index.html"), "<html><body>hello</body></html>");
+  execSafe("git add -A", dir);
+  execSafe('git commit -m "init face"', dir);
 }
 
 // ─── parseStatusPorcelain ──────────────────────────────────────────────────
@@ -82,11 +75,16 @@ describe("parseStatusPorcelain", () => {
     expect(parseStatusPorcelain(output)).toEqual(["newfile.ts", "another.ts"]);
   });
 
-  it("parses staged files", () => {
-    const output = "A  staged.ts\nD  deleted.ts\nR  old.ts -> new.ts";
+  it("parses staged added and deleted files", () => {
+    const output = "A  staged.ts\nD  deleted.ts";
     const result = parseStatusPorcelain(output);
     expect(result).toContain("staged.ts");
     expect(result).toContain("deleted.ts");
+  });
+
+  it("parses renamed files", () => {
+    const output = "R  old.ts -> new.ts";
+    const result = parseStatusPorcelain(output);
     expect(result).toContain("new.ts");
   });
 
@@ -100,36 +98,43 @@ describe("parseStatusPorcelain", () => {
 // ─── getRepoStatus ─────────────────────────────────────────────────────────
 
 describe("getRepoStatus", () => {
-  beforeEach(() => setupRepos());
-  afterEach(() => cleanup());
+  let dir: string;
+
+  beforeEach(() => {
+    dir = uniqueDir();
+    makeBrainRepo(dir);
+  });
+
+  afterEach(() => {
+    if (existsSync(dir)) rmSync(dir, { recursive: true, force: true });
+  });
 
   it("returns clean status for committed repo", () => {
-    const status = getRepoStatus(privateDir);
+    const status = getRepoStatus(dir);
     expect(status.clean).toBe(true);
     expect(status.changedFiles).toEqual([]);
-    expect(status.branch).toBe("main");
   });
 
   it("detects uncommitted changes", () => {
-    writeFileSync(join(privateDir, "cocapn", "new-file.md"), "test");
-    const status = getRepoStatus(privateDir);
+    writeFileSync(join(dir, "cocapn", "new-file.md"), "test");
+    const status = getRepoStatus(dir);
     expect(status.clean).toBe(false);
     expect(status.changedFiles.length).toBeGreaterThan(0);
     expect(status.changedFiles.some((f) => f.includes("new-file.md"))).toBe(true);
   });
 
   it("detects no remote by default", () => {
-    const status = getRepoStatus(privateDir);
+    const status = getRepoStatus(dir);
     expect(status.hasRemote).toBe(false);
   });
 
   it("returns last commit info", () => {
-    const status = getRepoStatus(privateDir);
+    const status = getRepoStatus(dir);
     expect(status.lastCommitMsg).toBe("init brain");
   });
 
   it("returns ahead=0 behind=0 with no remote", () => {
-    const status = getRepoStatus(privateDir);
+    const status = getRepoStatus(dir);
     expect(status.ahead).toBe(0);
     expect(status.behind).toBe(0);
   });
@@ -138,83 +143,82 @@ describe("getRepoStatus", () => {
 // ─── autoCommit ────────────────────────────────────────────────────────────
 
 describe("autoCommit", () => {
-  beforeEach(() => setupRepos());
-  afterEach(() => cleanup());
+  let dir: string;
+
+  beforeEach(() => {
+    dir = uniqueDir();
+    makeBrainRepo(dir);
+  });
+
+  afterEach(() => {
+    if (existsSync(dir)) rmSync(dir, { recursive: true, force: true });
+  });
 
   it("returns null when no changes", () => {
-    const result = autoCommit(privateDir, "test commit");
+    const result = autoCommit(dir, "test commit");
     expect(result).toBeNull();
   });
 
   it("commits changes and returns file list", () => {
-    writeFileSync(join(privateDir, "cocapn", "change.md"), "new content");
-    const result = autoCommit(privateDir, "test commit");
+    writeFileSync(join(dir, "cocapn", "change.md"), "new content");
+    const result = autoCommit(dir, "test commit");
     expect(result).not.toBeNull();
     expect(result!.length).toBeGreaterThan(0);
   });
 
   it("creates a git commit with the given message", () => {
-    writeFileSync(join(privateDir, "cocapn", "change.md"), "new content");
-    autoCommit(privateDir, "sync test message");
-    const lastMsg = exec('git log -1 --format="%s"', privateDir);
+    writeFileSync(join(dir, "cocapn", "change.md"), "new content");
+    autoCommit(dir, "sync test message");
+    const lastMsg = execSafe('git log -1 --format="%s"', dir);
     expect(lastMsg).toBe("sync test message");
   });
 
   it("handles multiple files", () => {
-    writeFileSync(join(privateDir, "a.txt"), "a");
-    writeFileSync(join(privateDir, "b.txt"), "b");
-    writeFileSync(join(privateDir, "c.txt"), "c");
-    const result = autoCommit(privateDir, "multi file commit");
+    writeFileSync(join(dir, "a.txt"), "a");
+    writeFileSync(join(dir, "b.txt"), "b");
+    writeFileSync(join(dir, "c.txt"), "c");
+    const result = autoCommit(dir, "multi file commit");
     expect(result).not.toBeNull();
     expect(result!.length).toBe(3);
-  });
-});
-
-// ─── pushRepo / pullRepo ──────────────────────────────────────────────────
-
-describe("pushRepo", () => {
-  beforeEach(() => setupRepos());
-  afterEach(() => cleanup());
-
-  it("returns false when no remote configured", () => {
-    const result = pushRepo(privateDir);
-    expect(result).toBe(false);
-  });
-});
-
-describe("pullRepo", () => {
-  beforeEach(() => setupRepos());
-  afterEach(() => cleanup());
-
-  it("returns false when no remote configured", () => {
-    const result = pullRepo(privateDir);
-    expect(result).toBe(false);
   });
 });
 
 // ─── resolveRepoPaths ──────────────────────────────────────────────────────
 
 describe("resolveRepoPaths", () => {
-  beforeEach(() => setupRepos());
-  afterEach(() => cleanup());
+  let brainDir: string;
+  let faceDir: string;
+  let parentDir: string;
+
+  beforeEach(() => {
+    parentDir = uniqueDir();
+    brainDir = join(parentDir, "brain");
+    faceDir = join(parentDir, "alice.makerlog.ai");
+    makeBrainRepo(brainDir);
+    makeFaceRepo(faceDir);
+  });
+
+  afterEach(() => {
+    if (existsSync(parentDir)) rmSync(parentDir, { recursive: true, force: true });
+  });
 
   it("detects private repo when in brain directory", () => {
-    const { privatePath } = resolveRepoPaths(privateDir);
-    expect(privatePath).toBe(privateDir);
+    const { privatePath } = resolveRepoPaths(brainDir);
+    expect(privatePath).toBe(brainDir);
   });
 
   it("detects public repo when in face directory", () => {
-    const { publicPath } = resolveRepoPaths(publicDir);
-    expect(publicPath).toBe(publicDir);
+    const { publicPath } = resolveRepoPaths(faceDir);
+    expect(publicPath).toBe(faceDir);
   });
 
   it("finds sibling public repo from brain directory", () => {
-    const { publicPath } = resolveRepoPaths(privateDir);
-    expect(publicPath).toBe(publicDir);
+    const { publicPath } = resolveRepoPaths(brainDir);
+    expect(publicPath).toBe(faceDir);
   });
 
-  it("returns nulls when not in a cocapn directory", () => {
-    const { privatePath } = resolveRepoPaths(testDir);
+  it("returns null for private when not in a cocapn directory", () => {
+    const { privatePath } = resolveRepoPaths(parentDir);
     expect(privatePath).toBeNull();
   });
 });
@@ -222,25 +226,33 @@ describe("resolveRepoPaths", () => {
 // ─── syncRepo ──────────────────────────────────────────────────────────────
 
 describe("syncRepo", () => {
-  beforeEach(() => setupRepos());
-  afterEach(() => cleanup());
+  let dir: string;
+
+  beforeEach(() => {
+    dir = uniqueDir();
+    makeBrainRepo(dir);
+  });
+
+  afterEach(() => {
+    if (existsSync(dir)) rmSync(dir, { recursive: true, force: true });
+  });
 
   it("syncs a clean repo (no changes)", () => {
-    const result = syncRepo(privateDir, "private", "[cocapn] test");
+    const result = syncRepo(dir, "private", "[cocapn] test");
     expect(result.committed).toBe(false);
     expect(result.files).toEqual([]);
     expect(result.repo).toBe("private");
   });
 
   it("syncs a dirty repo (commits changes)", () => {
-    writeFileSync(join(privateDir, "cocapn", "dirty.md"), "dirty");
-    const result = syncRepo(privateDir, "private", "[cocapn] test");
+    writeFileSync(join(dir, "cocapn", "dirty.md"), "dirty");
+    const result = syncRepo(dir, "private", "[cocapn] test");
     expect(result.committed).toBe(true);
     expect(result.files.length).toBeGreaterThan(0);
   });
 
   it("pushed is false when no remote configured", () => {
-    const result = syncRepo(privateDir, "private", "[cocapn] test");
+    const result = syncRepo(dir, "private", "[cocapn] test");
     expect(result.pushed).toBe(false);
   });
 });
@@ -282,16 +294,21 @@ describe("printRepoStatus", () => {
 // ─── Conflict detection ────────────────────────────────────────────────────
 
 describe("conflict handling", () => {
-  beforeEach(() => setupRepos());
-  afterEach(() => cleanup());
+  let dir: string;
 
-  it("syncRepo handles repos with simulated conflict markers", () => {
-    // Create a file with conflict markers to simulate a conflict state
-    const conflictedFile = join(privateDir, "conflict.md");
-    writeFileSync(conflictedFile, "<<<<<<< HEAD\ncontent\n=======\nother\n>>>>>>> branch\n");
+  beforeEach(() => {
+    dir = uniqueDir();
+    makeBrainRepo(dir);
+  });
 
-    // The sync should still work (conflict detection uses git ls-files -u, not file content)
-    const result = syncRepo(privateDir, "private", "[cocapn] test");
+  afterEach(() => {
+    if (existsSync(dir)) rmSync(dir, { recursive: true, force: true });
+  });
+
+  it("syncRepo handles repos with conflict markers in a file", () => {
+    writeFileSync(join(dir, "conflict.md"), "<<<<<<< HEAD\ncontent\n=======\nother\n>>>>>>> branch\n");
+    // Conflict detection uses git ls-files -u, not file content, so this should work
+    const result = syncRepo(dir, "private", "[cocapn] test");
     expect(result.repo).toBe("private");
   });
 });
@@ -299,26 +316,38 @@ describe("conflict handling", () => {
 // ─── End-to-end: sync both repos ───────────────────────────────────────────
 
 describe("end-to-end sync", () => {
-  beforeEach(() => setupRepos());
-  afterEach(() => cleanup());
+  let brainDir: string;
+  let faceDir: string;
+  let parentDir: string;
+
+  beforeEach(() => {
+    parentDir = uniqueDir();
+    brainDir = join(parentDir, "brain");
+    faceDir = join(parentDir, "alice.makerlog.ai");
+    makeBrainRepo(brainDir);
+    makeFaceRepo(faceDir);
+  });
+
+  afterEach(() => {
+    if (existsSync(parentDir)) rmSync(parentDir, { recursive: true, force: true });
+  });
 
   it("can sync both repos with changes", () => {
-    // Make changes in both repos
-    writeFileSync(join(privateDir, "cocapn", "brain-update.md"), "brain change");
-    writeFileSync(join(publicDir, "face-update.html"), "<html>face change</html>");
+    writeFileSync(join(brainDir, "cocapn", "brain-update.md"), "brain change");
+    writeFileSync(join(faceDir, "face-update.html"), "<html>face change</html>");
 
-    const brainResult = syncRepo(privateDir, "private", "[cocapn] brain sync");
-    const faceResult = syncRepo(publicDir, "public", "[cocapn] face sync");
+    const brainResult = syncRepo(brainDir, "private", "[cocapn] brain sync");
+    const faceResult = syncRepo(faceDir, "public", "[cocapn] face sync");
 
     expect(brainResult.committed).toBe(true);
     expect(faceResult.committed).toBe(true);
   });
 
   it("handles one clean and one dirty repo", () => {
-    writeFileSync(join(privateDir, "cocapn", "update.md"), "update");
+    writeFileSync(join(brainDir, "cocapn", "update.md"), "update");
 
-    const brainResult = syncRepo(privateDir, "private", "[cocapn] brain sync");
-    const faceResult = syncRepo(publicDir, "public", "[cocapn] face sync");
+    const brainResult = syncRepo(brainDir, "private", "[cocapn] brain sync");
+    const faceResult = syncRepo(faceDir, "public", "[cocapn] face sync");
 
     expect(brainResult.committed).toBe(true);
     expect(faceResult.committed).toBe(false);

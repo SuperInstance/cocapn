@@ -141,7 +141,13 @@ export function parseStatusPorcelain(output: string): string[] {
   return output
     .split("\n")
     .filter(Boolean)
-    .map((line) => line.slice(3).trim());
+    .map((line) => {
+      const path = line.slice(3).trim();
+      // Renamed files show as "old -> new" — extract the target
+      const arrow = path.indexOf(" -> ");
+      if (arrow !== -1) return path.slice(arrow + 4).trim();
+      return path;
+    });
 }
 
 /** Get the repo status. */

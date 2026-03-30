@@ -27,6 +27,12 @@
  *   cocapn sync                — Sync repos (private + public)
  *   cocapn sync status         — Show sync status
  *   cocapn sync pull           — Pull from remotes
+ *   cocapn wiki list           — List wiki pages
+ *   cocapn wiki get <slug>     — Show wiki page
+ *   cocapn wiki new <slug>     — Create wiki page
+ *   cocapn wiki edit <slug>    — Edit wiki page
+ *   cocapn wiki search <query> — Search wiki
+ *   cocapn wiki delete <slug>  — Delete wiki page
  *   cocapn version             — Show version
  */
 
@@ -53,6 +59,7 @@ import { createChatCommand } from "./commands/chat.js";
 import { createMemoryCommand } from "./commands/memory.js";
 import { createExportCommand } from "./commands/export.js";
 import { createSyncCommand } from "./commands/sync.js";
+import { createWikiCommand } from "./commands/wiki.js";
 
 const VERSION = "0.1.0";
 
@@ -79,6 +86,9 @@ export function createCLI(): Command {
 
   // Sync commands
   program.addCommand(createSyncCommand());
+
+  // Wiki commands
+  program.addCommand(createWikiCommand());
 
   // Deploy commands
   program.addCommand(createDeployCommand());
