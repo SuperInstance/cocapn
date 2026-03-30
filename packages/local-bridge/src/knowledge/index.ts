@@ -6,3 +6,4 @@
 export { KnowledgePipeline, type KnowledgeEntry, type KnowledgeMeta, type KnowledgeType, type ValidationResult, type KnowledgeStats } from "./pipeline.js";
 export { validateFull, validateSpecies, validateRegulation, validateTechnique, validateLocation, validateEquipment } from "./validator.js";
 export { GitKnowledgePipeline } from "./git-pipeline.js";
+export { extract, suggestType, type ExtractedEntity, type ExtractionResult } from "./extractor.js";
