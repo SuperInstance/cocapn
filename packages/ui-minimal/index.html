@@ -62,6 +62,35 @@
       border-color: rgba(250,204,21,0.3);
     }
 
+    /* Personality Header Strip */
+    .personality-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+    }
+    .personality-header .agent-name { font-weight: 600; font-size: 16px; }
+    .personality-header .agent-greeting { color: var(--muted); font-size: 13px; }
+    .personality-header .mode-badge {
+      margin-left: auto;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .mode-badge.public { background: rgba(74,222,128,0.2); color: #4ade80; }
+    .mode-badge.private { background: rgba(108,140,255,0.2); color: #6c8cff; }
+    .mode-badge.maintenance { background: rgba(250,204,21,0.2); color: #facc15; }
+    .status-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--success);
+      display: inline-block;
+    }
+
     .status {
       display: flex; align-items: center; gap: 6px;
       font-size: 12px; color: var(--muted);
@@ -501,6 +530,15 @@
       </div>
     </header>
 
+    <div id="personality-header" class="personality-header" style="display:none">
+      <span class="status-dot"></span>
+      <div>
+        <div class="agent-name" id="agent-name">Cocapn</div>
+        <div class="agent-greeting" id="agent-greeting"></div>
+      </div>
+      <span class="mode-badge private" id="mode-badge">Private</span>
+    </div>
+
     <div class="body">
       <!-- Chat -->
       <div class="chat">
@@ -678,6 +716,25 @@
         currentMode = data.mode;
         updateModeBadge();
       }
+    }
+
+    // Fetch personality from /api/status
+    async function loadPersonality() {
+      try {
+        const res = await fetch('/api/status');
+        const data = await res.json();
+        if (data.soul && data.soul.greeting) {
+          agentName = data.soul.name || 'Cocapn';
+          document.getElementById('agent-name').textContent = agentName;
+          document.getElementById('agent-greeting').textContent = data.soul.greeting;
+          document.getElementById('personality-header').style.display = 'flex';
+        }
+        if (data.mode) {
+          const badge = document.getElementById('mode-badge');
+          badge.textContent = data.mode;
+          badge.className = 'mode-badge ' + data.mode;
+        }
+      } catch(e) { /* offline */ }
     }
 
     function fetchPersonality() {
@@ -859,7 +916,7 @@
 
       let inner = '<div class="bubble">';
       if (role === 'agent') {
-        const label = agentName || agentId || 'Assistant';
+        const label = agentName || document.getElementById('agent-name').textContent || agentId || 'Assistant';
         inner += '<div class="agent-label">' + escapeHtml(label) + '</div>';
       }
       inner += formatText(content);
@@ -1261,6 +1318,7 @@
     }
 
     // ─── Init ──────────────────────────────────────────────────────────────────
+    loadPersonality();
     fetchPersonality();
     connect();
     $input.focus();
