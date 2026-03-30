@@ -35,6 +35,7 @@ import { FleetKeyManager } from "./security/fleet.js";
 import { Brain } from "./brain/index.js";
 import { ConversationMemory } from "./brain/conversation-memory.js";
 import { Publisher } from "./publishing/publisher.js";
+import { ModeSwitcher } from "./publishing/mode-switcher.js";
 import { SkillLoader } from "./skills/loader.js";
 import { SkillDecisionTree } from "./skills/decision-tree.js";
 import { CloudConnector, type CloudConnectorConfig } from "./cloud-bridge/connector.js";
@@ -104,6 +105,7 @@ export class Bridge {
   private tenantRegistry: TenantRegistry;
   private tenantBridge:   TenantBridge;
   private requestQueue:   RequestQueue;
+  private modeSwitcher:   ModeSwitcher;
 
   constructor(options: BridgeOptions) {
     this.options    = options;
@@ -123,6 +125,7 @@ export class Bridge {
     this.modules   = new ModuleManager(options.privateRepoRoot);
     this.brain     = new Brain(options.privateRepoRoot, this.config, this.sync);
     this.fleetKeys = new FleetKeyManager(options.privateRepoRoot);
+    this.modeSwitcher = new ModeSwitcher();
 
     // Initialize skill system
     this.skillLoader = new SkillLoader({
@@ -198,6 +201,7 @@ export class Bridge {
       tenantRegistry: this.tenantRegistry,
       tenantBridge:   this.tenantBridge,
       requestQueue:   this.requestQueue,
+      modeSwitcher:   this.modeSwitcher,
     });
   }
 

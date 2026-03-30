@@ -29,11 +29,15 @@ import { createEmbeddingProvider, type EmbeddingOptions } from "./embedding.js";
 import { createVectorStore, type VectorStore } from "./vector-store.js";
 import { createHybridSearch, HybridSearch } from "./hybrid-search.js";
 import { MemoryManager, type MemoryEntry, type MemoryManagerOptions } from "./memory-manager.js";
+import { RepoLearner, type FileContext, type ModuleInfo, type ArchitecturalDecision } from "./repo-learner.js";
+import type { AgentMode } from "../publishing/mode-switcher.js";
 
 // ─── Re-exports ─────────────────────────────────────────────────────────────────
 
 export type { MemoryEntry, MemoryManagerOptions, MemoryWriteOptions, MemoryType, MemoryStats, PruneResult } from "./memory-manager.js";
 export { MemoryManager } from "./memory-manager.js";
+export type { FileContext, ModuleInfo, ArchitecturalDecision, RepoUnderstanding, CommitAnalysis, CodePattern } from "./repo-learner.js";
+export { RepoLearner } from "./repo-learner.js";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -66,12 +70,19 @@ export class Brain {
   private vectorStore: VectorStore | null = null;
   private embeddingProvider: any = null;
   public memoryManager: MemoryManager | null = null;
+  private currentMode: AgentMode = "private";
+  private repoLearner: RepoLearner;
+  private repoLearnerReady = false;
 
   constructor(repoRoot: string, config: BridgeConfig, sync: GitSync, _repoGraph?: unknown, memoryManagerOptions?: MemoryManagerOptions) {
     this.repoRoot = repoRoot;
     this.config = config;
     this.sync = sync;
     this.wikiIndex = new InvertedIndex();
+
+    // Initialize RepoLearner for git-backed repo understanding
+    const brainPath = join(repoRoot, config.memory.facts, "..");
+    this.repoLearner = new RepoLearner(repoRoot, brainPath);
 
     // Initialize hybrid search with vector store (optional)
     this.hybridSearch = this.initializeVectorSearch();
@@ -159,22 +170,49 @@ export class Brain {
   // Facts (cocapn/memory/facts.json — Record<string, string>)
   // ---------------------------------------------------------------------------
 
-  /** Return the value for a fact key, or undefined if not present. */
-  getFact(key: string): string | undefined {
+  /**
+   * Return the value for a fact key, or undefined if not present.
+   * If mode is 'public' and the key starts with 'private.', returns undefined.
+   */
+  getFact(key: string, mode?: AgentMode): string | undefined {
+    const effectiveMode = mode ?? this.currentMode;
+    if (effectiveMode === "public" || effectiveMode === "a2a") {
+      if (key.startsWith("private.")) return undefined;
+    }
     const facts = this.readFacts();
     return facts[key];
   }
 
-  /** Return all facts as a plain object. */
-  getAllFacts(): Record<string, string> {
-    return this.readFacts();
+  /**
+   * Return all facts as a plain object.
+   * If mode is 'public' or 'a2a', filters out private.* keys.
+   */
+  getAllFacts(mode?: AgentMode): Record<string, string> {
+    const facts = this.readFacts();
+    const effectiveMode = mode ?? this.currentMode;
+    if (effectiveMode === "public" || effectiveMode === "a2a") {
+      const result: Record<string, string> = {};
+      for (const [k, v] of Object.entries(facts)) {
+        if (!k.startsWith("private.")) {
+          result[k] = v;
+        }
+      }
+      return result;
+    }
+    return facts;
   }
 
   /**
    * Set (or overwrite) a fact and auto-commit the change.
+   * Writes are always allowed in private/maintenance modes.
+   * In public/a2a mode, this is a no-op (read-only).
    * Commit message: "update memory: set fact <key>"
    */
-  async setFact(key: string, value: string): Promise<void> {
+  async setFact(key: string, value: string, mode?: AgentMode): Promise<void> {
+    const effectiveMode = mode ?? this.currentMode;
+    if (effectiveMode === "public" || effectiveMode === "a2a") {
+      return; // Read-only in public/a2a mode
+    }
     const release = await acquireLock();
     try {
       const facts = this.readFacts();
@@ -306,8 +344,13 @@ export class Brain {
   /**
    * Read the raw content of a wiki page by relative filename.
    * Returns null if the file doesn't exist.
+   * In public/a2a mode, blocks access to pages in private/ subdirectory.
    */
-  readWikiPage(file: string): string | null {
+  readWikiPage(file: string, mode?: AgentMode): string | null {
+    const effectiveMode = mode ?? this.currentMode;
+    if ((effectiveMode === "public" || effectiveMode === "a2a") && file.startsWith("private/")) {
+      return null;
+    }
     const fullPath = join(this.repoRoot, "cocapn", "wiki", file);
     if (!existsSync(fullPath)) return null;
     try {
@@ -403,6 +446,90 @@ export class Brain {
     }
 
     return tasks.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  }
+
+  // ---------------------------------------------------------------------------
+  // Mode management
+  // ---------------------------------------------------------------------------
+
+  /** Get the current access mode. */
+  getMode(): AgentMode {
+    return this.currentMode;
+  }
+
+  /**
+   * Set the current access mode.
+   * Called by BridgeServer based on ModeSwitcher.detectMode(request).
+   */
+  setMode(mode: AgentMode): void {
+    this.currentMode = mode;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Memories (delegated to MemoryManager)
+  // ---------------------------------------------------------------------------
+
+  /**
+   * List memories, optionally filtered by type.
+   * In public/a2a mode, only returns explicit memories without private.* keys.
+   */
+  getMemories(options?: { type?: MemoryEntry["type"]; mode?: AgentMode }): MemoryEntry[] {
+    if (!this.memoryManager) return [];
+    const effectiveMode = options?.mode ?? this.currentMode;
+    const entries = this.memoryManager.list({
+      type: options?.type,
+    });
+    if (effectiveMode === "public" || effectiveMode === "a2a") {
+      return entries.filter((e) => !e.key.startsWith("private."));
+    }
+    return entries;
+  }
+
+  // ---------------------------------------------------------------------------
+  // RepoLearner integration
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Query file-level context from the repo learner.
+   * Lazily builds the index on first access.
+   */
+  async queryFileContext(filePath: string): Promise<FileContext | null> {
+    await this.ensureRepoLearner();
+    return this.repoLearner.queryFile(filePath);
+  }
+
+  /**
+   * Query module information from the repo learner.
+   */
+  async queryModuleInfo(moduleName: string): Promise<ModuleInfo | null> {
+    await this.ensureRepoLearner();
+    return this.repoLearner.queryModule(moduleName);
+  }
+
+  /**
+   * Query architectural decisions from the repo learner.
+   */
+  async queryArchitecture(): Promise<ArchitecturalDecision[]> {
+    await this.ensureRepoLearner();
+    return this.repoLearner.queryArchitecture();
+  }
+
+  /**
+   * Get the RepoLearner instance (for direct access if needed).
+   */
+  getRepoLearner(): RepoLearner {
+    return this.repoLearner;
+  }
+
+  /** Lazily build the repo learner index on first access. */
+  private async ensureRepoLearner(): Promise<void> {
+    if (this.repoLearnerReady) return;
+    try {
+      await this.repoLearner.buildIndex();
+      this.repoLearnerReady = true;
+    } catch {
+      // RepoLearner is best-effort — don't fail the brain if it can't index
+    }
   }
 
   // ---------------------------------------------------------------------------

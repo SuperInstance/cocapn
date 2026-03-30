@@ -371,6 +371,17 @@ export class BridgeServer extends EventEmitter<BridgeServerEventMap> {
   ): Promise<void> {
     const url = req.url || '';
 
+    // Set brain mode based on request context
+    if (this.options.modeSwitcher && this.options.brain) {
+      const mode = this.options.modeSwitcher.detectMode({
+        path: url,
+        origin: req.headers.origin,
+        authorization: req.headers.authorization,
+        fleetJwt: req.headers['x-fleet-jwt'] as string | undefined,
+      });
+      this.options.brain.setMode(mode);
+    }
+
     // Handle health check endpoint
     if (url === '/health') {
       const health = await this.getHealthStatus();
@@ -584,6 +595,14 @@ export class BridgeServer extends EventEmitter<BridgeServerEventMap> {
   // ---------------------------------------------------------------------------
 
   private handleConnection(ws: WebSocket, clientId: string): void {
+    // Set brain mode to private for authenticated WebSocket connections
+    if (this.options.brain) {
+      const session = this.sessions.get(clientId);
+      if (session?.githubToken || session?.githubLogin) {
+        this.options.brain.setMode("private");
+      }
+    }
+
     // Send initial bridge status
     this.sender.result(ws, null, this.getBridgeStatus());
 

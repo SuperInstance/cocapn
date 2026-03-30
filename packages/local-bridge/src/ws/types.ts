@@ -76,6 +76,8 @@ export interface BridgeServerOptions {
   tenantBridge?: TenantBridge;
   /** Request queue — LLM request queue with backpressure */
   requestQueue?: import('../queue/index.js').RequestQueue;
+  /** Mode switcher — detects agent mode from request context */
+  modeSwitcher?: import('../publishing/mode-switcher.js').ModeSwitcher;
 }
 
 // ─── Event map ───────────────────────────────────────────────────────────────
