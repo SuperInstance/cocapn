@@ -33,6 +33,11 @@
  *   cocapn wiki edit <slug>    — Edit wiki page
  *   cocapn wiki search <query> — Search wiki
  *   cocapn wiki delete <slug>  — Delete wiki page
+ *   cocapn config show         — Show current config
+ *   cocapn config get <key>    — Get a config value
+ *   cocapn config set <k> <v>  — Set a config value
+ *   cocapn config reset        — Reset to defaults
+ *   cocapn config validate     — Validate config
  *   cocapn version             — Show version
  */
 
@@ -61,6 +66,7 @@ import { createExportCommand } from "./commands/export.js";
 import { createSyncCommand } from "./commands/sync.js";
 import { createWikiCommand } from "./commands/wiki.js";
 import { createFleetCommand } from "./commands/fleet.js";
+import { createConfigCommand } from "./commands/config.js";
 
 const VERSION = "0.1.0";
 
@@ -115,6 +121,9 @@ export function createCLI(): Command {
 
   // Fleet commands
   program.addCommand(createFleetCommand());
+
+  // Config commands
+  program.addCommand(createConfigCommand());
 
   // Analysis commands
   program.addCommand(createTreeCommand());
