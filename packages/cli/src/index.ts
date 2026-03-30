@@ -20,6 +20,10 @@
  *   cocapn memory set <k> <v>  — Set a fact
  *   cocapn memory delete <key> — Delete a fact
  *   cocapn memory search <q>   — Search memory
+ *   cocapn export brain        — Export entire brain
+ *   cocapn export chat <id>    — Export chat history
+ *   cocapn export wiki         — Export wiki as markdown
+ *   cocapn export knowledge    — Export knowledge entries
  *   cocapn version             — Show version
  */
 
@@ -44,6 +48,7 @@ import { createRunCommand } from "./commands/run.js";
 import { createTelemetryCommand } from "./commands/telemetry.js";
 import { createChatCommand } from "./commands/chat.js";
 import { createMemoryCommand } from "./commands/memory.js";
+import { createExportCommand } from "./commands/export.js";
 
 const VERSION = "0.1.0";
 
@@ -64,6 +69,9 @@ export function createCLI(): Command {
 
   // Memory commands
   program.addCommand(createMemoryCommand());
+
+  // Export commands
+  program.addCommand(createExportCommand());
 
   // Deploy commands
   program.addCommand(createDeployCommand());
