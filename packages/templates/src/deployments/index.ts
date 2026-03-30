@@ -6,15 +6,21 @@
  */
 
 export { dmlogAi } from './dmlog-ai.js';
+export { fishinglogAi } from './fishinglog-ai.js';
+export { deckbossAi } from './deckboss-ai.js';
 export type { DeploymentTemplate, ThemeConfig } from './dmlog-ai.js';
 
 import type { DeploymentTemplate } from './dmlog-ai.js';
 import { dmlogAi } from './dmlog-ai.js';
+import { fishinglogAi } from './fishinglog-ai.js';
+import { deckbossAi } from './deckboss-ai.js';
 
 // ─── Registry ───────────────────────────────────────────────────────────
 
 const DEPLOYMENTS = {
   dmlogAi,
+  fishinglogAi,
+  deckbossAi,
 } as const;
 
 export { DEPLOYMENTS };
