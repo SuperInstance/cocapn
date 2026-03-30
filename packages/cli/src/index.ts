@@ -2,22 +2,26 @@
  * Cocapn CLI — Unified CLI tool for cocapn management
  *
  * Usage:
- *   cocapn init [dir]           — Initialize cocapn in a repo
- *   cocapn start                — Start the bridge
- *   cocapn status               — Show bridge status
- *   cocapn deploy               — Deploy to Cloudflare Workers
- *   cocapn rollback             — Rollback deployment
- *   cocapn skill list           — List available skills
- *   cocapn template search <q>  — Search template registry
- *   cocapn tree <task>          — Start tree search
- *   cocapn graph                — Show knowledge graph stats
- *   cocapn tokens               — Show token usage stats
- *   cocapn health               — Health check
- *   cocapn version              — Show version
+ *   cocapn setup [dir]         — Interactive onboarding wizard
+ *   cocapn init [dir]          — Alias for setup
+ *   cocapn start               — Start the bridge
+ *   cocapn status              — Show bridge status
+ *   cocapn deploy              — Deploy to Cloudflare Workers
+ *   cocapn rollback            — Rollback deployment
+ *   cocapn skill list          — List available skills
+ *   cocapn template search <q> — Search template registry
+ *   cocapn tree <task>         — Start tree search
+ *   cocapn graph               — Show knowledge graph stats
+ *   cocapn tokens              — Show token usage stats
+ *   cocapn health              — Health check
+ *   cocapn version             — Show version
  */
 
 import { Command } from "commander";
+import { existsSync } from "fs";
+import { join } from "path";
 import { createInitCommand } from "./commands/init.js";
+import { createSetupCommand } from "./commands/setup.js";
 import { createStartCommand } from "./commands/start.js";
 import { createStatusCommand } from "./commands/status.js";
 import { createDeployCommand } from "./commands/deploy.js";
@@ -44,7 +48,8 @@ export function createCLI(): Command {
     .version(VERSION);
 
   // Core commands
-  program.addCommand(createInitCommand());
+  program.addCommand(createSetupCommand());
+  program.addCommand(createInitCommand()); // init delegates to setup
   program.addCommand(createStartCommand());
   program.addCommand(createStatusCommand());
 
@@ -82,5 +87,15 @@ export function createCLI(): Command {
 // Run CLI if this is the main module
 if (import.meta.url === `file://${process.argv[1]}`) {
   const cli = createCLI();
+
+  // Suggest setup if no command given and no cocapn/ dir exists
+  const hasExplicitCommand = process.argv.length > 2 && !process.argv[2].startsWith("-");
+  if (!hasExplicitCommand) {
+    const cocapnDir = join(process.cwd(), "cocapn");
+    if (!existsSync(cocapnDir)) {
+      console.log("No cocapn/ directory found. Run cocapn setup to get started.\n");
+    }
+  }
+
   cli.parse();
 }
