@@ -67,6 +67,7 @@ import { createFleetCommand } from "./commands/fleet.js";
 import { createConfigCommand } from "./commands/config.js";
 import { createLogsCommand } from "./commands/logs.js";
 import { createDoctorCommand } from "./commands/doctor.js";
+import { createUpgradeCommand } from "./commands/upgrade.js";
 
 const VERSION = "0.1.0";
 
@@ -134,6 +135,9 @@ export function createCLI(): Command {
 
   // Doctor command
   program.addCommand(createDoctorCommand());
+
+  // Upgrade command
+  program.addCommand(createUpgradeCommand());
 
   return program;
 }
