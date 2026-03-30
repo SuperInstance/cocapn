@@ -1,12 +1,8 @@
 /**
  * Tests for scaffold.ts — two-repo model.
- *
- * Run with:
- *   node --import ../local-bridge/node_modules/tsx/dist/esm/index.cjs --test tests/scaffold.test.ts
  */
 
-import { describe, it, before, after } from "node:test";
-import assert from "node:assert/strict";
+import { describe, it, beforeEach, afterEach, beforeAll, afterAll, expect } from "vitest";
 import { existsSync, rmSync, readFileSync } from "fs";
 import { join } from "path";
 import { tmpdir } from "os";
@@ -32,11 +28,11 @@ const CONFIG = {
 describe("createPrivateRepo", () => {
   let dir: string;
 
-  before(() => {
+  beforeEach(() => {
     dir = tmpDir("brain");
   });
 
-  after(() => {
+  afterEach(() => {
     rmSync(dir, { recursive: true, force: true });
   });
 
@@ -45,22 +41,22 @@ describe("createPrivateRepo", () => {
     createPrivateRepo(dir, CONFIG);
 
     // Directories
-    assert.ok(existsSync(join(dir, "cocapn")), "cocapn/ exists");
-    assert.ok(existsSync(join(dir, "cocapn", "memory")), "memory/ exists");
-    assert.ok(existsSync(join(dir, "cocapn", "memory", "repo-understanding")), "repo-understanding/ exists");
-    assert.ok(existsSync(join(dir, "wiki")), "wiki/ exists");
+    expect(existsSync(join(dir, "cocapn"))).toBeTruthy();
+    expect(existsSync(join(dir, "cocapn", "memory"))).toBeTruthy();
+    expect(existsSync(join(dir, "cocapn", "memory", "repo-understanding"))).toBeTruthy();
+    expect(existsSync(join(dir, "wiki"))).toBeTruthy();
 
     // Files
-    assert.ok(existsSync(join(dir, "cocapn", "soul.md")), "soul.md exists");
-    assert.ok(existsSync(join(dir, "cocapn", "config.yml")), "config.yml exists");
-    assert.ok(existsSync(join(dir, "cocapn", "memory", "facts.json")), "facts.json exists");
-    assert.ok(existsSync(join(dir, "cocapn", "memory", "memories.json")), "memories.json exists");
-    assert.ok(existsSync(join(dir, "cocapn", "memory", "procedures.json")), "procedures.json exists");
-    assert.ok(existsSync(join(dir, "cocapn", "memory", "relationships.json")), "relationships.json exists");
-    assert.ok(existsSync(join(dir, "wiki", "README.md")), "wiki README exists");
-    assert.ok(existsSync(join(dir, ".gitignore")), ".gitignore exists");
-    assert.ok(existsSync(join(dir, ".env.local")), ".env.local exists");
-    assert.ok(existsSync(join(dir, "package.json")), "package.json exists");
+    expect(existsSync(join(dir, "cocapn", "soul.md"))).toBeTruthy();
+    expect(existsSync(join(dir, "cocapn", "config.yml"))).toBeTruthy();
+    expect(existsSync(join(dir, "cocapn", "memory", "facts.json"))).toBeTruthy();
+    expect(existsSync(join(dir, "cocapn", "memory", "memories.json"))).toBeTruthy();
+    expect(existsSync(join(dir, "cocapn", "memory", "procedures.json"))).toBeTruthy();
+    expect(existsSync(join(dir, "cocapn", "memory", "relationships.json"))).toBeTruthy();
+    expect(existsSync(join(dir, "wiki", "README.md"))).toBeTruthy();
+    expect(existsSync(join(dir, ".gitignore"))).toBeTruthy();
+    expect(existsSync(join(dir, ".env.local"))).toBeTruthy();
+    expect(existsSync(join(dir, "package.json"))).toBeTruthy();
   });
 
   it("soul.md contains username", async () => {
@@ -69,8 +65,8 @@ describe("createPrivateRepo", () => {
     try {
       createPrivateRepo(d, { ...CONFIG, username: "bob" });
       const soul = readFileSync(join(d, "cocapn", "soul.md"), "utf8");
-      assert.ok(soul.includes("bob"), "username in soul.md");
-      assert.ok(!soul.includes("{{username}}"), "no unreplaced placeholders");
+      expect(soul.includes("bob")).toBeTruthy();
+      expect(soul.includes("{{username}}")).toBeFalsy();
     } finally {
       rmSync(d, { recursive: true, force: true });
     }
@@ -82,7 +78,7 @@ describe("createPrivateRepo", () => {
     try {
       createPrivateRepo(d, CONFIG);
       const gitignore = readFileSync(join(d, ".gitignore"), "utf8");
-      assert.ok(gitignore.includes(".env.local"), ".env.local in .gitignore");
+      expect(gitignore.includes(".env.local")).toBeTruthy();
     } finally {
       rmSync(d, { recursive: true, force: true });
     }
@@ -94,7 +90,7 @@ describe("createPrivateRepo", () => {
     try {
       createPrivateRepo(d, { ...CONFIG, domain: "dmlog" });
       const config = readFileSync(join(d, "cocapn", "config.yml"), "utf8");
-      assert.ok(config.includes("dmlog"), "domain in config.yml");
+      expect(config.includes("dmlog")).toBeTruthy();
     } finally {
       rmSync(d, { recursive: true, force: true });
     }
@@ -106,7 +102,7 @@ describe("createPrivateRepo", () => {
     try {
       createPrivateRepo(d, { ...CONFIG, template: "dmlog" });
       const soul = readFileSync(join(d, "cocapn", "soul.md"), "utf8");
-      assert.ok(soul.includes("Dungeon Master"), "TTRPG content in dmlog soul.md");
+      expect(soul.includes("Dungeon Master")).toBeTruthy();
     } finally {
       rmSync(d, { recursive: true, force: true });
     }
@@ -118,7 +114,7 @@ describe("createPrivateRepo", () => {
     try {
       createPrivateRepo(d, CONFIG);
       const facts = readFileSync(join(d, "cocapn", "memory", "facts.json"), "utf8");
-      assert.deepEqual(JSON.parse(facts), {});
+      expect(JSON.parse(facts)).toEqual({});
     } finally {
       rmSync(d, { recursive: true, force: true });
     }
@@ -134,13 +130,13 @@ describe("createPublicRepo", () => {
     try {
       createPublicRepo(dir, CONFIG);
 
-      assert.ok(existsSync(join(dir, "cocapn.yml")), "cocapn.yml exists");
-      assert.ok(existsSync(join(dir, "index.html")), "index.html exists");
-      assert.ok(existsSync(join(dir, "src", "main.ts")), "main.ts exists");
-      assert.ok(existsSync(join(dir, "src", "app.ts")), "app.ts exists");
-      assert.ok(existsSync(join(dir, "src", "style.css")), "style.css exists");
-      assert.ok(existsSync(join(dir, ".gitignore")), ".gitignore exists");
-      assert.ok(existsSync(join(dir, "package.json")), "package.json exists");
+      expect(existsSync(join(dir, "cocapn.yml"))).toBeTruthy();
+      expect(existsSync(join(dir, "index.html"))).toBeTruthy();
+      expect(existsSync(join(dir, "src", "main.ts"))).toBeTruthy();
+      expect(existsSync(join(dir, "src", "app.ts"))).toBeTruthy();
+      expect(existsSync(join(dir, "src", "style.css"))).toBeTruthy();
+      expect(existsSync(join(dir, ".gitignore"))).toBeTruthy();
+      expect(existsSync(join(dir, "package.json"))).toBeTruthy();
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
@@ -151,9 +147,9 @@ describe("createPublicRepo", () => {
     const dir = tmpDir("cname");
     try {
       createPublicRepo(dir, CONFIG);
-      assert.ok(existsSync(join(dir, "CNAME")), "CNAME exists");
+      expect(existsSync(join(dir, "CNAME"))).toBeTruthy();
       const cname = readFileSync(join(dir, "CNAME"), "utf8");
-      assert.ok(cname.includes("alice.makerlog.ai"), "CNAME has correct domain");
+      expect(cname.includes("alice.makerlog.ai")).toBeTruthy();
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
@@ -164,7 +160,7 @@ describe("createPublicRepo", () => {
     const dir = tmpDir("no-cname");
     try {
       createPublicRepo(dir, { ...CONFIG, domain: "" });
-      assert.ok(!existsSync(join(dir, "CNAME")), "CNAME should not exist");
+      expect(existsSync(join(dir, "CNAME"))).toBeFalsy();
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
@@ -176,8 +172,8 @@ describe("createPublicRepo", () => {
     try {
       createPublicRepo(dir, CONFIG);
       const yml = readFileSync(join(dir, "cocapn.yml"), "utf8");
-      assert.ok(yml.includes("my-cocapn"), "project name in cocapn.yml");
-      assert.ok(yml.includes("alice"), "username in cocapn.yml");
+      expect(yml.includes("my-cocapn")).toBeTruthy();
+      expect(yml.includes("alice")).toBeTruthy();
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
@@ -189,11 +185,11 @@ describe("createPublicRepo", () => {
 describe("Two-repo integration", () => {
   let baseDir: string;
 
-  before(() => {
+  beforeAll(() => {
     baseDir = tmpDir("two-repo");
   });
 
-  after(() => {
+  afterAll(() => {
     rmSync(baseDir, { recursive: true, force: true });
   });
 
@@ -207,24 +203,24 @@ describe("Two-repo integration", () => {
     initAndCommit(brainDir, "alice", "Initial brain");
     initAndCommit(publicDir, "alice", "Initial public");
 
-    assert.ok(existsSync(join(brainDir, "cocapn", "soul.md")), "brain has soul.md");
-    assert.ok(existsSync(join(publicDir, "cocapn.yml")), "public has cocapn.yml");
+    expect(existsSync(join(brainDir, "cocapn", "soul.md"))).toBeTruthy();
+    expect(existsSync(join(publicDir, "cocapn.yml"))).toBeTruthy();
   });
 
   it("both repos have .git directories after initAndCommit", async () => {
-    assert.ok(existsSync(join(baseDir, "test-brain", ".git")), "brain has .git");
-    assert.ok(existsSync(join(baseDir, "test-public", ".git")), "public has .git");
+    expect(existsSync(join(baseDir, "test-brain", ".git"))).toBeTruthy();
+    expect(existsSync(join(baseDir, "test-public", ".git"))).toBeTruthy();
   });
 
   it("soul.md exists in brain repo", async () => {
     const soul = readFileSync(join(baseDir, "test-brain", "cocapn", "soul.md"), "utf8");
-    assert.ok(soul.length > 0, "soul.md is not empty");
-    assert.ok(soul.includes("alice"), "soul.md has username");
+    expect(soul.length > 0).toBeTruthy();
+    expect(soul.includes("alice")).toBeTruthy();
   });
 
   it(".gitignore has .env.local in brain repo", async () => {
     const gitignore = readFileSync(join(baseDir, "test-brain", ".gitignore"), "utf8");
-    assert.ok(gitignore.includes(".env.local"), ".env.local in brain .gitignore");
+    expect(gitignore.includes(".env.local")).toBeTruthy();
   });
 
   it(".env.local is gitignored", async () => {
@@ -235,9 +231,9 @@ describe("Two-repo integration", () => {
         encoding: "utf8",
         stdio: "pipe",
       });
-      assert.ok(output.trim() === ".env.local", "git check-ignore confirms .env.local");
+      expect(output.trim()).toBe(".env.local");
     } catch {
-      assert.fail(".env.local should be gitignored but git check-ignore returned non-zero");
+      expect.unreachable(".env.local should be gitignored but git check-ignore returned non-zero");
     }
   });
 });
@@ -256,7 +252,7 @@ describe("writeSecrets", () => {
 
       writeSecrets(dir, { DEEPSEEK_API_KEY: "sk-test-123" });
       const content = readFileSync(join(dir, ".env.local"), "utf8");
-      assert.ok(content.includes("DEEPSEEK_API_KEY=sk-test-123"), "secret written");
+      expect(content.includes("DEEPSEEK_API_KEY=sk-test-123")).toBeTruthy();
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
@@ -279,9 +275,9 @@ describe("testLLMConnection", () => {
 
     try {
       const result = await testLLMConnection("sk-test-key");
-      assert.equal(result.ok, true);
-      assert.ok(result.latencyMs >= 0, "latency is non-negative");
-      assert.ok(typeof result.model === "string", "model is string");
+      expect(result.ok).toBe(true);
+      expect(result.latencyMs >= 0).toBeTruthy();
+      expect(typeof result.model === "string").toBeTruthy();
     } finally {
       global.fetch = originalFetch;
     }
@@ -300,8 +296,8 @@ describe("testLLMConnection", () => {
 
     try {
       const result = await testLLMConnection("sk-bad-key");
-      assert.equal(result.ok, false);
-      assert.ok(result.error, "error message present");
+      expect(result.ok).toBe(false);
+      expect(result.error).toBeTruthy();
     } finally {
       global.fetch = originalFetch;
     }
@@ -317,8 +313,8 @@ describe("testLLMConnection", () => {
 
     try {
       const result = await testLLMConnection("sk-any-key");
-      assert.equal(result.ok, false);
-      assert.ok(result.error?.includes("ECONNREFUSED"), "error message contains cause");
+      expect(result.ok).toBe(false);
+      expect(result.error?.includes("ECONNREFUSED")).toBeTruthy();
     } finally {
       global.fetch = originalFetch;
     }
@@ -345,9 +341,9 @@ describe("createGitHubRepos", () => {
 
     try {
       const repos = await createGitHubRepos("fake-token", "testuser", "my-app");
-      assert.equal(repos.publicRepo, "my-app-public");
-      assert.equal(repos.privateRepo, "my-app-brain");
-      assert.equal(calls.length, 2);
+      expect(repos.publicRepo).toBe("my-app-public");
+      expect(repos.privateRepo).toBe("my-app-brain");
+      expect(calls.length).toBe(2);
     } finally {
       global.fetch = originalFetch;
     }
@@ -367,8 +363,8 @@ describe("validateToken", () => {
     };
 
     try {
-      const result = await validateToken("valid-token");
-      assert.equal(result, "alice");
+      const result = await validateToken("validtoken");
+      expect(result).toBe("alice");
     } finally {
       global.fetch = originalFetch;
     }
@@ -386,8 +382,8 @@ describe("validateToken", () => {
     };
 
     try {
-      const result = await validateToken("bad-token");
-      assert.equal(result, undefined);
+      const result = await validateToken("badtoken");
+      expect(result).toBeUndefined();
     } finally {
       global.fetch = originalFetch;
     }
