@@ -11,8 +11,6 @@
  *   cocapn rollback            — Rollback deployment
  *   cocapn skill list          — List available skills
  *   cocapn template search <q> — Search template registry
- *   cocapn tree <task>         — Start tree search
- *   cocapn graph               — Show knowledge graph stats
  *   cocapn tokens              — Show token usage stats
  *   cocapn health              — Health check
  *   cocapn memory list         — List all memory entries
@@ -52,8 +50,6 @@ import { createDeployCommand } from "./commands/deploy.js";
 import { createRollbackCommand } from "./commands/rollback.js";
 import { createSkillsCommand } from "./commands/skills.js";
 import { createTemplateCommand } from "./commands/templates.js";
-import { createTreeCommand } from "./commands/tree.js";
-import { createGraphCommand } from "./commands/graph.js";
 import { createTokensCommand } from "./commands/tokens.js";
 import { createHealthCommand } from "./commands/health.js";
 import { createPluginCommand } from "./commands/plugin.js";
@@ -125,9 +121,7 @@ export function createCLI(): Command {
   // Config commands
   program.addCommand(createConfigCommand());
 
-  // Analysis commands
-  program.addCommand(createTreeCommand());
-  program.addCommand(createGraphCommand());
+  // Utility commands
   program.addCommand(createTokensCommand());
   program.addCommand(createHealthCommand());
 
