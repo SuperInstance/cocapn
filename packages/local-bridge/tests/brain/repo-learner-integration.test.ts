@@ -95,7 +95,6 @@ describe("Brain RepoLearner integration", () => {
 
       // Add a commit touching a specific file so we have data
       const git = simpleGit(repoRoot);
-      writeFileSync(join(repoRoot, "src", "index.ts"), "export const x = 1;\n", "utf8");
       mkdirSync(join(repoRoot, "src"), { recursive: true });
       writeFileSync(join(repoRoot, "src", "index.ts"), "export const x = 1;\n", "utf8");
       await git.add(".");

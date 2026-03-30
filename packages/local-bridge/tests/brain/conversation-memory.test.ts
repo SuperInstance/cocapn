@@ -4,13 +4,11 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync, readFileSync } from "fs";
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "fs";
 import { join } from "path";
-import { tmpdir, homedir } from "os";
+import { tmpdir } from "os";
+import { randomUUID } from "crypto";
 import { simpleGit } from "simple-git";
-
-// Ensure the lock directory exists (required by Brain.setFact / acquireLock)
-mkdirSync(join(homedir(), ".cocapn", "brain"), { recursive: true });
 import { Brain } from "../../src/brain/index.js";
 import { ConversationMemory, type ExtractedFact } from "../../src/brain/conversation-memory.js";
 import { GitSync } from "../../src/git/sync.js";
@@ -19,7 +17,7 @@ import { DEFAULT_CONFIG, type BridgeConfig } from "../../src/config/types.js";
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 async function makeTempRepo(): Promise<string> {
-  const dir = mkdtempSync(join(tmpdir(), "cocapn-conv-mem-test-"));
+  const dir = mkdtempSync(join(tmpdir(), `cocapn-conv-mem-test-${randomUUID()}-`));
   const git = simpleGit(dir);
   await git.init();
   await git.addConfig("user.name", "Test");

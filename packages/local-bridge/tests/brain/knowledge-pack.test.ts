@@ -5,11 +5,9 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { rmSync, mkdirSync, existsSync } from "fs";
 import { join } from "path";
-import { tmpdir, homedir } from "os";
+import { tmpdir } from "os";
+import { randomUUID } from "crypto";
 import { Brain } from "../../src/brain/index.js";
-
-// Ensure the lock directory exists (required by Brain.setFact / acquireLock)
-mkdirSync(join(homedir(), ".cocapn", "brain"), { recursive: true });
 import { MemoryManager } from "../../src/brain/memory-manager.js";
 import { KnowledgePackExporter, KnowledgePackImporter, type KnowledgePack } from "../../src/brain/knowledge-pack.js";
 import { loadConfig } from "../../src/config/loader.js";
@@ -23,7 +21,7 @@ describe("Knowledge Pack Export/Import", () => {
 
   beforeEach(async () => {
     // Create a temporary test repository
-    testRepoRoot = join(tmpdir(), `cocapn-test-${Date.now()}`);
+    testRepoRoot = join(tmpdir(), `cocapn-test-${randomUUID()}`);
     mkdirSync(testRepoRoot, { recursive: true });
     mkdirSync(join(testRepoRoot, "cocapn"), { recursive: true });
     mkdirSync(join(testRepoRoot, "cocapn", "memory"), { recursive: true });
