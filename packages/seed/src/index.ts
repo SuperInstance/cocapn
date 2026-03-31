@@ -25,6 +25,7 @@ import type { Soul } from './soul.js';
 import { startWebServer } from './web.js';
 import { PluginLoader } from './plugins.js';
 import type { ChatContext } from './plugins.js';
+import { A2AHub } from './a2a.js';
 
 // ─── Config ────────────────────────────────────────────────────────────────────
 
@@ -220,6 +221,10 @@ function cmdHelp(agentName: string): string {
     `${G}  /git diff${R}          Uncommitted changes`,
     `${G}  /clear${R}             Clear context`,
     `${G}  /plugins${R}           List loaded plugins`,
+    `${G}  /a2a connect <url>${R} Connect to another agent`,
+    `${G}  /a2a peers${R}         List connected agents`,
+    `${G}  /a2a send <id> <msg>${R} Send message to agent`,
+    `${G}  /a2a ask <id> <q>${R}  Ask another agent a question`,
     `${G}  /quit${R}              Exit`,
   ].join('\n');
 }
@@ -264,9 +269,51 @@ function cmdImport(memory: Memory, filePath: string): string {
   }
 }
 
+// ─── A2A commands ──────────────────────────────────────────────────────────────
+
+async function cmdA2a(input: string, hub: A2AHub): Promise<string> {
+  const GR = '\x1b[90m', G = '\x1b[32m', Y = '\x1b[33m', R = '\x1b[0m';
+  const parts = input.trim().split(/\s+/);
+  const sub = parts[1] ?? '';
+
+  if (sub === 'connect') {
+    const url = parts[2];
+    if (!url) return `${GR}Usage: /a2a connect <url>${R}`;
+    const peer = await hub.connect(url.replace(/\/$/, ''));
+    if (!peer) return `${GR}Failed to connect to ${url}${R}`;
+    return `${G}Connected to ${peer.name} (${peer.url})${R}`;
+  }
+
+  if (sub === 'peers') {
+    const peers = hub.getPeers();
+    if (peers.length === 0) return `${GR}(no connected agents)${R}`;
+    return peers.map(p => `${G}${p.name}${R} ${GR}(${p.url}) — ${p.capabilities.join(', ')}${R}`).join('\n');
+  }
+
+  if (sub === 'send') {
+    const id = parts[2];
+    const msg = parts.slice(3).join(' ');
+    if (!id || !msg) return `${GR}Usage: /a2a send <agent-id> <message>${R}`;
+    const res = await hub.sendMessage(id, msg, 'knowledge-share');
+    if (!res.ok) return `${GR}Failed: ${res.error}${R}`;
+    return `${G}${id}:${R} ${res.reply ?? '(no reply)'}`;
+  }
+
+  if (sub === 'ask') {
+    const id = parts[2];
+    const q = parts.slice(3).join(' ');
+    if (!id || !q) return `${GR}Usage: /a2a ask <agent-id> <question>${R}`;
+    const res = await hub.sendMessage(id, q, 'question');
+    if (!res.ok) return `${GR}Failed: ${res.error}${R}`;
+    return `${Y}${id} replies:${R} ${res.reply ?? '(no reply)'}`;
+  }
+
+  return `${GR}Usage: /a2a connect <url> | peers | send <id> <msg> | ask <id> <q>${R}`;
+}
+
 // ─── Terminal REPL ─────────────────────────────────────────────────────────────
 
-async function terminalChat(llm: LLM, memory: Memory, awareness: Awareness, systemPrompt: string, soulName: string, pluginLoader?: PluginLoader): Promise<void> {
+async function terminalChat(llm: LLM, memory: Memory, awareness: Awareness, systemPrompt: string, soulName: string, pluginLoader?: PluginLoader, a2a?: A2AHub): Promise<void> {
   const self = awareness.narrate();
   const B = '\x1b[1m', C = '\x1b[36m', G = '\x1b[32m', GR = '\x1b[90m', R = '\x1b[0m';
 
@@ -346,6 +393,13 @@ async function terminalChat(llm: LLM, memory: Memory, awareness: Awareness, syst
     if (input === '/git diff') {
       const { diff } = await import('./git.js');
       console.log(diff(awareness['repoDir']));
+      rl.prompt(); continue;
+    }
+
+    // /a2a commands
+    if (input.startsWith('/a2a')) {
+      if (!a2a) { console.log(`${GR}A2A not enabled. Set COCAPN_A2A_SECRET or create cocapn/a2a-secret.json${R}`); rl.prompt(); continue; }
+      console.log(await cmdA2a(input, a2a));
       rl.prompt(); continue;
     }
 
@@ -473,6 +527,10 @@ async function main(): Promise<void> {
   const pluginLoader = new PluginLoader();
   await pluginLoader.load(join(repoDir, 'cocapn', 'plugins'));
 
+  // Initialize A2A hub
+  const a2aSecret = A2AHub.loadSecret(repoDir);
+  const a2a = a2aSecret ? new A2AHub(soul.name, '', a2aSecret) : undefined;
+
   if (args.positionals[0] === 'whoami') {
     console.log(cmdWhoami(awareness, memory));
     return;
@@ -480,9 +538,10 @@ async function main(): Promise<void> {
 
   if (args.values.web) {
     const port = (parseInt(args.values.port, 10) || config.port) ?? 3100;
-    startWebServer(port, llm, memory, awareness, soul);
+    const hub = a2a ?? (a2aSecret ? new A2AHub(soul.name, `http://localhost:${port}`, a2aSecret) : undefined);
+    startWebServer(port, llm, memory, awareness, soul, hub);
   } else {
-    await terminalChat(llm, memory, awareness, systemPrompt, soul.name, pluginLoader);
+    await terminalChat(llm, memory, awareness, systemPrompt, soul.name, pluginLoader, a2a);
   }
 }
 
