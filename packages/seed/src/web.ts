@@ -67,7 +67,7 @@ export function startWebServer(
   memory: Memory,
   awareness: Awareness,
   soul: Soul,
-): void {
+) {
   const systemPrompt = `You are ${soul.name}. Your tone is ${soul.tone}.\n\n${soul.body}`;
   const self = awareness.perceive();
   const repoDir = process.cwd();
@@ -192,6 +192,7 @@ export function startWebServer(
   server.listen(port, () => {
     console.log(`[cocapn] Web chat at http://localhost:${port}`);
   });
+  return server;
 }
 
 // ─── Chat handler ──────────────────────────────────────────────────────────────
