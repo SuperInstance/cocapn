@@ -1,0 +1,47 @@
+{
+  "name": "@cocapn/starter-study-buddy",
+  "version": "1.0.0",
+  "description": "Patient, encouraging academic tutor starter — adapts to learning style, uses Socratic method, tracks progress across subjects",
+  "type": "module",
+  "keywords": [
+    "cocapn",
+    "study-buddy",
+    "tutor",
+    "academic",
+    "flashcards",
+    "spaced-repetition",
+    "quiz",
+    "learning",
+    "education",
+    "starter"
+  ],
+  "author": "Cocapn",
+  "license": "MIT",
+  "scripts": {
+    "start": "cocapn start",
+    "dev": "cocapn start --watch",
+    "build": "echo 'No build step required — this is a starter template'",
+    "test": "echo 'No tests in starter template — tests go in the generated project'",
+    "flashcards": "cocapn skill flashcard-maker",
+    "quiz": "cocapn skill quiz-generator",
+    "progress": "cocapn skill progress-tracker",
+    "deploy": "cocapn deploy"
+  },
+  "dependencies": {},
+  "devDependencies": {},
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "cocapn": {
+    "template": "study-buddy",
+    "category": "education",
+    "soul": "soul.md",
+    "config": "config.yml",
+    "theme": "theme.css",
+    "plugins": [
+      "flashcard-maker",
+      "quiz-generator",
+      "progress-tracker"
+    ]
+  }
+}

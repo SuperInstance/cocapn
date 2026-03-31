@@ -1,0 +1,18 @@
+{
+  "ttrpg.preferred_system": "D&D 5th Edition",
+  "ttrpg.current_campaign": "The Shattered Throne of Greyhawk",
+  "ttrpg.party_level": 5,
+  "ttrpg.party_size": 4,
+  "ttrpg.session_count": 0,
+  "ttrpg.active_quest": "Investigate the disappearances in the Mistmarsh",
+  "ttrpg.calendar_date": "Readying 15, 591 CY",
+  "ttrpg.setting": "Greyhawk",
+  "ttrpg.tone": "heroic with gritty undertones",
+  "ttrpg.house_rule_critical_hit": "Max weapon dice plus a roll, doubled modifiers",
+  "ttrpg.house_rule_potions": "Drinking a potion is a bonus action; administering is an action",
+  "ttrpg.house_rule_inspiration": "Inspiration gives advantage on any one roll and can be held by multiple characters simultaneously",
+  "ttrpg.encounter_pace": "6 to 8 encounters per adventuring day",
+  "ttrpg.death_threshold": "Character death is permanent unless revived by in-story means",
+  "ttrpg.player_names": "Alex, Jordan, Sam, Riley",
+  "ttrpg.character_names": "Thorin Ironforge (fighter), Lyra Shadowmend (wizard), Brother Cedric (cleric), Whisper (rogue)"
+}

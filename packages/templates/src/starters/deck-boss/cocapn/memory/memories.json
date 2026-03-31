@@ -1,0 +1,51 @@
+{
+  "version": "1.0.0",
+  "namespace": "commercial-fishing",
+  "memories": [
+    {
+      "id": "mem-001",
+      "type": "operational",
+      "confidence": 0.95,
+      "timestamp": "2026-02-18T14:30:00Z",
+      "title": "Pollock CPUE in Shelikof Strait, February 2026",
+      "content": "Average CPUE of 3,200 lbs per tow in Shelikof Strait during February trip. Tows at 180-220 fathoms, 2.5 knot tow speed. Catch composition: 78% pollock, 12% Pacific cod, 6% arrowtooth flounder, 4% other. Best tows on the 180-fathom contour northeast of Tugidak Island. Gear performed well with no hangups.",
+      "tags": ["pollock", "cpue", "shelikof-strait", "february", "trip-report"]
+    },
+    {
+      "id": "mem-002",
+      "type": "maintenance",
+      "confidence": 1.0,
+      "timestamp": "2026-01-10T09:00:00Z",
+      "title": "Main engine overhaul completed January 2026",
+      "content": "Seward Ship's Drydock completed main engine overhaul. Work included: new cylinder liners for #3 and #5 cylinders, turbocharger rebuild, fuel injection pump recalibration, raw water pump impeller replacement, and full alignment check. Total cost: $87,400. Engine now showing 12% better fuel economy at cruise RPM. Recommended next overhaul at 18,000 hours or January 2029, whichever comes first.",
+      "tags": ["engine", "overhaul", "maintenance", "seward", "cost-tracking"]
+    },
+    {
+      "id": "mem-003",
+      "type": "regulatory",
+      "confidence": 0.9,
+      "timestamp": "2026-03-01T08:00:00Z",
+      "title": "2026 Gulf of Alaska Pacific cod TAC allocation",
+      "content": "2026 GOA Pacific cod TAC set at 27,431 metric tons for the Western Gulf. J gear sector allocation is 18.3%. Vessel's cooperative quota share is 2.7% of J gear allocation, yielding approximately 13,530 lbs of Pacific cod for the 2026 season. Halibut PSC limit for the trawl sector is 1,970 mt. Captain requests weekly quota balance updates during active fishing.",
+      "tags": ["tac", "pacific-cod", "goa", "quota", "allocation", "2026"]
+    },
+    {
+      "id": "mem-004",
+      "type": "safety",
+      "confidence": 1.0,
+      "timestamp": "2026-02-05T16:00:00Z",
+      "title": "Man overboard drill, February 2026",
+      "content": "Conducted MOB drill northwest of Chiniak Island, 0900 hours. Deckhand Ryan Okbock served as drill subject with practice dummy. Recovery time: 4 minutes 22 seconds using rescue sling and hydraulic winch. All crew wore immersion suits for the drill. Areas for improvement: communication between wheelhouse and deck could be faster -- recommend handheld VHF for deck boss during drills. Drill logged in vessel safety record book. Next drill: fire/abandon ship, scheduled March 2026.",
+      "tags": ["mob-drill", "safety", "chiniak", "crew-training"]
+    },
+    {
+      "id": "mem-005",
+      "type": "operational",
+      "confidence": 0.85,
+      "timestamp": "2025-11-20T11:00:00Z",
+      "title": "Sablefish longline trip, November 2025",
+      "content": "Three-day sablefish trip on the east side of Kodiak Island. Average catch rate: 180 lbs per skate. Best sets at 250-320 fathoms near Twoheaded Island. Fish averaged 8.5 lbs round weight, with good quality -- minimal sea lice damage. Used 13/0 circle hooks with whole herring bait. Bait costs ran $2,400 for the trip. Total sablefish landed: 11,200 lbs at $4.10/lb ex-vessel. Fuel burn: 2,800 gallons at $4.85/gal. Net after crew shares and expenses: approximately $18,600. Longline gear sustained 4 broken gangions and 1 lost skate from killer whale depredation.",
+      "tags": ["sablefish", "longline", "kodiak", "trip-report", "economics"]
+    }
+  ]
+}

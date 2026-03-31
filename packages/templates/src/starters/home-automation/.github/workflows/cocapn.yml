@@ -1,0 +1,185 @@
+name: Cocapn CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    name: Validate Starter Template
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Validate package.json
+        run: |
+          if [ ! -f package.json ]; then
+            echo "ERROR: package.json not found"
+            exit 1
+          fi
+          node -e "const pkg = require('./package.json'); \
+            if (!pkg.name) { console.error('Missing name'); process.exit(1); } \
+            if (!pkg.version) { console.error('Missing version'); process.exit(1); } \
+            if (pkg.type !== 'module') { console.error('Must be ESM (type: module)'); process.exit(1); } \
+            console.log('package.json valid:', pkg.name, pkg.version);"
+
+      - name: Validate soul.md
+        run: |
+          if [ ! -f soul.md ]; then
+            echo "ERROR: soul.md not found"
+            exit 1
+          fi
+          # Check YAML frontmatter exists
+          head -1 soul.md | grep -q "^---" || { echo "ERROR: soul.md missing YAML frontmatter"; exit 1; }
+          # Check required sections
+          for section in "Identity" "Personality" "What You Do" "What You Know" "What You Don't Do" "Memory Priorities" "Public Face"; do
+            grep -q "## $section" soul.md || { echo "ERROR: soul.md missing section: $section"; exit 1; }
+          done
+          echo "soul.md valid"
+
+      - name: Validate config.yml
+        run: |
+          if [ ! -f config.yml ]; then
+            echo "ERROR: config.yml not found"
+            exit 1
+          fi
+          npm install -g js-yaml 2>/dev/null
+          node -e "
+            const fs = require('fs');
+            const yaml = require('js-yaml');
+            const config = yaml.load(fs.readFileSync('config.yml', 'utf8'));
+            if (!config.config || !config.config.mode) { console.error('Missing config.config.mode'); process.exit(1); }
+            if (!config.llm || !config.llm.provider) { console.error('Missing llm.provider'); process.exit(1); }
+            if (!config.brain) { console.error('Missing brain section'); process.exit(1); }
+            if (!config.plugins || config.plugins.length === 0) { console.error('Missing plugins'); process.exit(1); }
+            console.log('config.yml valid');
+          "
+
+      - name: Validate theme.css
+        run: |
+          if [ ! -f theme.css ]; then
+            echo "ERROR: theme.css not found"
+            exit 1
+          fi
+          # Check for required CSS custom properties
+          for prop in "--color-primary" "--color-secondary" "--color-accent" "--bg-primary" "--text-primary" "--font-family"; do
+            grep -q "$prop" theme.css || { echo "ERROR: theme.css missing property: $prop"; exit 1; }
+          done
+          echo "theme.css valid"
+
+      - name: Validate CLAUDE.md
+        run: |
+          if [ ! -f CLAUDE.md ]; then
+            echo "ERROR: CLAUDE.md not found"
+            exit 1
+          fi
+          echo "CLAUDE.md valid"
+
+      - name: Validate memory files
+        run: |
+          # Validate facts.json
+          if [ ! -f cocapn/memory/facts.json ]; then
+            echo "ERROR: cocapn/memory/facts.json not found"
+            exit 1
+          fi
+          node -e "
+            const facts = require('./cocapn/memory/facts.json');
+            const keys = Object.keys(facts);
+            if (keys.length < 5) { console.error('facts.json needs at least 5 facts'); process.exit(1); }
+            console.log('facts.json valid:', keys.length, 'facts');
+          "
+
+          # Validate memories.json
+          if [ ! -f cocapn/memory/memories.json ]; then
+            echo "ERROR: cocapn/memory/memories.json not found"
+            exit 1
+          fi
+          node -e "
+            const data = require('./cocapn/memory/memories.json');
+            if (!data.memories || data.memories.length < 3) { console.error('memories.json needs at least 3 memories'); process.exit(1); }
+            console.log('memories.json valid:', data.memories.length, 'memories');
+          "
+
+      - name: Validate wiki files
+        run: |
+          for file in \
+            "wiki/devices/supported-devices.md" \
+            "wiki/routines/example-routines.md" \
+            "wiki/energy/monitoring.md" \
+            "wiki/security/security-setup.md"; do
+            if [ ! -f "$file" ]; then
+              echo "ERROR: $file not found"
+              exit 1
+            fi
+            lines=$(wc -l < "$file")
+            if [ "$lines" -lt 30 ]; then
+              echo "WARNING: $file has only $lines lines (recommended: 30+)"
+            fi
+            echo "$file valid ($lines lines)"
+          done
+
+      - name: Validate device registry
+        run: |
+          if [ ! -f knowledge/device-registry.json ]; then
+            echo "ERROR: knowledge/device-registry.json not found"
+            exit 1
+          fi
+          node -e "
+            const reg = require('./knowledge/device-registry.json');
+            if (!reg.categories) { console.error('Missing categories'); process.exit(1); }
+            const catCount = Object.keys(reg.categories).length;
+            console.log('device-registry.json valid:', catCount, 'categories');
+          "
+
+      - name: Validate plugins
+        run: |
+          for plugin in energy-monitor device-health security-alert; do
+            dir="plugins/$plugin"
+            if [ ! -f "$dir/plugin.json" ]; then
+              echo "ERROR: $dir/plugin.json not found"
+              exit 1
+            fi
+            if [ ! -f "$dir/README.md" ]; then
+              echo "ERROR: $dir/README.md not found"
+              exit 1
+            fi
+            node -e "
+              const p = require('./$dir/plugin.json');
+              if (!p.id || !p.name || !p.version) { console.error('$dir/plugin.json missing id/name/version'); process.exit(1); }
+              console.log('$plugin plugin valid:', p.name, p.version);
+            "
+          done
+
+      - name: Summary
+        run: |
+          echo "========================================="
+          echo "  Home Automation Starter - Validated"
+          echo "========================================="
+          echo ""
+          echo "Files checked:"
+          echo "  - package.json"
+          echo "  - soul.md"
+          echo "  - config.yml"
+          echo "  - theme.css"
+          echo "  - CLAUDE.md"
+          echo "  - cocapn/memory/facts.json"
+          echo "  - cocapn/memory/memories.json"
+          echo "  - wiki/devices/supported-devices.md"
+          echo "  - wiki/routines/example-routines.md"
+          echo "  - wiki/energy/monitoring.md"
+          echo "  - wiki/security/security-setup.md"
+          echo "  - knowledge/device-registry.json"
+          echo "  - plugins/energy-monitor/"
+          echo "  - plugins/device-health/"
+          echo "  - plugins/security-alert/"
+          echo ""
+          echo "All validations passed."

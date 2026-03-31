@@ -1,0 +1,133 @@
+:root {
+  /* Primary palette — teal/tech */
+  --color-primary: #00897b;
+  --color-primary-light: #4ebaaa;
+  --color-primary-dark: #005b4f;
+  --color-primary-alpha: rgba(0, 137, 123, 0.12);
+
+  /* Secondary — cool slate */
+  --color-secondary: #455a64;
+  --color-secondary-light: #718792;
+  --color-secondary-dark: #1c313a;
+
+  /* Accent — electric cyan for interactive elements */
+  --color-accent: #00bcd4;
+  --color-accent-light: #62efff;
+  --color-accent-dark: #008ba3;
+
+  /* Status colors */
+  --color-success: #43a047;
+  --color-warning: #fb8c00;
+  --color-error: #e53935;
+  --color-info: #1e88e5;
+
+  /* Backgrounds */
+  --bg-primary: #fafbfc;
+  --bg-secondary: #f0f2f5;
+  --bg-card: #ffffff;
+  --bg-dark: #1a2332;
+  --bg-sidebar: #f5f7fa;
+  --bg-hover: rgba(0, 137, 123, 0.06);
+  --bg-active: rgba(0, 137, 123, 0.10);
+
+  /* Text */
+  --text-primary: #1a2332;
+  --text-secondary: #5f6b7a;
+  --text-muted: #9aa5b4;
+  --text-inverse: #ffffff;
+  --text-accent: #00897b;
+
+  /* Borders */
+  --border-color: #e2e6eb;
+  --border-light: #f0f2f5;
+  --border-focus: #00897b;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(26, 35, 50, 0.06);
+  --shadow-md: 0 4px 12px rgba(26, 35, 50, 0.08);
+  --shadow-lg: 0 8px 24px rgba(26, 35, 50, 0.10);
+  --shadow-card: 0 2px 8px rgba(26, 35, 50, 0.05);
+
+  /* Spacing */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+
+  /* Typography */
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+  --font-size-xs: 11px;
+  --font-size-sm: 13px;
+  --font-size-base: 15px;
+  --font-size-lg: 18px;
+  --font-size-xl: 22px;
+  --font-size-2xl: 28px;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --line-height: 1.5;
+
+  /* Border radius */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-full: 9999px;
+
+  /* Transitions */
+  --transition-fast: 150ms ease;
+  --transition-normal: 250ms ease;
+  --transition-slow: 400ms ease;
+
+  /* Device status indicators */
+  --device-online: #43a047;
+  --device-offline: #9aa5b4;
+  --device-warning: #fb8c00;
+  --device-error: #e53935;
+  --device-updating: #1e88e5;
+
+  /* Room colors */
+  --room-living: #00897b;
+  --room-bedroom: #5c6bc0;
+  --room-kitchen: #fb8c00;
+  --room-bathroom: #1e88e5;
+  --room-office: #7cb342;
+  --room-garage: #6d4c41;
+  --room-outdoor: #558b2f;
+
+  /* Energy gradient */
+  --energy-low: #43a047;
+  --energy-medium: #fb8c00;
+  --energy-high: #e53935;
+
+  /* Security levels */
+  --security-disarmed: #9aa5b4;
+  --security-home: #1e88e5;
+  --security-away: #fb8c00;
+  --security-night: #5c6bc0;
+  --security-alert: #e53935;
+}
+
+/* Dark mode overrides */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-primary: #121a26;
+    --bg-secondary: #1a2332;
+    --bg-card: #1e2a3a;
+    --bg-sidebar: #162030;
+    --bg-hover: rgba(0, 137, 123, 0.12);
+    --bg-active: rgba(0, 137, 123, 0.18);
+    --text-primary: #e8ecf0;
+    --text-secondary: #9aa5b4;
+    --text-muted: #6b7a8d;
+    --border-color: #2a3648;
+    --border-light: #1e2a3a;
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.2);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.4);
+    --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.25);
+  }
+}

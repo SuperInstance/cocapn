@@ -1,0 +1,72 @@
+config:
+  mode: local
+  port: 8787
+sync:
+  interval: 10
+  autoCommit: true
+  autoPush: false
+capabilities:
+  filesystem: true
+  git: true
+  llm: deepseek
+  vectorSearch: auto
+  mcp: true
+  fleet: false
+  sandbox: true
+llm:
+  provider: deepseek
+  model: deepseek-chat
+  temperature: 0.6
+  maxTokens: 4096
+  systemPrompt:
+    includeSoul: true
+    includeFacts: true
+    includeRecentMemories: 5
+brain:
+  autoSync: true
+  factsNamespace: study
+  memoryLimit: 2000
+  decayInterval: 21600
+  maxEntries: 1000
+features:
+  flashcards:
+    enabled: true
+    spacedRepetition: true
+    algorithm: sm2
+    dailyLimit: 50
+    decks: auto
+  quizzes:
+    enabled: true
+    adaptive: true
+    formats:
+      - multiple-choice
+      - fill-in-blank
+      - short-answer
+      - true-false
+    difficultyScaling: true
+  progressTracking:
+    enabled: true
+    metrics:
+      - accuracy
+      - speed
+      - consistency
+      - weakAreas
+    reports: weekly
+  studyScheduler:
+    enabled: true
+    pomodoroIntegration: true
+    breakReminders: true
+    sessionLength: 25
+  explanations:
+    socraticMode: true
+    analogyEngine: true
+    stepByStep: true
+  examPrep:
+    enabled: true
+    timedPractice: true
+    mockExams: true
+    stressManagement: true
+plugins:
+  - flashcard-maker
+  - quiz-generator
+  - progress-tracker

@@ -1,0 +1,62 @@
+{
+  "dev.preferredLanguages": {
+    "value": ["TypeScript", "Python"],
+    "confidence": 1.0,
+    "source": "explicit",
+    "updatedAt": "2026-03-30T00:00:00Z"
+  },
+  "dev.frameworks": {
+    "value": ["React", "Node.js"],
+    "confidence": 0.9,
+    "source": "explicit",
+    "updatedAt": "2026-03-30T00:00:00Z"
+  },
+  "dev.editor": {
+    "value": "VS Code",
+    "confidence": 1.0,
+    "source": "explicit",
+    "updatedAt": "2026-03-30T00:00:00Z"
+  },
+  "dev.projectType": {
+    "value": "web app",
+    "confidence": 0.9,
+    "source": "explicit",
+    "updatedAt": "2026-03-30T00:00:00Z"
+  },
+  "team.size": {
+    "value": 3,
+    "confidence": 0.9,
+    "source": "explicit",
+    "updatedAt": "2026-03-30T00:00:00Z"
+  },
+  "dev.indentStyle": {
+    "value": "2 spaces",
+    "confidence": 0.8,
+    "source": "implicit",
+    "updatedAt": "2026-03-30T00:00:00Z"
+  },
+  "dev.quoteStyle": {
+    "value": "single quotes",
+    "confidence": 0.8,
+    "source": "implicit",
+    "updatedAt": "2026-03-30T00:00:00Z"
+  },
+  "dev.commitConvention": {
+    "value": "conventional commits",
+    "confidence": 1.0,
+    "source": "explicit",
+    "updatedAt": "2026-03-30T00:00:00Z"
+  },
+  "dev.branchingStrategy": {
+    "value": "GitHub Flow",
+    "confidence": 0.8,
+    "source": "implicit",
+    "updatedAt": "2026-03-30T00:00:00Z"
+  },
+  "dev.testFramework": {
+    "value": "Vitest",
+    "confidence": 0.9,
+    "source": "explicit",
+    "updatedAt": "2026-03-30T00:00:00Z"
+  }
+}

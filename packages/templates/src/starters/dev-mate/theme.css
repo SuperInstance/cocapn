@@ -1,0 +1,174 @@
+:root {
+  /* Primary palette — Monokai-inspired terminal aesthetic */
+  --color-primary: #a6e22e;
+  --color-primary-hover: #b8f344;
+  --color-primary-dim: #5c7a16;
+  --color-secondary: #66d9ef;
+  --color-secondary-hover: #8be4f7;
+  --color-secondary-dim: #3a7a8f;
+  --color-accent: #f92672;
+  --color-accent-hover: #fb4e8f;
+  --color-accent-dim: #a7154e;
+  --color-warning: #fd971f;
+  --color-warning-dim: #b56a15;
+  --color-success: #a6e22e;
+  --color-error: #f92672;
+  --color-info: #66d9ef;
+
+  /* Background layers — deep dark, not pure black */
+  --color-bg-primary: #1a1a2e;
+  --color-bg-secondary: #16213e;
+  --color-bg-tertiary: #0f3460;
+  --color-bg-surface: #1e1e3a;
+  --color-bg-elevated: #242448;
+  --color-bg-overlay: rgba(15, 15, 30, 0.92);
+  --color-bg-code: #1b1b30;
+  --color-bg-inline-code: #2a2a4a;
+
+  /* Text colors */
+  --color-text-primary: #e6e6e6;
+  --color-text-secondary: #a0a0b8;
+  --color-text-muted: #6a6a80;
+  --color-text-inverse: #1a1a2e;
+  --color-text-code: #f8f8f2;
+  --color-text-link: #66d9ef;
+  --color-text-link-hover: #a6e22e;
+
+  /* Syntax highlighting — Monokai palette */
+  --color-syntax-keyword: #f92672;
+  --color-syntax-string: #e6db74;
+  --color-syntax-comment: #75715e;
+  --color-syntax-function: #a6e22e;
+  --color-syntax-variable: #fd971f;
+  --color-syntax-number: #ae81ff;
+  --color-syntax-operator: #f92672;
+  --color-syntax-type: #66d9ef;
+  --color-syntax-tag: #f92672;
+  --color-syntax-attribute: #a6e22e;
+  --color-syntax-punctuation: #f8f8f2;
+
+  /* Border and divider colors */
+  --color-border: #2a2a4a;
+  --color-border-focus: #66d9ef;
+  --color-border-hover: #a6e22e;
+  --color-divider: #333358;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.6);
+  --shadow-glow-primary: 0 0 12px rgba(166, 226, 46, 0.2);
+  --shadow-glow-accent: 0 0 12px rgba(249, 38, 114, 0.2);
+  --shadow-glow-secondary: 0 0 12px rgba(102, 217, 239, 0.2);
+
+  /* Spacing */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+
+  /* Typography */
+  --font-sans: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+  --font-serif: 'Merriweather', 'Georgia', serif;
+  --font-size-xs: 11px;
+  --font-size-sm: 13px;
+  --font-size-md: 15px;
+  --font-size-lg: 18px;
+  --font-size-xl: 22px;
+  --font-size-2xl: 28px;
+  --font-size-3xl: 36px;
+  --line-height-tight: 1.3;
+  --line-height-normal: 1.6;
+  --line-height-relaxed: 1.8;
+
+  /* Border radius */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-full: 9999px;
+
+  /* Transitions */
+  --transition-fast: 120ms ease;
+  --transition-normal: 200ms ease;
+  --transition-slow: 350ms ease;
+
+  /* Z-index layers */
+  --z-base: 0;
+  --z-dropdown: 100;
+  --z-sticky: 200;
+  --z-overlay: 300;
+  --z-modal: 400;
+  --z-toast: 500;
+  --z-tooltip: 600;
+
+  /* Component-specific */
+  --code-line-height: 1.7;
+  --code-font-size: 14px;
+  --code-padding: 16px;
+  --sidebar-width: 280px;
+  --header-height: 56px;
+  --max-content-width: 960px;
+  --terminal-prompt-color: #a6e22e;
+  --terminal-cursor-color: #f8f8f2;
+}
+
+/* Dark mode is the default — this is a dev theme */
+@media (prefers-color-scheme: light) {
+  :root {
+    --color-bg-primary: #fafafa;
+    --color-bg-secondary: #f0f0f5;
+    --color-bg-tertiary: #e4e4ec;
+    --color-bg-surface: #ffffff;
+    --color-bg-elevated: #ffffff;
+    --color-bg-overlay: rgba(240, 240, 245, 0.95);
+    --color-bg-code: #f5f5fa;
+    --color-bg-inline-code: #ebebf5;
+    --color-text-primary: #1a1a2e;
+    --color-text-secondary: #4a4a60;
+    --color-text-muted: #7a7a90;
+    --color-text-inverse: #f8f8f2;
+    --color-border: #d4d4e0;
+    --color-divider: #e0e0ec;
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+    --shadow-glow-primary: 0 0 12px rgba(166, 226, 46, 0.1);
+    --shadow-glow-accent: 0 0 12px rgba(249, 38, 114, 0.1);
+    --shadow-glow-secondary: 0 0 12px rgba(102, 217, 239, 0.1);
+    --color-syntax-comment: #8a8a6e;
+  }
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-muted);
+}
+
+/* Selection */
+::selection {
+  background: rgba(166, 226, 46, 0.25);
+  color: var(--color-text-primary);
+}
+
+/* Focus ring */
+:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 2px;
+}

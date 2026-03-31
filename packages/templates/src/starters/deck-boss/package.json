@@ -1,0 +1,65 @@
+{
+  "name": "@cocapn/starter-deck-boss",
+  "version": "1.0.0",
+  "description": "Commercial fishing operations agent starter — quota tracking, crew management, maintenance scheduling, regulatory compliance",
+  "type": "module",
+  "keywords": [
+    "cocapn",
+    "starter",
+    "deck-boss",
+    "commercial-fishing",
+    "quota-tracking",
+    "crew-management",
+    "maintenance",
+    "regulatory-compliance",
+    "vessel-management",
+    "fisheries"
+  ],
+  "author": "Cocapn",
+  "license": "MIT",
+  "files": [
+    "soul.md",
+    "config.yml",
+    "theme.css",
+    "README.md",
+    "CLAUDE.md",
+    "cocapn/**/*",
+    "wiki/**/*",
+    "knowledge/**/*",
+    "plugins/**/*",
+    ".github/**/*"
+  ],
+  "cocapn": {
+    "template": true,
+    "category": "commercial-fishing",
+    "tags": [
+      "commercial-fishing",
+      "vessel-management",
+      "quota-tracking",
+      "crew-scheduling",
+      "maintenance",
+      "regulatory-compliance",
+      "IFQ",
+      "safety"
+    ],
+    "soul": "soul.md",
+    "config": "config.yml",
+    "theme": "theme.css",
+    "memory": "cocapn/memory",
+    "wiki": "wiki",
+    "knowledge": "knowledge",
+    "plugins": "plugins"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SuperInstance/cocapn.git",
+    "directory": "packages/templates/src/starters/deck-boss"
+  },
+  "homepage": "https://cocapn.ai",
+  "bugs": {
+    "url": "https://github.com/SuperInstance/cocapn/issues"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

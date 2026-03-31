@@ -1,0 +1,56 @@
+{
+  "version": 1,
+  "namespace": "life",
+  "memories": [
+    {
+      "id": "mem-001",
+      "type": "preference",
+      "content": "User prefers to batch-process emails twice a day (9am and 3pm) rather than checking continuously. Said constant notifications were a major source of anxiety and switching to batch processing cut email time by 40%.",
+      "confidence": 0.9,
+      "tags": ["email", "productivity", "routine", "anxiety-management"],
+      "source": "conversation",
+      "createdAt": "2026-03-15T14:30:00Z",
+      "updatedAt": "2026-03-15T14:30:00Z"
+    },
+    {
+      "id": "mem-002",
+      "type": "error-pattern",
+      "content": "User tends to overcommit on weekends — packing Saturday and Sunday with activities then feeling exhausted Monday. Learned this after three consecutive Mondays where user reported burnout. Now recommending maximum 2 planned activities per weekend day with buffer time built in.",
+      "confidence": 0.85,
+      "tags": ["weekend", "overcommitment", "energy", "scheduling", "boundary"],
+      "source": "conversation",
+      "createdAt": "2026-03-10T09:15:00Z",
+      "updatedAt": "2026-03-22T18:00:00Z"
+    },
+    {
+      "id": "mem-003",
+      "type": "milestone",
+      "content": "User completed their first 6-mile run (week 7 of half marathon training). Felt strong and maintained a 10:15 pace. This was a confidence boost after struggling with the 5-miler the week before. Celebrated with a smoothie from the place on Hawthorne.",
+      "confidence": 1.0,
+      "tags": ["running", "half-marathon", "milestone", "celebration", "fitness"],
+      "source": "conversation",
+      "createdAt": "2026-03-22T08:45:00Z",
+      "updatedAt": "2026-03-22T08:45:00Z"
+    },
+    {
+      "id": "mem-004",
+      "type": "preference",
+      "content": "User's mother (Linda) lives in Eugene, about 2 hours south. They talk on the phone every Sunday evening. User mentioned feeling guilty about not visiting more often. Recommended scheduling one visit per month — user agreed and seemed relieved to have it as a calendar item rather than a worry.",
+      "confidence": 0.95,
+      "tags": ["family", "mother", "visiting", "guilt", "relationship", "scheduling"],
+      "source": "conversation",
+      "createdAt": "2026-03-18T20:30:00Z",
+      "updatedAt": "2026-03-18T20:30:00Z"
+    },
+    {
+      "id": "mem-005",
+      "type": "insight",
+      "content": "User does best with habit stacking — linking new habits to existing ones. Successfully built a meditation habit by attaching it to morning coffee. Applying same strategy: vitamins after brushing teeth, stretching after brushing teeth at night, reading before sleep instead of phone scrolling.",
+      "confidence": 0.9,
+      "tags": ["habits", "habit-stacking", "method", "what-works"],
+      "source": "conversation",
+      "createdAt": "2026-03-12T07:20:00Z",
+      "updatedAt": "2026-03-25T07:00:00Z"
+    }
+  ]
+}

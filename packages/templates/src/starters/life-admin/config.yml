@@ -1,0 +1,69 @@
+config:
+  mode: local
+  port: 8787
+sync:
+  interval: 10
+  autoCommit: true
+  autoPush: false
+capabilities:
+  filesystem: true
+  git: true
+  llm: deepseek
+  vectorSearch: auto
+  mcp: true
+  fleet: false
+  sandbox: true
+llm:
+  provider: deepseek
+  model: deepseek-chat
+  temperature: 0.6
+  maxTokens: 4096
+  systemPrefix: "You are a warm, organized personal assistant. Be concise but caring."
+brain:
+  autoSync: true
+  factsNamespace: life
+  memoryLimit: 2000
+features:
+  dailyBriefing: true
+  weeklyReview: true
+  habitTracking: true
+  billReminders: true
+  travelPlanning: true
+  groceryLists: true
+  appointmentReminders: true
+  goalTracking: true
+  relationshipManager: true
+  documentTracker: true
+  morningCheckin:
+    enabled: true
+    time: "07:00"
+    includeWeather: true
+    includeCalendar: true
+    includeHabits: true
+    includePriorities: true
+  eveningReview:
+    enabled: true
+    time: "21:00"
+    includeAccomplishments: true
+    includeTomorrow: true
+    includeGratitude: true
+  billReminder:
+    advanceDays: 7
+    repeatInterval: 3
+    urgentThreshold: 2
+  habitCheckin:
+    frequency: adaptive
+    quietHours:
+      start: "22:00"
+      end: "07:00"
+  weeklyReview:
+    day: sunday
+    time: "10:00"
+    includeHabitStats: true
+    includeBudgetSummary: true
+    includeGoalProgress: true
+    planNextWeek: true
+plugins:
+  - calendar-sync
+  - habit-tracker
+  - bill-reminder

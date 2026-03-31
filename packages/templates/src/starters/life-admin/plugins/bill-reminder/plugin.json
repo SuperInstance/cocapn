@@ -1,0 +1,105 @@
+{
+  "name": "bill-reminder",
+  "version": "1.0.0",
+  "description": "Tracks bill due dates, sends tiered reminders, monitors subscriptions, and provides monthly budget summaries.",
+  "author": "Cocapn",
+  "license": "MIT",
+  "capabilities": [
+    "bill.track",
+    "bill.remind",
+    "bill.recurring",
+    "subscription.manage",
+    "budget.summary"
+  ],
+  "permissions": [
+    "filesystem.read",
+    "filesystem.write",
+    "llm.chat"
+  ],
+  "config": {
+    "reminderSchedule": {
+      "advanceDays": 7,
+      "followUpDays": 3,
+      "urgentDays": 1,
+      "repeatIntervalDays": 3
+    },
+    "autoPayTracking": true,
+    "categories": [
+      "housing",
+      "utilities",
+      "insurance",
+      "subscriptions",
+      "transportation",
+      "loans",
+      "other"
+    ],
+    "defaultBills": [
+      {
+        "name": "Rent",
+        "amount": 1800,
+        "dayOfMonth": 1,
+        "category": "housing",
+        "paymentMethod": "auto-pay",
+        "account": "checking"
+      },
+      {
+        "name": "Electric",
+        "amount": null,
+        "dayOfMonth": 5,
+        "category": "utilities",
+        "paymentMethod": "auto-pay",
+        "account": "checking",
+        "note": "Variable, typically $80-160"
+      },
+      {
+        "name": "Internet",
+        "amount": 79,
+        "dayOfMonth": 15,
+        "category": "utilities",
+        "paymentMethod": "auto-pay",
+        "account": "checking"
+      },
+      {
+        "name": "Car Insurance",
+        "amount": 189,
+        "dayOfMonth": 10,
+        "category": "insurance",
+        "paymentMethod": "manual",
+        "account": "checking"
+      },
+      {
+        "name": "Gym Membership",
+        "amount": 45,
+        "dayOfMonth": 25,
+        "category": "subscriptions",
+        "paymentMethod": "auto-pay",
+        "account": "checking"
+      },
+      {
+        "name": "Credit Card",
+        "amount": null,
+        "dayOfMonth": 20,
+        "category": "other",
+        "paymentMethod": "manual",
+        "account": "checking",
+        "note": "Pay full balance, varies monthly"
+      }
+    ],
+    "monthlyBudget": {
+      "total": 3200,
+      "bufferPercent": 5
+    },
+    "quarterlyAuditMonths": [1, 4, 7, 10]
+  },
+  "events": {
+    "onBillDue": "tiered-reminder",
+    "onBillPaid": "confirm",
+    "onBudgetThreshold": "alert",
+    "onSubscriptionRenewal": "review-prompt",
+    "onQuarterlyAudit": "full-review"
+  },
+  "storage": {
+    "type": "file",
+    "path": "cocapn/memory/bills.json"
+  }
+}

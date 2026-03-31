@@ -1,0 +1,280 @@
+name: Cocapn CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    name: Validate Configuration
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Validate JSON files
+        run: |
+          echo "Validating JSON files..."
+          errors=0
+          for file in $(find . -name '*.json' -not -path './node_modules/*'); do
+            if ! node -e "JSON.parse(require('fs').readFileSync('$file', 'utf8'))" 2>/dev/null; then
+              echo "Invalid JSON: $file"
+              errors=$((errors + 1))
+            fi
+          done
+          if [ $errors -gt 0 ]; then
+            echo "Found $errors invalid JSON files"
+            exit 1
+          fi
+          echo "All JSON files are valid"
+
+      - name: Validate YAML config
+        run: |
+          npm install -g js-yaml
+          echo "Validating YAML files..."
+          errors=0
+          for file in $(find . -name '*.yml' -o -name '*.yaml' | grep -v node_modules); do
+            if ! js-yaml "$file" > /dev/null 2>&1; then
+              echo "Invalid YAML: $file"
+              errors=$((errors + 1))
+            fi
+          done
+          if [ $errors -gt 0 ]; then
+            echo "Found $errors invalid YAML files"
+            exit 1
+          fi
+          echo "All YAML files are valid"
+
+      - name: Validate soul.md frontmatter
+        run: |
+          if [ -f "soul.md" ]; then
+            echo "Checking soul.md frontmatter..."
+            node -e "
+              const fs = require('fs');
+              const content = fs.readFileSync('soul.md', 'utf8');
+              const match = content.match(/^---\n([\s\S]*?)\n---/);
+              if (!match) {
+                console.error('No YAML frontmatter found in soul.md');
+                process.exit(1);
+              }
+              try {
+                // Basic YAML validation — check for required fields
+                const frontmatter = match[1];
+                if (!frontmatter.includes('name:')) {
+                  console.error('Missing required field: name');
+                  process.exit(1);
+                }
+                if (!frontmatter.includes('version:')) {
+                  console.error('Missing required field: version');
+                  process.exit(1);
+                }
+                console.log('soul.md frontmatter is valid');
+              } catch (e) {
+                console.error('Invalid frontmatter:', e.message);
+                process.exit(1);
+              }
+            "
+          fi
+
+      - name: Validate wiki files
+        run: |
+          echo "Checking wiki files for minimum content..."
+          errors=0
+          for file in $(find ./wiki -name '*.md' 2>/dev/null); do
+            lines=$(wc -l < "$file")
+            if [ "$lines" -lt 30 ]; then
+              echo "WARNING: $file has only $lines lines (recommended minimum: 30)"
+            fi
+          done
+          echo "Wiki validation complete"
+
+      - name: Validate plugin manifests
+        run: |
+          echo "Checking plugin manifests..."
+          errors=0
+          for dir in ./plugins/*/; do
+            plugin_json="$dir/plugin.json"
+            if [ ! -f "$plugin_json" ]; then
+              echo "Missing plugin.json in $dir"
+              errors=$((errors + 1))
+              continue
+            fi
+            # Check required fields
+            node -e "
+              const p = JSON.parse(require('fs').readFileSync('$plugin_json', 'utf8'));
+              const required = ['name', 'version', 'description', 'commands'];
+              for (const field of required) {
+                if (!p[field]) {
+                  console.error('Missing field: ' + field + ' in $plugin_json');
+                  process.exit(1);
+                }
+              }
+              if (!Array.isArray(p.commands) || p.commands.length === 0) {
+                console.error('Commands must be a non-empty array in $plugin_json');
+                process.exit(1);
+              }
+            "
+            if [ $? -ne 0 ]; then
+              errors=$((errors + 1))
+            fi
+
+            readme="$dir/README.md"
+            if [ ! -f "$readme" ]; then
+              echo "Missing README.md in $dir"
+              errors=$((errors + 1))
+            fi
+          done
+          if [ $errors -gt 0 ]; then
+            echo "Found $errors plugin validation errors"
+            exit 1
+          fi
+          echo "All plugin manifests are valid"
+
+      - name: Validate knowledge files
+        run: |
+          echo "Checking knowledge files..."
+          errors=0
+          for file in $(find ./knowledge -name '*.json' 2>/dev/null); do
+            # Already validated as JSON above; check structure
+            node -e "
+              const data = JSON.parse(require('fs').readFileSync('$file', 'utf8'));
+              if (typeof data !== 'object' || Object.keys(data).length === 0) {
+                console.error('Knowledge file must be a non-empty object: $file');
+                process.exit(1);
+              }
+            "
+            if [ $? -ne 0 ]; then
+              errors=$((errors + 1))
+            fi
+          done
+          if [ $errors -gt 0 ]; then
+            echo "Found $errors knowledge file errors"
+            exit 1
+          fi
+          echo "All knowledge files are valid"
+
+      - name: Check memory files
+        run: |
+          echo "Checking memory files..."
+          # Validate facts.json structure
+          if [ -f "./cocapn/memory/facts.json" ]; then
+            node -e "
+              const data = JSON.parse(require('fs').readFileSync('./cocapn/memory/facts.json', 'utf8'));
+              if (typeof data !== 'object' || Array.isArray(data)) {
+                console.error('facts.json must be a flat object (key-value pairs)');
+                process.exit(1);
+              }
+              const keys = Object.keys(data);
+              if (keys.length < 5) {
+                console.error('facts.json should have at least 5 entries, found: ' + keys.length);
+                process.exit(1);
+              }
+              console.log('facts.json: ' + keys.length + ' entries');
+            "
+          fi
+          # Validate memories.json structure
+          if [ -f "./cocapn/memory/memories.json" ]; then
+            node -e "
+              const data = JSON.parse(require('fs').readFileSync('./cocapn/memory/memories.json', 'utf8'));
+              if (!Array.isArray(data)) {
+                console.error('memories.json must be an array');
+                process.exit(1);
+              }
+              if (data.length < 3) {
+                console.error('memories.json should have at least 3 entries, found: ' + data.length);
+                process.exit(1);
+              }
+              for (const entry of data) {
+                if (!entry.id || !entry.type || !entry.content) {
+                  console.error('Each memory must have id, type, and content fields');
+                  process.exit(1);
+                }
+              }
+              console.log('memories.json: ' + data.length + ' entries');
+            "
+          fi
+          echo "Memory files are valid"
+
+  lint:
+    name: Lint and Format
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check for placeholder content
+        run: |
+          echo "Scanning for placeholder content..."
+          found=0
+          for file in $(find . -name '*.md' -o -name '*.json' | grep -v node_modules | grep -v '.github'); do
+            if grep -qiE '(TODO|FIXME|PLACEHOLDER|your content here|lorem ipsum|tbd|coming soon)' "$file" 2>/dev/null; then
+              echo "Found placeholder in: $file"
+              grep -niE '(TODO|FIXME|PLACEHOLDER|your content here|lorem ipsum|tbd|coming soon)' "$file"
+              found=$((found + 1))
+            fi
+          done
+          if [ $found -gt 0 ]; then
+            echo "Found placeholder content in $found files"
+            exit 1
+          fi
+          echo "No placeholder content found"
+
+      - name: Check markdown formatting
+        run: |
+          echo "Checking markdown file structure..."
+          for file in $(find ./wiki -name '*.md' 2>/dev/null); do
+            # Check that files have a top-level heading
+            if ! grep -q '^#' "$file"; then
+              echo "WARNING: $file has no headings"
+            fi
+          done
+          echo "Markdown formatting check complete"
+
+  security:
+    name: Security Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check for secrets in codebase
+        run: |
+          echo "Scanning for potential secrets..."
+          found=0
+          # Check for common secret patterns
+          for file in $(find . -type f \( -name '*.md' -o -name '*.json' -o -name '*.yml' -o -name '*.yaml' \) | grep -v node_modules); do
+            if grep -qiE '(api_key|apikey|secret_key|password|token|credential).*=.*[A-Za-z0-9]{20,}' "$file" 2>/dev/null; then
+              echo "POTENTIAL SECRET in: $file"
+              found=$((found + 1))
+            fi
+            # Check for hardcoded GPS coordinates that might be private spots
+            if grep -qE '-?[0-9]{2,3}\.[0-9]{4,},\s*-?[0-9]{2,3}\.[0-9]{4,}' "$file" 2>/dev/null; then
+              echo "NOTE: GPS coordinates found in $file — verify these are public knowledge"
+            fi
+          done
+          if [ $found -gt 0 ]; then
+            echo "Found potential secrets in $found files"
+            exit 1
+          fi
+          echo "No secrets detected"
+
+      - name: Check gitignore
+        run: |
+          if [ -f ".gitignore" ]; then
+            echo "Checking .gitignore..."
+            required=("secrets/" "*.env" ".env*")
+            for pattern in "${required[@]}"; do
+              if ! grep -q "$pattern" .gitignore 2>/dev/null; then
+                echo "WARNING: .gitignore should include: $pattern"
+              fi
+            done
+          else
+            echo "NOTE: No .gitignore found — consider adding one with secrets/ and .env patterns"
+          fi

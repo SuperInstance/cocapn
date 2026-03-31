@@ -1,0 +1,57 @@
+{
+  "name": "calendar-sync",
+  "version": "1.0.0",
+  "description": "Synchronizes calendar events, manages appointments, detects scheduling conflicts, and provides daily agenda briefings.",
+  "author": "Cocapn",
+  "license": "MIT",
+  "capabilities": [
+    "calendar.read",
+    "calendar.write",
+    "calendar.conflict-detect",
+    "reminder.schedule"
+  ],
+  "permissions": [
+    "filesystem.read",
+    "filesystem.write",
+    "llm.chat"
+  ],
+  "config": {
+    "defaultView": "week",
+    "conflictDetection": true,
+    "conflictBufferMinutes": 15,
+    "reminderAdvanceMinutes": [1440, 60, 15],
+    "workingHours": {
+      "start": "09:00",
+      "end": "17:30",
+      "days": ["monday", "tuesday", "wednesday", "thursday", "friday"]
+    },
+    "timezone": "auto",
+    "weekStartsOn": "monday"
+  },
+  "events": {
+    "onEventCreated": "notify",
+    "onEventUpdated": "notify",
+    "onConflictDetected": "alert",
+    "onReminderTriggered": "notify"
+  },
+  "integrations": {
+    "ical": {
+      "description": "Import and subscribe to iCal feeds",
+      "enabled": true
+    },
+    "google-calendar": {
+      "description": "Sync with Google Calendar via MCP server",
+      "enabled": false,
+      "requires": "google-calendar-mcp"
+    },
+    "outlook": {
+      "description": "Sync with Outlook Calendar via MCP server",
+      "enabled": false,
+      "requires": "outlook-mcp"
+    }
+  },
+  "storage": {
+    "type": "file",
+    "path": "cocapn/memory/calendar.json"
+  }
+}

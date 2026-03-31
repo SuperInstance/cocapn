@@ -1,0 +1,48 @@
+{
+  "name": "@cocapn/starter-dev-mate",
+  "version": "1.0.0",
+  "description": "Senior software developer assistant starter — code review, debugging, architecture guidance, Git workflow management, and institutional memory for your repo",
+  "type": "module",
+  "keywords": [
+    "cocapn",
+    "dev-mate",
+    "code-review",
+    "debugging",
+    "pair-programming",
+    "developer-tools",
+    "git-helper",
+    "architecture",
+    "ci-cd",
+    "starter"
+  ],
+  "author": "Cocapn",
+  "license": "MIT",
+  "scripts": {
+    "start": "cocapn start",
+    "dev": "cocapn start --watch",
+    "build": "echo 'No build step required — this is a starter template'",
+    "test": "echo 'No tests in starter template — tests go in the generated project'",
+    "review": "cocapn skill code-reviewer",
+    "git-helper": "cocapn skill git-helper",
+    "docs": "cocapn skill doc-generator",
+    "audit": "npm audit --production",
+    "deploy": "cocapn deploy"
+  },
+  "dependencies": {},
+  "devDependencies": {},
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "cocapn": {
+    "template": "dev-mate",
+    "category": "development",
+    "soul": "soul.md",
+    "config": "config.yml",
+    "theme": "theme.css",
+    "plugins": [
+      "code-reviewer",
+      "git-helper",
+      "doc-generator"
+    ]
+  }
+}

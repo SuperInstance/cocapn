@@ -1,0 +1,41 @@
+{
+  "name": "doc-generator",
+  "version": "1.0.0",
+  "description": "Automated documentation generation including ADR templates, API docs, README updates, inline doc comments, and architecture diagrams from code.",
+  "author": "Cocapn",
+  "license": "MIT",
+  "hooks": [
+    {
+      "event": "on-message",
+      "handler": "docCommand",
+      "description": "Handle documentation-related chat commands (adr, api-docs, readme)"
+    },
+    {
+      "event": "post-commit",
+      "handler": "checkDocsFreshness",
+      "description": "After commits, check if related documentation needs updating"
+    },
+    {
+      "event": "on-review",
+      "handler": "reviewDocs",
+      "description": "Augment code review with documentation completeness checks"
+    }
+  ],
+  "permissions": [
+    "git.diff",
+    "git.log",
+    "filesystem.read",
+    "filesystem.write",
+    "brain.facts.read",
+    "brain.memories.read",
+    "brain.memories.write"
+  ],
+  "config": {
+    "adrDirectory": "wiki/architecture",
+    "apiDocFormat": "openapi",
+    "autoDetectStaleDocs": true,
+    "requireDocCommentsOnExports": true,
+    "adrTemplate": "standard",
+    "includeCodeExamples": true
+  }
+}

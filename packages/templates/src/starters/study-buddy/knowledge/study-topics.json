@@ -1,0 +1,204 @@
+{
+  "subjects": [
+    {
+      "id": "math-algebra",
+      "name": "Algebra",
+      "category": "mathematics",
+      "difficulty": "intermediate",
+      "topics": [
+        {
+          "id": "linear-equations",
+          "name": "Linear Equations",
+          "description": "Solving and graphing equations of the form y = mx + b",
+          "prerequisites": [],
+          "keyConcepts": ["slope", "y-intercept", "point-slope form", "standard form"],
+          "commonMistakes": ["confusing slope and y-intercept", "sign errors when rearranging", "forgetting to distribute negatives"]
+        },
+        {
+          "id": "quadratic-equations",
+          "name": "Quadratic Equations",
+          "description": "Solving ax^2 + bx + c = 0 using factoring, completing the square, and the quadratic formula",
+          "prerequisites": ["linear-equations"],
+          "keyConcepts": ["quadratic formula", "discriminant", "factoring", "vertex form", "parabolas"],
+          "commonMistakes": ["sign errors in quadratic formula", "forgetting the +/- in the formula", "not checking if factoring is possible first"]
+        },
+        {
+          "id": "polynomials",
+          "name": "Polynomials",
+          "description": "Operations with polynomials including addition, multiplication, division, and factoring",
+          "prerequisites": ["quadratic-equations"],
+          "keyConcepts": ["degree", "leading coefficient", "synthetic division", "remainder theorem", "factor theorem"],
+          "commonMistakes": ["dropping terms when adding", "incorrect synthetic division setup", "missing rational roots"]
+        },
+        {
+          "id": "rational-expressions",
+          "name": "Rational Expressions",
+          "description": "Simplifying, multiplying, dividing, adding, and subtracting rational expressions",
+          "prerequisites": ["polynomials"],
+          "keyConcepts": ["domain restrictions", "common denominators", "complex fractions", "asymptotes"],
+          "commonMistakes": ["forgetting to check for excluded values", "not finding LCD before adding", "canceling terms that are not factors"]
+        }
+      ]
+    },
+    {
+      "id": "math-calculus",
+      "name": "Calculus",
+      "category": "mathematics",
+      "difficulty": "advanced",
+      "topics": [
+        {
+          "id": "limits",
+          "name": "Limits and Continuity",
+          "description": "Understanding the behavior of functions as they approach specific values",
+          "prerequisites": ["rational-expressions"],
+          "keyConcepts": ["limit definition", "one-sided limits", "epsilon-delta", "squeeze theorem", "continuity", "intermediate value theorem"],
+          "commonMistakes": ["confusing limit value with function value", "incorrect L'Hopital application", "not checking both sides"]
+        },
+        {
+          "id": "derivatives",
+          "name": "Derivatives",
+          "description": "Rates of change, tangent lines, and differentiation rules",
+          "prerequisites": ["limits"],
+          "keyConcepts": ["power rule", "product rule", "quotient rule", "chain rule", "implicit differentiation", "related rates"],
+          "commonMistakes": ["forgetting chain rule", "sign errors in quotient rule", "not recognizing when implicit differentiation is needed"]
+        },
+        {
+          "id": "integration",
+          "name": "Integration",
+          "description": "Antiderivatives, definite integrals, and techniques of integration",
+          "prerequisites": ["derivatives"],
+          "keyConcepts": ["fundamental theorem of calculus", "u-substitution", "integration by parts", "Riemann sums", "definite vs indefinite"],
+          "commonMistakes": ["forgetting +C", "wrong u-substitution choice", "incorrect LIATE application", "wrong bounds after substitution"]
+        },
+        {
+          "id": "applications-integration",
+          "name": "Applications of Integration",
+          "description": "Area between curves, volumes, and other applications",
+          "prerequisites": ["integration"],
+          "keyConcepts": ["area between curves", "disk method", "shell method", "arc length", "average value"],
+          "commonMistakes": ["wrong bounds of integration", "confusing disk and shell method formulas", "not sketching the region first"]
+        }
+      ]
+    },
+    {
+      "id": "science-biology",
+      "name": "Biology",
+      "category": "science",
+      "difficulty": "intermediate",
+      "topics": [
+        {
+          "id": "cell-biology",
+          "name": "Cell Biology",
+          "description": "Structure and function of cells, organelles, and cellular processes",
+          "prerequisites": [],
+          "keyConcepts": ["cell membrane", "organelles", "mitochondria", "chloroplasts", "endoplasmic reticulum", "golgi apparatus"],
+          "commonMistakes": ["confusing prokaryotic and eukaryotic features", "mixing up rough and smooth ER functions"]
+        },
+        {
+          "id": "genetics",
+          "name": "Genetics",
+          "description": "DNA, RNA, protein synthesis, and inheritance patterns",
+          "prerequisites": ["cell-biology"],
+          "keyConcepts": ["DNA structure", "transcription", "translation", "Punnett squares", "Mendelian genetics", "gene expression"],
+          "commonMistakes": ["confusing transcription and translation", "incorrect Punnett square setup", "mixing dominant/recessive patterns"]
+        },
+        {
+          "id": "evolution",
+          "name": "Evolution",
+          "description": "Natural selection, speciation, and evidence for evolution",
+          "prerequisites": ["genetics"],
+          "keyConcepts": ["natural selection", "genetic drift", "speciation", "phylogenetics", "convergent evolution", "Hardy-Weinberg equilibrium"],
+          "commonMistakes": ["thinking evolution has a goal", "confusing fitness with strength", "misapplying Hardy-Weinberg conditions"]
+        },
+        {
+          "id": "ecology",
+          "name": "Ecology",
+          "description": "Ecosystems, populations, and environmental interactions",
+          "prerequisites": ["evolution"],
+          "keyConcepts": ["food webs", "trophic levels", "population dynamics", "carrying capacity", "biomes", "nutrient cycles"],
+          "commonMistakes": ["confusing habitat and niche", "mixing up food chains and food webs", "forgetting decomposers"]
+        }
+      ]
+    },
+    {
+      "id": "cs-programming",
+      "name": "Computer Science",
+      "category": "computer-science",
+      "difficulty": "intermediate",
+      "topics": [
+        {
+          "id": "programming-fundamentals",
+          "name": "Programming Fundamentals",
+          "description": "Variables, data types, control flow, and functions",
+          "prerequisites": [],
+          "keyConcepts": ["variables", "data types", "conditionals", "loops", "functions", "scope"],
+          "commonMistakes": ["off-by-one errors", "confusing assignment and equality", "infinite loops", "scope confusion"]
+        },
+        {
+          "id": "data-structures",
+          "name": "Data Structures",
+          "description": "Arrays, linked lists, stacks, queues, trees, and hash maps",
+          "prerequisites": ["programming-fundamentals"],
+          "keyConcepts": ["arrays", "linked lists", "stacks", "queues", "binary trees", "hash maps", "Big-O notation"],
+          "commonMistakes": ["choosing wrong data structure for the problem", "not understanding time complexity tradeoffs"]
+        },
+        {
+          "id": "algorithms",
+          "name": "Algorithms",
+          "description": "Sorting, searching, recursion, and algorithm design",
+          "prerequisites": ["data-structures"],
+          "keyConcepts": ["binary search", "sorting algorithms", "recursion", "dynamic programming", "greedy algorithms", "graph traversal"],
+          "commonMistakes": ["incorrect binary search bounds", "missing base case in recursion", "not recognizing dynamic programming opportunities"]
+        },
+        {
+          "id": "oop",
+          "name": "Object-Oriented Programming",
+          "description": "Classes, inheritance, polymorphism, and design patterns",
+          "prerequisites": ["programming-fundamentals"],
+          "keyConcepts": ["encapsulation", "inheritance", "polymorphism", "abstraction", "composition vs inheritance", "interfaces"],
+          "commonMistakes": ["overusing inheritance", "violating encapsulation", "confusing overriding and overloading"]
+        }
+      ]
+    },
+    {
+      "id": "history-us",
+      "name": "US History",
+      "category": "history",
+      "difficulty": "intermediate",
+      "topics": [
+        {
+          "id": "colonial-period",
+          "name": "Colonial Period and Revolution",
+          "description": "Early American settlement through the Revolutionary War",
+          "prerequisites": [],
+          "keyConcepts": ["mercantilism", "representative government", "Enlightenment ideas", "causes of revolution", "Declaration of Independence"],
+          "commonMistakes": ["attributing revolution solely to taxes", "overlooking ideological motivations", "confusing timeline of events"]
+        },
+        {
+          "id": "civil-war-reconstruction",
+          "name": "Civil War and Reconstruction",
+          "description": "Causes, course, and consequences of the Civil War and Reconstruction era",
+          "prerequisites": ["colonial-period"],
+          "keyConcepts": ["sectionalism", "slavery", "secession", "Emancipation Proclamation", "Reconstruction amendments", "Jim Crow"],
+          "commonMistakes": ["oversimplifying causes to just slavery or states' rights", "confusing Reconstruction amendments"]
+        },
+        {
+          "id": "gilded-age-progressive",
+          "name": "Gilded Age and Progressive Era",
+          "description": "Industrialization, urbanization, and reform movements",
+          "prerequisites": ["civil-war-reconstruction"],
+          "keyConcepts": ["industrialization", "monopolies", "labor movements", "progressive reforms", "imperialism", "Spanish-American War"],
+          "commonMistakes": ["confusing Gilded Age and Progressive Era reforms", "overlooking connection between industrialization and imperialism"]
+        },
+        {
+          "id": "modern-america",
+          "name": "Modern America",
+          "description": "World Wars, Cold War, Civil Rights, and contemporary issues",
+          "prerequisites": ["gilded-age-progressive"],
+          "keyConcepts": ["World Wars", "Great Depression", "Cold War", "Civil Rights Movement", "Vietnam War", "globalization"],
+          "commonMistakes": ["treating events as isolated rather than connected", "confusing foreign and domestic policy impacts"]
+        }
+      ]
+    }
+  ]
+}

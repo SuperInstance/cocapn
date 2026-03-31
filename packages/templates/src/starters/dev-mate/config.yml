@@ -1,0 +1,87 @@
+config:
+  mode: local
+  port: 8787
+  logLevel: info
+  timezone: UTC
+sync:
+  interval: 10
+  autoCommit: true
+  autoPush: false
+  commitMessageTemplate: "chore(brain): sync memory at {timestamp}"
+capabilities:
+  filesystem: true
+  git: true
+  llm: deepseek
+  vectorSearch: auto
+  mcp: true
+  fleet: false
+  sandbox: true
+  webhooks: true
+  scheduler: true
+llm:
+  provider: deepseek
+  model: deepseek-chat
+  temperature: 0.5
+  maxTokens: 4096
+  topP: 0.95
+  frequencyPenalty: 0.0
+  presencePenalty: 0.0
+  systemPromptMode: soul
+  streaming: true
+  retryAttempts: 3
+  retryDelay: 1000
+brain:
+  autoSync: true
+  factsNamespace: dev
+  memoryLimit: 2000
+  confidenceDecay: true
+  decayInterval: 21600
+  maxEntries: 1000
+  stores:
+    facts: true
+    memories: true
+    procedures: true
+    relationships: true
+    repoUnderstanding: true
+features:
+  codeReview: true
+  autoSuggest: true
+  diffAnalysis: true
+  dependencyAudit: true
+  testGeneration: true
+  refactoringSuggestions: true
+  securityScanning: true
+  performanceHints: true
+  conventionalCommits: true
+  prDescriptionGeneration: true
+  adrTracking: true
+  coverageTracking: true
+plugins:
+  - code-reviewer
+  - git-helper
+  - doc-generator
+security:
+  enforcePrivateBoundary: true
+  sanitizeOutputs: true
+  blockSecretExposure: true
+  allowedCommands:
+    - git
+    - npm
+    - npx
+    - node
+    - tsc
+    - vitest
+    - eslint
+    - prettier
+scheduler:
+  enabled: true
+  jobs:
+    - name: dependency-audit
+      cron: "0 9 * * 1"
+      command: "npm audit --production"
+    - name: coverage-report
+      cron: "0 18 * * 5"
+      command: "npx vitest run --coverage"
+    - name: stale-branch-check
+      cron: "0 10 * * 1"
+      command: "git branch --merged main"

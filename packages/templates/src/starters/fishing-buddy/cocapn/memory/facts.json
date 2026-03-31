@@ -1,0 +1,19 @@
+{
+  "user.location": "Alaska",
+  "user.experience": "intermediate",
+  "user.boat": "22ft Hewescraft",
+  "user.preferredSpecies": "halibut, king salmon",
+  "user.favoriteSpot": "Homer Spit",
+  "user.licenseYear": "2024",
+  "user.gearPreference": "conventional",
+  "season.currentRun": "early king salmon",
+  "season.iceOut": "April 2024",
+  "season.lastFrost": "late May 2024",
+  "regulations.bagLimitKingSalmon": "1 per day, 2 annual for nonresidents",
+  "regulations.bagLimitHalibut": "2 per day, 1 under 32 inches",
+  "gear.mainRod": "Shimano Trevala medium-heavy",
+  "gear.mainReel": "Penn Squall 30",
+  "gear.downrigger": "Scotty 1106B",
+  "private.realName": "",
+  "private.licenseNumber": ""
+}

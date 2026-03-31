@@ -1,0 +1,83 @@
+{
+  "name": "habit-tracker",
+  "version": "1.0.0",
+  "description": "Tracks daily habits, monitors streaks, provides adaptive check-ins, and generates weekly and monthly consistency reports.",
+  "author": "Cocapn",
+  "license": "MIT",
+  "capabilities": [
+    "habit.create",
+    "habit.track",
+    "habit.streak",
+    "habit.report",
+    "reminder.adaptive"
+  ],
+  "permissions": [
+    "filesystem.read",
+    "filesystem.write",
+    "llm.chat"
+  ],
+  "config": {
+    "checkInStyle": "adaptive",
+    "quietHours": {
+      "start": "22:00",
+      "end": "07:00"
+    },
+    "streakMilestones": [3, 7, 14, 21, 30, 60, 100, 365],
+    "defaultHabits": [
+      {
+        "id": "hydration",
+        "name": "Drink 8 glasses of water",
+        "target": 8,
+        "unit": "glasses",
+        "timeOfDay": "throughout-day",
+        "icon": "water"
+      },
+      {
+        "id": "meditation",
+        "name": "Meditate",
+        "target": 1,
+        "unit": "session",
+        "timeOfDay": "morning",
+        "duration": "5-20 min",
+        "icon": "brain"
+      },
+      {
+        "id": "exercise",
+        "name": "Exercise",
+        "target": 3,
+        "unit": "sessions per week",
+        "timeOfDay": "flexible",
+        "icon": "run"
+      },
+      {
+        "id": "reading",
+        "name": "Read for 20+ minutes",
+        "target": 1,
+        "unit": "session",
+        "timeOfDay": "evening",
+        "icon": "book"
+      },
+      {
+        "id": "medication",
+        "name": "Take medications and supplements",
+        "target": 1,
+        "unit": "session",
+        "timeOfDay": "morning",
+        "icon": "pill"
+      }
+    ],
+    "twoDayRule": true,
+    "celebrationLevel": "enthusiastic",
+    "slipResponse": "empathetic"
+  },
+  "events": {
+    "onStreakMilestone": "celebrate",
+    "onHabitSlip": "empathetic-check-in",
+    "onTwoDayRule": "gentle-alert",
+    "onWeeklyReport": "summary"
+  },
+  "storage": {
+    "type": "file",
+    "path": "cocapn/memory/habits.json"
+  }
+}

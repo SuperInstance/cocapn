@@ -1,0 +1,42 @@
+[
+  {
+    "id": "mem_001",
+    "type": "session",
+    "content": "Writer brainstormed the inciting incident for 'The Cartographer's Ink'. Decided that the cartographer (Maren) first notices the discrepancy when a river she mapped as a tributary three months ago has physically become the main channel. The original main channel is now a dry riverbed. She finds her original field notes confirm her memory -- the map was wrong, but the landscape changed to match it, not the other way around.",
+    "confidence": 0.9,
+    "timestamp": "2026-03-15T07:30:00Z",
+    "tags": ["plot", "inciting-incident", "cartographers-ink", "maren"]
+  },
+  {
+    "id": "mem_002",
+    "type": "craft-discussion",
+    "content": "Discussed Maren's character arc. Writer wants her to start as someone who trusts systems and institutions -- she works for a government survey company and believes in objective measurement. Her arc moves toward understanding that all mapping is interpretation, all observation changes the observed. The turning point should come when she realizes she's been reshaping the coastline near a fishing village and the residents are being displaced. Moral complexity: her beautiful maps are destroying a community.",
+    "confidence": 0.85,
+    "timestamp": "2026-03-18T06:45:00Z",
+    "tags": ["character-arc", "maren", "cartographers-ink", "theme"]
+  },
+  {
+    "id": "mem_003",
+    "type": "session",
+    "content": "First writing sprint on chapter 4. Writer completed 1,340 words in 50 minutes (two 25-minute sprints). Struggled with the scene where Maren confronts her supervisor about the discrepancies. The supervisor (Hale) needs to be neither villainous nor dismissive -- genuinely rational but constrained by institutional inertia. Writer agreed to rewrite the scene focusing on Hale's conflicted body language rather than his dialogue, letting the reader feel the institutional pressure through what Hale doesn't say.",
+    "confidence": 0.8,
+    "timestamp": "2026-03-22T07:15:00Z",
+    "tags": ["writing-sprint", "chapter-4", "hale", "dialogue", "cartographers-ink"]
+  },
+  {
+    "id": "mem_004",
+    "type": "craft-feedback",
+    "content": "Reviewed the opening three chapters. Noted that chapter 1 has strong sensory detail about the coastal landscape but the prose gets thick during Maren's morning routine. Suggested trimming the breakfast scene to two sentences and moving the map-drawing description later. Writer agreed and plans to cut approximately 400 words from chapter 1's opening. The map-drawing scene in chapter 2 is the strongest passage so far -- the writer should trust that scene more and let it breathe.",
+    "confidence": 0.85,
+    "timestamp": "2026-03-25T08:00:00Z",
+    "tags": ["revision", "chapter-1", "chapter-2", "chapter-3", "feedback", "prose-style"]
+  },
+  {
+    "id": "mem_005",
+    "type": "worldbuilding",
+    "content": "Established worldbuilding rules for the mapping magic system. Maps alter reality only when drawn by hand with genuine cartographic skill -- digital maps have no effect. The power scales with the cartographer's expertise and emotional investment. Maren's maps are unusually potent because she has a genuine love for the landscapes she charts. Ancient cartographers in this world were essentially wizards, but the knowledge was lost and relegated to a bureaucratic survey industry. The magic is tied to ink composition -- specifically, ink made from a certain deep-sea mollusk that the survey company harvests without understanding its significance.",
+    "confidence": 0.75,
+    "timestamp": "2026-03-28T06:30:00Z",
+    "tags": ["worldbuilding", "magic-system", "cartographers-ink", "rules"]
+  }
+]

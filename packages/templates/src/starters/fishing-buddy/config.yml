@@ -1,0 +1,55 @@
+config:
+  mode: local
+  port: 8787
+sync:
+  interval: 10
+  autoCommit: true
+  autoPush: false
+capabilities:
+  filesystem: true
+  git: true
+  llm: deepseek
+  vectorSearch: auto
+  mcp: true
+  fleet: false
+  sandbox: true
+llm:
+  provider: deepseek
+  model: deepseek-chat
+  temperature: 0.7
+  maxTokens: 4096
+  systemPromptExtra: |
+    Always reference real Alaska fishing locations, species, and techniques.
+    Use nautical and fishing terminology naturally. When discussing regulations,
+    remind the user to verify with ADFG for the most current emergency orders.
+    Distances in nautical miles for saltwater, statute miles for freshwater.
+    Weights in pounds, lengths in inches unless the user specifies otherwise.
+brain:
+  autoSync: true
+  factsNamespace: fishing
+  memoryLimit: 2000
+features:
+  catchLogging: true
+  tidePrediction: true
+  weatherIntegration: true
+  speciesIdentification: true
+  regulationTracking: true
+  tripPlanning: true
+  gearRecommendations: true
+  seasonalAlerts: true
+plugins:
+  - catch-logger
+  - tide-tables
+  - weather-check
+wiki:
+  paths:
+    - wiki/species
+    - wiki/techniques
+    - wiki/locations
+    - wiki/regulations
+    - wiki/gear
+    - wiki/tips
+knowledge:
+  paths:
+    - knowledge
+  autoIndex: true

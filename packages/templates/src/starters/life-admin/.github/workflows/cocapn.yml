@@ -1,0 +1,237 @@
+name: Cocapn CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    name: Validate Template
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Validate soul.md frontmatter
+        run: |
+          if [ ! -f "soul.md" ]; then
+            echo "::error::soul.md not found"
+            exit 1
+          fi
+          # Check frontmatter exists with required fields
+          for field in name version tone model maxTokens; do
+            if ! grep -q "^${field}:" soul.md; then
+              echo "::error::Missing required field '${field}' in soul.md frontmatter"
+              exit 1
+            fi
+          done
+          echo "soul.md validation passed"
+
+      - name: Validate config.yml structure
+        run: |
+          if [ ! -f "config.yml" ]; then
+            echo "::error::config.yml not found"
+            exit 1
+          fi
+          # Check required top-level sections
+          for section in config sync capabilities llm brain features plugins; do
+            if ! grep -q "^${section}:" config.yml; then
+              echo "::error::Missing required section '${section}' in config.yml"
+              exit 1
+            fi
+          done
+          echo "config.yml validation passed"
+
+      - name: Validate theme.css custom properties
+        run: |
+          if [ ! -f "theme.css" ]; then
+            echo "::error::theme.css not found"
+            exit 1
+          fi
+          # Check for required CSS custom properties
+          for prop in --color-primary --color-secondary --color-bg --color-text \
+                      --color-border --font-size-base --space-md --radius-md \
+                      --shadow-md --transition-normal; do
+            if ! grep -q "${prop}:" theme.css; then
+              echo "::error::Missing required CSS custom property '${prop}' in theme.css"
+              exit 1
+            fi
+          done
+          echo "theme.css validation passed"
+
+      - name: Validate package.json
+        run: |
+          if [ ! -f "package.json" ]; then
+            echo "::error::package.json not found"
+            exit 1
+          fi
+          # Verify template name and cocapn metadata
+          name=$(node -e "const p=require('./package.json'); console.log(p.name)")
+          if [ "$name" != "@cocapn/starter-life-admin" ]; then
+            echo "::error::package.json name must be @cocapn/starter-life-admin, got: ${name}"
+            exit 1
+          fi
+          has_cocapn=$(node -e "const p=require('./package.json'); console.log(p.cocapn ? 'yes' : 'no')")
+          if [ "$has_cocapn" != "yes" ]; then
+            echo "::error::package.json missing 'cocapn' metadata section"
+            exit 1
+          fi
+          echo "package.json validation passed"
+
+      - name: Validate memory files
+        run: |
+          # Check facts.json
+          if [ ! -f "cocapn/memory/facts.json" ]; then
+            echo "::error::cocapn/memory/facts.json not found"
+            exit 1
+          fi
+          node -e "
+            const f = require('./cocapn/memory/facts.json');
+            if (!f.version || !f.namespace || !f.facts) {
+              throw new Error('facts.json missing required fields (version, namespace, facts)');
+            }
+            const factCount = Object.keys(f.facts).length;
+            if (factCount < 5) {
+              throw new Error('facts.json should have at least 5 facts, got ' + factCount);
+            }
+            console.log('facts.json: ' + factCount + ' facts validated');
+          "
+
+          # Check memories.json
+          if [ ! -f "cocapn/memory/memories.json" ]; then
+            echo "::error::cocapn/memory/memories.json not found"
+            exit 1
+          fi
+          node -e "
+            const m = require('./cocapn/memory/memories.json');
+            if (!m.version || !m.namespace || !m.memories) {
+              throw new Error('memories.json missing required fields (version, namespace, memories)');
+            }
+            if (m.memories.length < 3) {
+              throw new Error('memories.json should have at least 3 memories, got ' + m.memories.length);
+            }
+            console.log('memories.json: ' + m.memories.length + ' memories validated');
+          "
+
+      - name: Validate wiki files
+        run: |
+          wiki_files=(
+            "wiki/productivity/gtd-method.md"
+            "wiki/finance/budget-tracker.md"
+            "wiki/health/habit-tracker.md"
+            "wiki/travel/packing-lists.md"
+          )
+          for file in "${wiki_files[@]}"; do
+            if [ ! -f "$file" ]; then
+              echo "::error::Wiki file not found: ${file}"
+              exit 1
+            fi
+            # Check minimum line count (30+ lines of content)
+            lines=$(wc -l < "$file")
+            if [ "$lines" -lt 30 ]; then
+              echo "::error::${file} has only ${lines} lines (minimum 30)"
+              exit 1
+            fi
+            # Check frontmatter exists
+            head -1 "$file" | grep -q "^---" || {
+              echo "::error::${file} missing YAML frontmatter"
+              exit 1
+            }
+            echo "  ${file}: ${lines} lines OK"
+          done
+
+      - name: Validate knowledge files
+        run: |
+          if [ ! -f "knowledge/routines.json" ]; then
+            echo "::error::knowledge/routines.json not found"
+            exit 1
+          fi
+          node -e "
+            const r = require('./knowledge/routines.json');
+            if (!r.version || !r.routines) {
+              throw new Error('routines.json missing required fields (version, routines)');
+            }
+            if (!r.routines.daily || !r.routines.weekly) {
+              throw new Error('routines.json must have daily and weekly routines');
+            }
+            const dailyCount = Object.keys(r.routines.daily).length;
+            const weeklyCount = Object.keys(r.routines.weekly).length;
+            console.log('routines.json: ' + dailyCount + ' daily, ' + weeklyCount + ' weekly routines validated');
+          "
+
+      - name: Validate plugins
+        run: |
+          plugins=(
+            "calendar-sync"
+            "habit-tracker"
+            "bill-reminder"
+          )
+          for plugin in "${plugins[@]}"; do
+            dir="plugins/${plugin}"
+            if [ ! -f "${dir}/plugin.json" ]; then
+              echo "::error::Missing plugin.json in ${dir}"
+              exit 1
+            fi
+            if [ ! -f "${dir}/README.md" ]; then
+              echo "::error::Missing README.md in ${dir}"
+              exit 1
+            fi
+            # Validate plugin.json structure
+            node -e "
+              const p = require('./${dir}/plugin.json');
+              if (!p.name || !p.version || !p.capabilities || !p.permissions) {
+                throw new Error('${dir}/plugin.json missing required fields');
+              }
+              if (p.name !== '${plugin}') {
+                throw new Error('Plugin name mismatch: expected ${plugin}, got ' + p.name);
+              }
+              console.log('  ${plugin}: v' + p.version + ' OK (' + p.capabilities.length + ' capabilities)');
+            "
+          done
+
+      - name: Validate README exists and has substance
+        run: |
+          if [ ! -f "README.md" ]; then
+            echo "::error::README.md not found"
+            exit 1
+          fi
+          lines=$(wc -l < "README.md")
+          if [ "$lines" -lt 50 ]; then
+            echo "::error::README.md has only ${lines} lines (minimum 50 for a complete starter template)"
+            exit 1
+          fi
+          # Check for required sections
+          for section in "What It Does" "Quick Start" "Use Cases"; do
+            if ! grep -q "## .*${section}" README.md; then
+              echo "::error::README.md missing required section: ${section}"
+              exit 1
+            fi
+          done
+          echo "README.md: ${lines} lines, all sections present"
+
+      - name: Summary
+        run: |
+          echo "====================================="
+          echo "  Life Admin Template Validation"
+          echo "====================================="
+          echo ""
+          echo "  soul.md:       OK"
+          echo "  config.yml:    OK"
+          echo "  theme.css:     OK"
+          echo "  package.json:  OK"
+          echo "  memory:        OK"
+          echo "  wiki (4):      OK"
+          echo "  knowledge:     OK"
+          echo "  plugins (3):   OK"
+          echo "  README.md:     OK"
+          echo ""
+          echo "All validations passed."

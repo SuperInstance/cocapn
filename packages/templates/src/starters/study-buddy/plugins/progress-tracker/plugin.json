@@ -1,0 +1,114 @@
+{
+  "name": "progress-tracker",
+  "version": "1.0.0",
+  "description": "Monitors study progress, tracks accuracy and speed, identifies weak areas, and generates weekly reports",
+  "author": "Cocapn",
+  "license": "MIT",
+  "hooks": [
+    {
+      "event": "message.received",
+      "handler": "onMessage",
+      "priority": 20
+    },
+    {
+      "event": "brain.fact.updated",
+      "handler": "onFactUpdate",
+      "priority": 10
+    },
+    {
+      "event": "brain.memory.added",
+      "handler": "onMemoryAdded",
+      "priority": 10
+    },
+    {
+      "event": "scheduler.daily",
+      "handler": "onDailyCheck",
+      "priority": 30,
+      "config": {
+        "time": "21:00",
+        "timezone": "local"
+      }
+    },
+    {
+      "event": "scheduler.weekly",
+      "handler": "onWeeklyReport",
+      "priority": 30,
+      "config": {
+        "day": "sunday",
+        "time": "18:00",
+        "timezone": "local"
+      }
+    }
+  ],
+  "permissions": [
+    "brain.read",
+    "brain.write",
+    "wiki.read",
+    "knowledge.read"
+  ],
+  "config": {
+    "metrics": [
+      "accuracy",
+      "speed",
+      "consistency",
+      "weakAreas",
+      "studyTime",
+      "streak"
+    ],
+    "reports": {
+      "frequency": "weekly",
+      "includeComparison": true,
+      "includeRecommendations": true,
+      "includeCelebrations": true
+    },
+    "milestones": {
+      "firstCorrect": true,
+      "streak3": true,
+      "streak7": true,
+      "streak14": true,
+      "streak30": true,
+      "score90plus": true,
+      "topicMastery": true,
+      "deckComplete": true,
+      "weekComplete": true
+    },
+    "weakAreaDetection": {
+      "threshold": 0.65,
+      "minimumAttempts": 5,
+      "lookbackDays": 30,
+      "autoCreateFlashcards": true
+    },
+    "visualization": {
+      "progressBar": true,
+      "trendArrows": true,
+      "subjectHeatmap": true
+    }
+  },
+  "commands": [
+    {
+      "name": "progress",
+      "description": "Show overall study progress and statistics",
+      "usage": "progress [--subject <name>] [--period <week|month|all>]"
+    },
+    {
+      "name": "weak-areas",
+      "description": "List current weak areas ranked by priority",
+      "usage": "weak-areas [--subject <name>] [--limit <n>]"
+    },
+    {
+      "name": "milestones",
+      "description": "Show earned milestones and upcoming goals",
+      "usage": "milestones"
+    },
+    {
+      "name": "weekly-report",
+      "description": "Generate a detailed weekly progress report",
+      "usage": "weekly-report [--week <n>]"
+    },
+    {
+      "name": "study-log",
+      "description": "Show recent study activity log",
+      "usage": "study-log [--days <n>] [--subject <name>]"
+    }
+  ]
+}

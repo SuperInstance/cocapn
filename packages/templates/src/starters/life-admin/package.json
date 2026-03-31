@@ -1,0 +1,61 @@
+{
+  "name": "@cocapn/starter-life-admin",
+  "version": "1.0.0",
+  "description": "Personal operations assistant starter — calendars, tasks, habits, bills, travel, and household logistics",
+  "type": "module",
+  "keywords": [
+    "cocapn",
+    "starter",
+    "life-admin",
+    "personal-assistant",
+    "productivity",
+    "habit-tracker",
+    "bill-reminder",
+    "calendar",
+    "task-management"
+  ],
+  "author": "Cocapn",
+  "license": "MIT",
+  "files": [
+    "soul.md",
+    "config.yml",
+    "theme.css",
+    "README.md",
+    "CLAUDE.md",
+    "cocapn/**/*",
+    "wiki/**/*",
+    "knowledge/**/*",
+    "plugins/**/*",
+    ".github/**/*"
+  ],
+  "cocapn": {
+    "template": true,
+    "category": "personal",
+    "tags": [
+      "productivity",
+      "life-management",
+      "habits",
+      "finance",
+      "travel"
+    ],
+    "soul": "soul.md",
+    "config": "config.yml",
+    "theme": "theme.css",
+    "memory": "cocapn/memory",
+    "wiki": "wiki",
+    "knowledge": "knowledge",
+    "plugins": "plugins"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SuperInstance/cocapn.git",
+    "directory": "packages/templates/src/starters/life-admin"
+  },
+  "homepage": "https://cocapn.ai",
+  "bugs": {
+    "url": "https://github.com/SuperInstance/cocapn/issues"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

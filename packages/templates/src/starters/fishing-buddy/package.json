@@ -1,0 +1,50 @@
+{
+  "name": "@cocapn/starter-fishing-buddy",
+  "version": "1.0.0",
+  "description": "An Alaska fishing companion that knows Pacific Northwest species, techniques, regulations, and waters. Logs your catches, plans your trips, and remembers every fish story.",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "cocapn start",
+    "dev": "cocapn start --watch",
+    "build": "echo 'No build step required — this is a cocapn starter template'",
+    "test": "echo 'No tests — run cocapn validate to check configuration'",
+    "validate": "cocapn validate"
+  },
+  "keywords": [
+    "cocapn",
+    "fishing",
+    "alaska",
+    "halibut",
+    "salmon",
+    "sport-fishing",
+    "catch-log",
+    "tide-tables",
+    "regulations",
+    "trip-planner"
+  ],
+  "author": "Cocapn",
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {},
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "cocapn": {
+    "template": "fishing-buddy",
+    "category": "outdoors",
+    "requiresSecrets": [
+      "DEEPSEEK_API_KEY"
+    ],
+    "compatibleProviders": [
+      "deepseek",
+      "openai",
+      "anthropic"
+    ],
+    "plugins": [
+      "catch-logger",
+      "tide-tables",
+      "weather-check"
+    ]
+  }
+}

@@ -1,0 +1,122 @@
+{
+  "id": "security-alert",
+  "name": "Security Alert System",
+  "version": "1.0.0",
+  "description": "Manages security modes, monitors sensors, processes alerts, and handles escalation for home intrusion, fire, CO, and water leak events.",
+  "author": "Cocapn",
+  "license": "MIT",
+  "type": "plugin",
+  "category": "security",
+  "permissions": [
+    "brain:read:facts",
+    "brain:read:memories",
+    "brain:write:memories",
+    "devices:read:state",
+    "devices:read:sensors",
+    "devices:write:locks",
+    "devices:write:lights",
+    "devices:write:sirens",
+    "notifications:send:push",
+    "notifications:send:sms",
+    "notifications:send:call",
+    "scheduler:read:schedules"
+  ],
+  "config": {
+    "defaultMode": "disarmed",
+    "modes": ["disarmed", "home-day", "home-night", "away", "vacation"],
+    "alertCooldown": 300,
+    "escalationEnabled": true,
+    "escalationTiers": [
+      {
+        "tier": 1,
+        "action": "push",
+        "timeout": 120
+      },
+      {
+        "tier": 2,
+        "action": "sms",
+        "timeout": 300
+      },
+      {
+        "tier": 3,
+        "action": "call",
+        "timeout": 600
+      },
+      {
+        "tier": 4,
+        "action": "emergency",
+        "timeout": 0,
+        "requireConfirmation": true
+      }
+    ],
+    "cameraRetention": {
+      "normal": 168,
+      "alert": 720,
+      "manual": 1440
+    },
+    "falsePositiveReduction": {
+      "dualTriggerWindow": 30,
+      "petImmunityEnabled": true,
+      "cameraVerificationEnabled": true
+    },
+    "emergencyContacts": [],
+    "cameraPrivacyZones": []
+  },
+  "triggers": {
+    "onSecurityModeChange": {
+      "description": "Fires when the security mode is changed",
+      "action": "log"
+    },
+    "onDoorOpenWhileArmed": {
+      "description": "Fires when a door/window sensor triggers while security is armed",
+      "action": "alert"
+    },
+    "onMotionWhileArmed": {
+      "description": "Fires when a motion sensor triggers while security is armed",
+      "action": "verify-then-alert"
+    },
+    "onSmokeDetected": {
+      "description": "Fires when a smoke detector triggers",
+      "action": "critical-alert"
+    },
+    "onCODetected": {
+      "description": "Fires when a CO detector triggers",
+      "action": "critical-alert"
+    },
+    "onWaterLeakDetected": {
+      "description": "Fires when a water leak sensor detects moisture",
+      "action": "alert"
+    },
+    "onTamperDetected": {
+      "description": "Fires when a device reports a tamper event",
+      "action": "alert"
+    },
+    "onPackageDelivered": {
+      "description": "Fires when a camera detects a package at the front door",
+      "action": "notify"
+    }
+  },
+  "provides": {
+    "commands": [
+      "security status",
+      "security arm [home-day|home-night|away|vacation]",
+      "security disarm",
+      "security history [today|week]",
+      "security cameras",
+      "security alerts",
+      "security test",
+      "security contacts"
+    ],
+    "data": [
+      "security.mode",
+      "security.armed_at",
+      "security.last_event",
+      "security.events_today",
+      "security.cameras_active",
+      "security.sensors_active"
+    ]
+  },
+  "dependencies": {
+    "cocapn": ">=1.0.0"
+  }
+}

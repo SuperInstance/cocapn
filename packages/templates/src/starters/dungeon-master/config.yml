@@ -1,0 +1,74 @@
+config:
+  mode: local
+  port: 8787
+  name: Dungeon Master
+  description: "TTRPG game master — runs campaigns, manages combat, tracks continuity"
+sync:
+  interval: 10
+  autoCommit: true
+  autoPush: false
+capabilities:
+  filesystem: true
+  git: true
+  llm: deepseek
+  vectorSearch: auto
+  mcp: true
+  fleet: false
+  sandbox: true
+llm:
+  provider: deepseek
+  model: deepseek-chat
+  temperature: 0.8
+  maxTokens: 4096
+  systemPromptPrefix: "You are an expert Dungeon Master running a TTRPG session."
+brain:
+  autoSync: true
+  factsNamespace: ttrpg
+  memoryLimit: 2000
+  stores:
+    - facts
+    - memories
+    - wiki
+    - procedures
+    - relationships
+features:
+  combatTracker: true
+  initiativeTracker: true
+  diceRolling: true
+  characterManagement: true
+  mapSupport: true
+  sessionRecap: true
+  encounterBuilder: true
+  lootGenerator: true
+  npcGenerator: true
+  randomTables: true
+  spellLookup: true
+  monsterLookup: true
+  continuityTracking: true
+  factionReputation: true
+  questLog: true
+plugins:
+  - dice-roller
+  - initiative-tracker
+  - character-sheet
+wiki:
+  sections:
+    - rules
+    - worlds
+    - npcs
+    - encounters
+    - tables
+    - storytelling
+knowledge:
+  - spell-data
+  - monster-data
+  - magic-items
+session:
+  autoSaveInterval: 300
+  maxHistoryPerSession: 500
+  recapLength: 200
+safety:
+  linesAndVeils: true
+  xCard: true
+  sessionZero: true
+  contentWarnings: true

@@ -1,0 +1,94 @@
+{
+  "name": "weather-check",
+  "version": "1.0.0",
+  "description": "Marine weather forecast retrieval and safety advisor for Alaska coastal waters. Provides current conditions, marine forecasts, wind and wave predictions, and go/no-go safety recommendations based on vessel capability and target area.",
+  "author": "Cocapn",
+  "commands": [
+    {
+      "name": "weather:now",
+      "description": "Show current marine weather conditions for a specified area",
+      "args": ["area?"],
+      "example": "weather:now Kachemak Bay"
+    },
+    {
+      "name": "weather:forecast",
+      "description": "Show the marine forecast for the next few days",
+      "args": ["area?", "days?"],
+      "example": "weather:forecast Cook Inlet 3"
+    },
+    {
+      "name": "weather:safe",
+      "description": "Assess whether conditions are safe for your vessel and planned trip",
+      "args": ["vessel?", "area?", "tripType?"],
+      "example": "weather:safe 22ft Hewescraft Homer halibut"
+    },
+    {
+      "name": "weather:wind",
+      "description": "Detailed wind forecast with direction, speed, and gusts",
+      "args": ["area?", "hours?"],
+      "example": "weather:wind Homer 24"
+    },
+    {
+      "name": "weather:alert",
+      "description": "Check for active marine weather warnings, advisories, and small craft advisories",
+      "args": ["area?"],
+      "example": "weather:alert Cook Inlet"
+    }
+  ],
+  "permissions": [
+    "brain:read",
+    "wiki:read"
+  ],
+  "config": {
+    "defaultArea": "Kachemak Bay",
+    "supportedAreas": [
+      "Kachemak Bay",
+      "Cook Inlet",
+      "Resurrection Bay",
+      "Prince William Sound",
+      "Shelikof Strait",
+      "Kenai Peninsula outside waters",
+      "Barren Islands"
+    ],
+    "vesselProfile": {
+      "type": "Hewescraft 22",
+      "maxSafeSeaState": 4,
+      "maxSafeWind": 20,
+      "recommendedLimit": "3 feet for comfortable fishing"
+    },
+    "safetyThresholds": {
+      "smallCraftAdvisory": {
+        "wind": 25,
+        "seas": 6,
+        "action": "Do not depart. Stay in protected waters."
+      },
+      "caution": {
+        "wind": 20,
+        "seas": 4,
+        "action": "Experienced operators only. Protected waters recommended."
+      },
+      "marginal": {
+        "wind": 15,
+        "seas": 3,
+        "action": "Fish protected areas. Monitor conditions. Have an exit plan."
+      },
+      "good": {
+        "wind": 10,
+        "seas": 2,
+        "action": "Good conditions for all areas. Standard safety precautions."
+      },
+      "excellent": {
+        "wind": 5,
+        "seas": 1,
+        "action": "Excellent conditions. Optimal for long runs to distant grounds."
+      }
+    },
+    "timeZone": "America/Anchorage",
+    "units": {
+      "wind": "knots",
+      "seas": "feet",
+      "temperature": "Fahrenheit",
+      "visibility": "nautical miles"
+    }
+  }
+}

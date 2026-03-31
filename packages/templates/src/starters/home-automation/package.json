@@ -1,0 +1,46 @@
+{
+  "name": "@cocapn/starter-home-automation",
+  "version": "1.0.0",
+  "description": "Smart home manager — IoT devices, automation routines, energy monitoring, and security",
+  "type": "module",
+  "main": "config.yml",
+  "scripts": {
+    "start": "cocapn start",
+    "dev": "cocapn start --watch",
+    "status": "cocapn status",
+    "deploy": "cocapn deploy",
+    "test": "echo \"No tests configured for starter template\" && exit 0",
+    "lint": "echo \"No linter configured for starter template\" && exit 0"
+  },
+  "keywords": [
+    "cocapn",
+    "home-automation",
+    "smart-home",
+    "iot",
+    "automation",
+    "energy-monitoring",
+    "security",
+    "zigbee",
+    "z-wave",
+    "home-assistant"
+  ],
+  "author": "Cocapn",
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {},
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "cocapn": {
+    "template": "home-automation",
+    "version": "1.0.0",
+    "category": "starter",
+    "tags": [
+      "iot",
+      "smart-home",
+      "energy",
+      "security",
+      "automation"
+    ]
+  }
+}

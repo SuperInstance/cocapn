@@ -1,0 +1,85 @@
+{
+  "name": "crew-scheduler",
+  "version": "1.0.0",
+  "description": "Manages watch rotations, tracks crew hours and fatigue limits, documents qualifications and sea time, and builds watch schedules for varying crew complements.",
+  "author": "Cocapn",
+  "license": "MIT",
+  "commands": [
+    "crew schedule",
+    "crew hours",
+    "crew roster",
+    "crew qualifications",
+    "crew fatigue"
+  ],
+  "capabilities": [
+    "read-facts",
+    "write-facts",
+    "read-memories",
+    "write-memories",
+    "read-wiki",
+    "schedule"
+  ],
+  "permissions": [
+    "filesystem.read",
+    "filesystem.write",
+    "memory.read",
+    "memory.write",
+    "wiki.read",
+    "scheduler.write"
+  ],
+  "dataSchema": {
+    "crewMember": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "required": true },
+        "position": { "type": "string", "required": true },
+        "hoursWorked": { "type": "number", "minimum": 0 },
+        "hoursRest": { "type": "number", "minimum": 0 },
+        "certifications": { "type": "array", "items": { "type": "string" } },
+        "certExpiry": { "type": "object" },
+        "seaTimeDays": { "type": "number", "minimum": 0 }
+      }
+    },
+    "watch": {
+      "type": "object",
+      "properties": {
+        "startTime": { "type": "string", "format": "HH:MM", "required": true },
+        "endTime": { "type": "string", "format": "HH:MM", "required": true },
+        "crewOnWatch": { "type": "array", "items": { "type": "string" }, "required": true },
+        "watchOfficer": { "type": "string", "required": true }
+      }
+    }
+  },
+  "fatigueLimits": {
+    "maxConsecutiveHours": 6,
+    "minRestPer24Hours": 6,
+    "minRestPer7Days": 56,
+    "restMustBeUninterrupted": true,
+    "description": "Fatigue limits based on USCG recommendations for commercial fishing vessels. Minimum 6 hours uninterrupted rest per 24 hours, 56 hours per 7 days."
+  },
+  "watchPatterns": {
+    "fourOnFourOff": {
+      "description": "Standard 4-on/4-off rotation for 7+ crew",
+      "minCrew": 7,
+      "watchDuration": 4,
+      "watchesPerDay": 6
+    },
+    "sixOnSixOff": {
+      "description": "6-on/6-off rotation for minimal crew",
+      "minCrew": 5,
+      "watchDuration": 6,
+      "watchesPerDay": 4
+    },
+    "eightOnEightOff": {
+      "description": "8-on/8-off for transit or light operations",
+      "minCrew": 4,
+      "watchDuration": 8,
+      "watchesPerDay": 3
+    }
+  },
+  "schedule": {
+    "watchChangeReminder": "15m before watch change",
+    "fatigueCheck": "every 6 hours",
+    "certExpiryWarning": "90 days before expiry"
+  }
+}

@@ -1,0 +1,33 @@
+config:
+  mode: local
+  port: 8787
+sync:
+  interval: 10
+  autoCommit: true
+  autoPush: false
+capabilities:
+  filesystem: true
+  git: true
+  llm: deepseek
+  vectorSearch: auto
+  mcp: true
+  fleet: false
+  sandbox: true
+llm:
+  provider: deepseek
+  model: deepseek-chat
+  temperature: 0.4
+  maxTokens: 4096
+brain:
+  autoSync: true
+  factsNamespace: commercial-fishing
+  memoryLimit: 2000
+features:
+  quotaTracking: true
+  crewManagement: true
+  maintenanceScheduling: true
+  regulatoryCompliance: true
+plugins:
+  - quota-tracker
+  - crew-scheduler
+  - maintenance-log

@@ -1,0 +1,305 @@
+{
+  "version": 1,
+  "lastUpdated": "2026-03-30T00:00:00Z",
+  "categories": {
+    "lighting": {
+      "bulbs": [
+        {
+          "id": "philips-hue-white-ambiance-a19",
+          "name": "Philips Hue White Ambiance A19",
+          "manufacturer": "Philips",
+          "model": "9290011998",
+          "protocol": "zigbee",
+          "capabilities": ["dimming", "color-temperature"],
+          "colorTempRange": [2200, 6500],
+          "dimmingRange": [1, 100],
+          "wattage": 9.5,
+          "standbyPower": 0.4,
+          "averagePrice": 15,
+          "hubRequired": true
+        },
+        {
+          "id": "philips-hue-color-a19",
+          "name": "Philips Hue Color A19",
+          "manufacturer": "Philips",
+          "model": "9290012573A",
+          "protocol": "zigbee",
+          "capabilities": ["dimming", "color-temperature", "color-rgb"],
+          "colorTempRange": [2000, 6500],
+          "dimmingRange": [1, 100],
+          "wattage": 10.5,
+          "standbyPower": 0.5,
+          "averagePrice": 45,
+          "hubRequired": true
+        },
+        {
+          "id": "ikea-tradfri-white-spectrum",
+          "name": "IKEA Tradfri White Spectrum LED",
+          "manufacturer": "IKEA",
+          "model": "LED1937R5",
+          "protocol": "zigbee",
+          "capabilities": ["dimming", "color-temperature"],
+          "colorTempRange": [2200, 4000],
+          "dimmingRange": [5, 100],
+          "wattage": 9,
+          "standbyPower": 0.3,
+          "averagePrice": 12,
+          "hubRequired": false
+        },
+        {
+          "id": "lifx-mini-white",
+          "name": "LIFX Mini White",
+          "manufacturer": "LIFX",
+          "model": "LMBM-01",
+          "protocol": "wifi",
+          "capabilities": ["dimming", "color-temperature"],
+          "colorTempRange": [2700, 6500],
+          "dimmingRange": [1, 100],
+          "wattage": 9,
+          "standbyPower": 0.8,
+          "averagePrice": 20,
+          "hubRequired": false
+        }
+      ],
+      "switches": [
+        {
+          "id": "lutron-caseta-dimmer",
+          "name": "Lutron Caseta Wireless Dimmer",
+          "manufacturer": "Lutron",
+          "model": "PD-6WCL",
+          "protocol": "clear-connect",
+          "capabilities": ["dimming"],
+          "dimmingRange": [1, 100],
+          "maxLoad": 600,
+          "averagePrice": 55,
+          "hubRequired": true,
+          "hubModel": "Lutron Smart Bridge"
+        },
+        {
+          "id": "inovelli-red-series-dimmer",
+          "name": "Inovelli Red Series Dimmer",
+          "manufacturer": "Inovelli",
+          "model": "LZW31-SN",
+          "protocol": "z-wave",
+          "capabilities": ["dimming", "scene-trigger", "energy-monitor"],
+          "dimmingRange": [1, 100],
+          "maxLoad": 450,
+          "averagePrice": 45,
+          "hubRequired": true
+        },
+        {
+          "id": "shelly-1pm",
+          "name": "Shelly 1PM Gen3",
+          "manufacturer": "Shelly",
+          "model": "S3SW-001P16EU",
+          "protocol": "wifi",
+          "capabilities": ["on-off", "energy-monitor"],
+          "maxLoad": 3680,
+          "standbyPower": 0.5,
+          "averagePrice": 18,
+          "hubRequired": false
+        }
+      ]
+    },
+    "climate": {
+      "thermostats": [
+        {
+          "id": "ecobee-smart-thermostat",
+          "name": "Ecobee Smart Thermostat Premium",
+          "manufacturer": "Ecobee",
+          "model": "EB-STATe5-02",
+          "protocol": "wifi",
+          "capabilities": ["heating", "cooling", "scheduling", "geofencing", "room-sensors", "occupancy"],
+          "supportedHVAC": ["forced-air", "heat-pump", "boiler"],
+          "averagePrice": 250,
+          "hubRequired": false
+        },
+        {
+          "id": "nest-learning-thermostat",
+          "name": "Nest Learning Thermostat 4th Gen",
+          "manufacturer": "Google",
+          "model": "T4R2US",
+          "protocol": "wifi",
+          "capabilities": ["heating", "cooling", "scheduling", "geofencing", "learning", "soli-radar"],
+          "supportedHVAC": ["forced-air", "heat-pump", "boiler"],
+          "averagePrice": 280,
+          "hubRequired": false
+        }
+      ],
+      "sensors": [
+        {
+          "id": "aqara-temp-humidity",
+          "name": "Aqara Temperature and Humidity Sensor",
+          "manufacturer": "Aqara",
+          "model": "WSDCGQ12LM",
+          "protocol": "zigbee",
+          "capabilities": ["temperature", "humidity", "pressure"],
+          "tempRange": [-20, 50],
+          "accuracy": 0.1,
+          "batteryType": "CR2032",
+          "batteryLife": 730,
+          "averagePrice": 15,
+          "hubRequired": true
+        }
+      ]
+    },
+    "security": {
+      "cameras": [
+        {
+          "id": "reolink-argus-3-pro",
+          "name": "Reolink Argus 3 Pro",
+          "manufacturer": "Reolink",
+          "model": "Argus 3 Pro",
+          "protocol": "wifi",
+          "capabilities": ["recording", "motion-detection", "night-vision", "color-night-vision", "solar", "two-way-audio", "siren"],
+          "resolution": "2K",
+          "powerSource": "battery+solar",
+          "storage": "microSD",
+          "averagePrice": 100,
+          "hubRequired": false
+        },
+        {
+          "id": "amcrest-ip8m-t2599ew",
+          "name": "Amcrest 4K Turret Camera",
+          "manufacturer": "Amcrest",
+          "model": "IP8M-T2599EW",
+          "protocol": "wifi-poe",
+          "capabilities": ["recording", "motion-detection", "night-vision", "ai-detection", "vehicle-detection"],
+          "resolution": "4K",
+          "powerSource": "PoE",
+          "storage": "microSD+NVR",
+          "averagePrice": 120,
+          "hubRequired": false
+        }
+      ],
+      "locks": [
+        {
+          "id": "yale-assure-lock-2",
+          "name": "Yale Assure Lock 2",
+          "manufacturer": "Yale",
+          "model": "YRL226",
+          "protocol": "zigbee",
+          "capabilities": ["lock-unlock", "keypad", "auto-lock", "guest-codes", "battery-monitor", "tamper-alert"],
+          "batteryType": "4x AA",
+          "batteryLife": 365,
+          "maxGuestCodes": 25,
+          "averagePrice": 230,
+          "hubRequired": true
+        },
+        {
+          "id": "august-wifi-smart-lock",
+          "name": "August Wi-Fi Smart Lock",
+          "manufacturer": "August",
+          "model": "AUG-SL05-M01-S01",
+          "protocol": "wifi",
+          "capabilities": ["lock-unlock", "auto-unlock", "auto-lock", "guest-codes", "door-sense", "battery-monitor"],
+          "batteryType": "CR123A x2",
+          "batteryLife": 180,
+          "maxGuestCodes": 50,
+          "averagePrice": 250,
+          "hubRequired": false
+        }
+      ],
+      "doorSensors": [
+        {
+          "id": "aqara-door-window-sensor",
+          "name": "Aqara Door and Window Sensor T1",
+          "manufacturer": "Aqara",
+          "model": "MCCGQ14LM",
+          "protocol": "zigbee",
+          "capabilities": ["open-close", "tamper-alert"],
+          "batteryType": "CR1632",
+          "batteryLife": 730,
+          "averagePrice": 12,
+          "hubRequired": true
+        }
+      ],
+      "motionSensors": [
+        {
+          "id": "hue-motion-sensor",
+          "name": "Philips Hue Motion Sensor",
+          "manufacturer": "Philips",
+          "model": "929001260571",
+          "protocol": "zigbee",
+          "capabilities": ["motion", "temperature", "ambient-light", "day-night"],
+          "detectionAngle": 160,
+          "detectionRange": 5,
+          "batteryType": "AAA x2",
+          "batteryLife": 730,
+          "averagePrice": 40,
+          "hubRequired": true
+        }
+      ],
+      "smokeCo": [
+        {
+          "id": "nest-protect",
+          "name": "Nest Protect (2nd Gen)",
+          "manufacturer": "Google",
+          "model": "S3000LWBUS",
+          "protocol": "wifi",
+          "capabilities": ["smoke-detection", "co-detection", "voice-alert", "pathlight", "self-test", "phone-alert"],
+          "batteryType": "6x AA (wired version available)",
+          "batteryLife": 3650,
+          "sensorLifespan": 3650,
+          "averagePrice": 120,
+          "hubRequired": false
+        }
+      ],
+      "leakSensors": [
+        {
+          "id": "aqara-leak-sensor",
+          "name": "Aqara Water Leak Sensor T1",
+          "manufacturer": "Aqara",
+          "model": "SJCGQ13LM",
+          "protocol": "zigbee",
+          "capabilities": ["water-leak", "audible-alarm"],
+          "batteryType": "CR2032",
+          "batteryLife": 730,
+          "averagePrice": 15,
+          "hubRequired": true
+        }
+      ]
+    },
+    "plugs": [
+      {
+        "id": "shelly-plug-s",
+        "name": "Shelly Plug S Gen3",
+        "manufacturer": "Shelly",
+        "model": "S3PL-001P16US",
+        "protocol": "wifi",
+        "capabilities": ["on-off", "energy-monitor", "schedule"],
+        "maxLoad": 1840,
+        "powerMonitoringAccuracy": 1,
+        "standbyPower": 0.5,
+        "averagePrice": 18,
+        "hubRequired": false
+      },
+      {
+        "id": "tplink-kasa-kp125m",
+        "name": "TP-Link Kasa Smart Plug Mini Matter",
+        "manufacturer": "TP-Link",
+        "model": "KP125M",
+        "protocol": "wifi-matter",
+        "capabilities": ["on-off", "energy-monitor", "schedule", "matter"],
+        "maxLoad": 1800,
+        "powerMonitoringAccuracy": 2,
+        "standbyPower": 0.6,
+        "averagePrice": 25,
+        "hubRequired": false
+      }
+    ],
+    "speakers": [
+      {
+        "id": "echo-4th-gen",
+        "name": "Amazon Echo (4th Gen)",
+        "manufacturer": "Amazon",
+        "model": "B7Q4SW",
+        "protocol": "wifi-zigbee",
+        "capabilities": ["voice-assistant", "zigbee-hub", "speaker", "drop-in", "announcements", "music"],
+        "hasZigbeeHub": true,
+        "averagePrice": 80,
+        "hubRequired": false
+      }
+    ]
+  }
+}

@@ -1,0 +1,159 @@
+:root {
+  /* --- Primary Palette: Rich Burgundy --- */
+  --color-primary: #722F37;
+  --color-primary-light: #8B3A42;
+  --color-primary-dark: #5A252C;
+  --color-primary-hover: #914248;
+  --color-primary-active: #4E1F25;
+
+  /* --- Secondary: Parchment Cream --- */
+  --color-secondary: #F5F0E8;
+  --color-secondary-light: #FAF7F2;
+  --color-secondary-dark: #E8DFD1;
+  --color-secondary-hover: #EDE6D8;
+
+  /* --- Accent: Ink Blue --- */
+  --color-accent: #2C3E6B;
+  --color-accent-light: #3D5291;
+  --color-accent-dark: #1E2B4D;
+  --color-accent-hover: #4A64AB;
+
+  /* --- Semantic Colors --- */
+  --color-success: #4A7C59;
+  --color-success-light: #5A9C6E;
+  --color-warning: #C4943A;
+  --color-warning-light: #D4A84E;
+  --color-error: #943A3A;
+  --color-error-light: #B04E4E;
+  --color-info: #3A6B9C;
+
+  /* --- Neutrals --- */
+  --color-bg: #FAF7F2;
+  --color-bg-elevated: #FFFFFF;
+  --color-bg-sunken: #EDE6D8;
+  --color-bg-overlay: rgba(44, 62, 107, 0.6);
+  --color-text: #2C2420;
+  --color-text-secondary: #6B5E52;
+  --color-text-tertiary: #9C8E80;
+  --color-text-inverse: #FAF7F2;
+  --color-border: #D4C9B8;
+  --color-border-light: #E8DFD1;
+  --color-divider: #D4C9B8;
+
+  /* --- Typography --- */
+  --font-heading: 'Playfair Display', 'Georgia', 'Times New Roman', serif;
+  --font-body: 'Merriweather', 'Georgia', 'Palatino', serif;
+  --font-mono: 'Fira Code', 'Source Code Pro', 'Courier New', monospace;
+  --font-ui: 'Source Sans 3', 'Helvetica Neue', sans-serif;
+
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1.0625rem;
+  --font-size-lg: 1.1875rem;
+  --font-size-xl: 1.375rem;
+  --font-size-2xl: 1.75rem;
+  --font-size-3xl: 2.25rem;
+  --font-size-4xl: 3rem;
+
+  --line-height-tight: 1.3;
+  --line-height-normal: 1.65;
+  --line-height-relaxed: 1.85;
+
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* --- Spacing --- */
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+  --space-2xl: 3rem;
+  --space-3xl: 4rem;
+
+  /* --- Layout --- */
+  --max-width-content: 42rem;
+  --max-width-wide: 64rem;
+  --max-width-sidebar: 18rem;
+  --border-radius-sm: 4px;
+  --border-radius-md: 8px;
+  --border-radius-lg: 12px;
+  --border-radius-full: 9999px;
+
+  /* --- Shadows --- */
+  --shadow-sm: 0 1px 3px rgba(44, 36, 32, 0.08);
+  --shadow-md: 0 4px 12px rgba(44, 36, 32, 0.1);
+  --shadow-lg: 0 8px 24px rgba(44, 36, 32, 0.12);
+  --shadow-xl: 0 16px 48px rgba(44, 36, 32, 0.16);
+
+  /* --- Transitions --- */
+  --transition-fast: 150ms ease;
+  --transition-normal: 250ms ease;
+  --transition-slow: 400ms ease;
+
+  /* --- Writing-specific --- */
+  --color-draft-new: #3A6B9C;
+  --color-draft-revised: #C4943A;
+  --color-draft-final: #4A7C59;
+  --color-wordcount-bg: #EDE6D8;
+  --color-wordcount-fill: #722F37;
+  --color-sprint-active: #C4943A;
+  --color-sprint-rest: #9C8E80;
+  --color-highlight-character: rgba(114, 47, 55, 0.12);
+  --color-highlight-plot: rgba(44, 62, 107, 0.12);
+  --color-highlight-world: rgba(196, 148, 58, 0.12);
+}
+
+/* --- Dark Mode Override --- */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-primary: #A44850;
+    --color-primary-light: #B85C64;
+    --color-primary-dark: #722F37;
+    --color-primary-hover: #C47078;
+    --color-primary-active: #5A252C;
+
+    --color-secondary: #2C2420;
+    --color-secondary-light: #3A302A;
+    --color-secondary-dark: #1E1814;
+    --color-secondary-hover: #4A3E34;
+
+    --color-accent: #5A7ABF;
+    --color-accent-light: #7A9AD4;
+    --color-accent-dark: #2C3E6B;
+    --color-accent-hover: #8AB0E8;
+
+    --color-bg: #1A1510;
+    --color-bg-elevated: #2C2420;
+    --color-bg-sunken: #12100D;
+    --color-bg-overlay: rgba(0, 0, 0, 0.7);
+    --color-text: #E8DFD1;
+    --color-text-secondary: #B0A294;
+    --color-text-tertiary: #7A6E62;
+    --color-text-inverse: #1A1510;
+    --color-border: #4A3E34;
+    --color-border-light: #3A302A;
+    --color-divider: #4A3E34;
+
+    --color-success: #6AAC7B;
+    --color-warning: #D4A84E;
+    --color-error: #C45454;
+    --color-info: #6A9CD4;
+
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.35);
+    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.4);
+    --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.5);
+
+    --color-draft-new: #6A9CD4;
+    --color-draft-revised: #D4A84E;
+    --color-draft-final: #6AAC7B;
+    --color-wordcount-bg: #3A302A;
+    --color-wordcount-fill: #A44850;
+    --color-highlight-character: rgba(164, 72, 80, 0.2);
+    --color-highlight-plot: rgba(90, 122, 191, 0.2);
+    --color-highlight-world: rgba(212, 168, 78, 0.2);
+  }
+}

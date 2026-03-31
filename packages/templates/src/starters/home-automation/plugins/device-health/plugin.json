@@ -1,0 +1,86 @@
+{
+  "id": "device-health",
+  "name": "Device Health Monitor",
+  "version": "1.0.0",
+  "description": "Monitors device connectivity, battery levels, firmware versions, and overall health status for all registered IoT devices.",
+  "author": "Cocapn",
+  "license": "MIT",
+  "type": "plugin",
+  "category": "health",
+  "permissions": [
+    "brain:read:facts",
+    "brain:read:memories",
+    "brain:write:memories",
+    "devices:read:state",
+    "devices:read:battery",
+    "devices:read:firmware",
+    "devices:read:signal"
+  ],
+  "config": {
+    "healthCheckInterval": 60,
+    "offlineThreshold": 300,
+    "batteryLowThreshold": 20,
+    "batteryCriticalThreshold": 10,
+    "signalWeakThreshold": -85,
+    "firmwareCheckInterval": 86400,
+    "dailyDigestEnabled": true,
+    "digestTime": "08:00",
+    "trackedMetrics": ["connectivity", "battery", "signal", "firmware", "uptime"]
+  },
+  "triggers": {
+    "onDeviceOffline": {
+      "description": "Fires when a device has not communicated for the configured offline threshold",
+      "action": "alert"
+    },
+    "onDeviceOnline": {
+      "description": "Fires when a previously offline device comes back online",
+      "action": "log"
+    },
+    "onBatteryLow": {
+      "description": "Fires when a device battery drops below 20%",
+      "action": "notify"
+    },
+    "onBatteryCritical": {
+      "description": "Fires when a device battery drops below 10%",
+      "action": "urgent-notify"
+    },
+    "onFirmwareUpdateAvailable": {
+      "description": "Fires when a new firmware version is available for a device",
+      "action": "notify"
+    },
+    "onSignalWeak": {
+      "description": "Fires when a device's wireless signal drops below -85 dBm",
+      "action": "log"
+    },
+    "onDailyDigest": {
+      "description": "Generates a daily health summary at the configured time",
+      "action": "report"
+    }
+  },
+  "provides": {
+    "commands": [
+      "devices status",
+      "devices offline",
+      "devices battery",
+      "devices battery low",
+      "devices firmware",
+      "devices signal",
+      "devices health <device-id>",
+      "devices digest"
+    ],
+    "data": [
+      "health.total_devices",
+      "health.online_devices",
+      "health.offline_devices",
+      "health.low_battery_devices",
+      "health.outdated_firmware",
+      "health.device.<id>.status",
+      "health.device.<id>.battery",
+      "health.device.<id>.signal",
+      "health.device.<id>.firmware"
+    ]
+  },
+  "dependencies": {
+    "cocapn": ">=1.0.0"
+  }
+}

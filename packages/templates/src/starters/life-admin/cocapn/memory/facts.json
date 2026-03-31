@@ -1,0 +1,102 @@
+{
+  "version": 1,
+  "namespace": "life",
+  "facts": {
+    "timezone": {
+      "value": "America/Los_Angeles",
+      "confidence": 1.0,
+      "source": "explicit",
+      "updatedAt": "2026-03-30T10:00:00Z"
+    },
+    "location": {
+      "value": "Portland, Oregon",
+      "confidence": 1.0,
+      "source": "explicit",
+      "updatedAt": "2026-03-30T10:00:00Z"
+    },
+    "work.schedule": {
+      "value": "Monday-Friday, 9:00 AM - 5:30 PM Pacific",
+      "confidence": 1.0,
+      "source": "explicit",
+      "updatedAt": "2026-03-30T10:00:00Z"
+    },
+    "work.commute": {
+      "value": "30 minutes by car each way",
+      "confidence": 1.0,
+      "source": "explicit",
+      "updatedAt": "2026-03-30T10:00:00Z"
+    },
+    "family.partner": {
+      "value": "Sarah, married since 2018, birthday June 15",
+      "confidence": 1.0,
+      "source": "explicit",
+      "updatedAt": "2026-03-30T10:00:00Z"
+    },
+    "family.children": {
+      "value": "Emma (age 8, birthday October 3) and Jack (age 5, birthday February 20)",
+      "confidence": 1.0,
+      "source": "explicit",
+      "updatedAt": "2026-03-30T10:00:00Z"
+    },
+    "family.pet": {
+      "value": "Golden retriever named Biscuit, needs monthly flea treatment",
+      "confidence": 1.0,
+      "source": "explicit",
+      "updatedAt": "2026-03-30T10:00:00Z"
+    },
+    "health.medication": {
+      "value": "Vitamin D daily with breakfast, Omega-3 daily with lunch, Magnesium before bed",
+      "confidence": 1.0,
+      "source": "explicit",
+      "updatedAt": "2026-03-30T10:00:00Z"
+    },
+    "health.allergies": {
+      "value": "Shellfish allergy (epi pen in kitchen drawer and car glovebox)",
+      "confidence": 1.0,
+      "source": "explicit",
+      "updatedAt": "2026-03-30T10:00:00Z"
+    },
+    "diet.preferences": {
+      "value": "Trying to eat more plant-based meals. No restrictions but reducing red meat to twice a week",
+      "confidence": 0.9,
+      "source": "explicit",
+      "updatedAt": "2026-03-30T10:00:00Z"
+    },
+    "fitness.goal": {
+      "value": "Training for half marathon in October 2026. Currently in week 8 of 16-week program. 3 runs per week.",
+      "confidence": 1.0,
+      "source": "explicit",
+      "updatedAt": "2026-03-30T10:00:00Z"
+    },
+    "finance.rent": {
+      "value": "$1,800/month due on the 1st, auto-pay set up",
+      "confidence": 1.0,
+      "source": "explicit",
+      "updatedAt": "2026-03-30T10:00:00Z"
+    },
+    "finance.savingsGoal": {
+      "value": "Emergency fund target: $10,000. Currently at $4,200. Contributing $400/month.",
+      "confidence": 1.0,
+      "source": "explicit",
+      "updatedAt": "2026-03-30T10:00:00Z"
+    },
+    "priorities.current": {
+      "value": "1) Stay on track with half marathon training, 2) Get meal planning system working, 3) Stay on top of bills without stress",
+      "confidence": 1.0,
+      "source": "explicit",
+      "updatedAt": "2026-03-30T10:00:00Z"
+    },
+    "preferences.reminderStyle": {
+      "value": "Gentle nudges, not nagging. One reminder, then one follow-up. Humor appreciated.",
+      "confidence": 1.0,
+      "source": "explicit",
+      "updatedAt": "2026-03-30T10:00:00Z"
+    },
+    "preferences.morningPerson": {
+      "value": "Yes, most productive between 7-10 AM. Prefer important tasks scheduled in the morning.",
+      "confidence": 0.9,
+      "source": "explicit",
+      "updatedAt": "2026-03-30T10:00:00Z"
+    }
+  }
+}

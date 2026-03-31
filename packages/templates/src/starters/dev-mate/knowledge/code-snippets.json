@@ -1,0 +1,98 @@
+[
+  {
+    "id": "snippet-001",
+    "language": "TypeScript",
+    "pattern": "Error Handling",
+    "title": "Typed Error Result with Discriminated Union",
+    "description": "A type-safe pattern for returning either a success value or a structured error without throwing exceptions. Useful for service layer functions where errors are expected outcomes, not exceptional cases.",
+    "code": "type Result<T, E = Error> =\n  | { ok: true; value: T }\n  | { ok: false; error: E }\n\nfunction success<T>(value: T): Result<T> {\n  return { ok: true, value }\n}\n\nfunction failure<E>(error: E): Result<never, E> {\n  return { ok: false, error }\n}\n\n// Usage\nasync function findUser(id: string): Promise<Result<User, NotFoundError>> {\n  const user = await db.user.findById(id)\n  if (!user) return failure(new NotFoundError('User', id))\n  return success(user)\n}\n\n// Consumer handles both branches explicitly\nconst result = await findUser('123')\nif (result.ok) {\n  console.log(result.value.name) // TypeScript knows value exists\n} else {\n  console.error(result.error.message) // TypeScript knows error exists\n}"
+  },
+  {
+    "id": "snippet-002",
+    "language": "TypeScript",
+    "pattern": "Dependency Injection",
+    "title": "Constructor-Based Dependency Injection",
+    "description": "Pass dependencies through constructors for testability and loose coupling. Enables easy mocking in tests and swapping implementations without modifying business logic.",
+    "code": "interface UserRepository {\n  findById(id: string): Promise<User | null>\n  create(data: CreateUserInput): Promise<User>\n  update(id: string, data: Partial<User>): Promise<User>\n}\n\ninterface EventPublisher {\n  publish(event: string, payload: unknown): Promise<void>\n}\n\nclass UserService {\n  constructor(\n    private repo: UserRepository,\n    private events: EventPublisher\n  ) {}\n\n  async createUser(input: CreateUserInput): Promise<User> {\n    const user = await this.repo.create(input)\n    await this.events.publish('user.created', { id: user.id })\n    return user\n  }\n}\n\n// Production wiring\nconst service = new UserService(postgresUserRepo, redisEventPublisher)\n\n// Test wiring\nconst testService = new UserService(mockRepo, mockEvents)"
+  },
+  {
+    "id": "snippet-003",
+    "language": "TypeScript",
+    "pattern": "Middleware / Pipeline",
+    "title": "Composable Middleware Chain",
+    "description": "A middleware pattern that allows composing multiple processing steps into a pipeline. Each middleware can modify the request, short-circuit with a response, or pass to the next handler.",
+    "code": "type Middleware = (\n  ctx: Context,\n  next: () => Promise<void>\n) => Promise<void>\n\nfunction compose(middlewares: Middleware[]): Middleware {\n  return async (ctx, next) => {\n    let index = -1\n\n    async function dispatch(i: number): Promise<void> {\n      if (i <= index) throw new Error('next() called multiple times')\n      index = i\n      const fn = i < middlewares.length ? middlewares[i] : next\n      if (!fn) return\n      await fn(ctx, () => dispatch(i + 1))\n    }\n\n    await dispatch(0)\n  }\n}\n\n// Usage\nconst pipeline = compose([\n  loggingMiddleware,\n  authMiddleware,\n  rateLimitMiddleware,\n  handlerMiddleware\n])\n\nawait pipeline(ctx, async () => {})"
+  },
+  {
+    "id": "snippet-004",
+    "language": "TypeScript",
+    "pattern": "Retry with Exponential Backoff",
+    "title": "Resilient API Call with Retry Logic",
+    "description": "Wraps async operations with configurable retry logic using exponential backoff and jitter. Handles transient failures like network timeouts or rate-limited API responses.",
+    "code": "interface RetryOptions {\n  maxAttempts: number\n  baseDelay: number\n  maxDelay: number\n  retryableErrors: string[]\n}\n\nconst defaultRetryOptions: RetryOptions = {\n  maxAttempts: 3,\n  baseDelay: 1000,\n  maxDelay: 30000,\n  retryableErrors: ['ECONNRESET', 'ETIMEDOUT', 'RATE_LIMITED']\n}\n\nasync function withRetry<T>(\n  fn: () => Promise<T>,\n  options: Partial<RetryOptions> = {}\n): Promise<T> {\n  const opts = { ...defaultRetryOptions, ...options }\n  let lastError: Error | null = null\n\n  for (let attempt = 1; attempt <= opts.maxAttempts; attempt++) {\n    try {\n      return await fn()\n    } catch (err) {\n      lastError = err as Error\n      const code = (err as any).code || (err as any).name\n\n      if (!opts.retryableErrors.includes(code)) throw err\n      if (attempt === opts.maxAttempts) throw err\n\n      const jitter = Math.random() * 0.3 + 0.85\n      const delay = Math.min(\n        opts.baseDelay * Math.pow(2, attempt - 1) * jitter,\n        opts.maxDelay\n      )\n      await new Promise(resolve => setTimeout(resolve, delay))\n    }\n  }\n\n  throw lastError\n}"
+  },
+  {
+    "id": "snippet-005",
+    "language": "TypeScript",
+    "pattern": "Event Emitter",
+    "title": "Type-Safe Event Bus",
+    "description": "A strongly-typed event emitter that enforces event name and payload types at compile time. Prevents typos and mismatched event data across the application.",
+    "code": "type EventMap = {\n  'user.created': { id: string; email: string }\n  'user.updated': { id: string; changes: Record<string, unknown> }\n  'order.placed': { orderId: string; userId: string; total: number }\n  'order.cancelled': { orderId: string; reason: string }\n}\n\ntype EventHandler<K extends keyof EventMap> = (payload: EventMap[K]) => void\n\nclass TypedEventBus {\n  private handlers = new Map<string, Set<Function>>()\n\n  on<K extends keyof EventMap>(event: K, handler: EventHandler<K>): () => void {\n    if (!this.handlers.has(event as string)) {\n      this.handlers.set(event as string, new Set())\n    }\n    this.handlers.get(event as string)!.add(handler)\n    return () => this.handlers.get(event as string)?.delete(handler)\n  }\n\n  emit<K extends keyof EventMap>(event: K, payload: EventMap[K]): void {\n    this.handlers.get(event as string)?.forEach(fn => fn(payload))\n  }\n}"
+  },
+  {
+    "id": "snippet-006",
+    "language": "Python",
+    "pattern": "Context Manager",
+    "title": "Database Transaction Context Manager",
+    "description": "A Python context manager that wraps database transactions with automatic commit/rollback. Ensures connections are always released even when exceptions occur.",
+    "code": "from contextlib import contextmanager\nfrom typing import Generator\nimport psycopg2\nfrom psycopg2.extras import RealDictCursor\n\n@contextmanager\ndef transaction(db_url: str) -> Generator:\n    \"\"\"Provide a transactional scope around a series of operations.\"\"\"\n    conn = psycopg2.connect(db_url)\n    cursor = conn.cursor(cursor_factory=RealDictCursor)\n    try:\n        yield cursor\n        conn.commit()\n    except Exception:\n        conn.rollback()\n        raise\n    finally:\n        cursor.close()\n        conn.close()\n\n# Usage\nwith transaction(DATABASE_URL) as cur:\n    cur.execute(\"UPDATE users SET last_login = NOW() WHERE id = %s\", (user_id,))\n    cur.execute(\"INSERT INTO audit_log (action, user_id) VALUES (%s, %s)\",\n                (\"login\", user_id))"
+  },
+  {
+    "id": "snippet-007",
+    "language": "TypeScript",
+    "pattern": "Validation",
+    "title": "Runtime Input Validation with Type Inference",
+    "description": "Validates and parses unknown input at runtime while inferring the TypeScript type statically. Catches invalid data at the boundary before it reaches business logic.",
+    "code": "type Validator<T> = {\n  validate(input: unknown): T\n}\n\nfunction string(): Validator<string> {\n  return {\n    validate(input: unknown): string {\n      if (typeof input !== 'string') throw new ValidationError('Expected string')\n      return input\n    }\n  }\n}\n\nfunction object<T extends Record<string, Validator<any>>>(schema: T):\n  Validator<{ [K in keyof T]: ReturnType<T[K]['validate']> }> {\n  return {\n    validate(input: unknown) {\n      if (typeof input !== 'object' || input === null) {\n        throw new ValidationError('Expected object')\n      }\n      const result: any = {}\n      for (const [key, validator] of Object.entries(schema)) {\n        result[key] = (validator as Validator<any>).validate((input as any)[key])\n      }\n      return result\n    }\n  }\n}\n\n// Define schema — TypeScript infers the output type\nconst createUserSchema = object({\n  name: string(),\n  email: string(),\n})\n\ntype CreateUser = ReturnType<typeof createUserSchema.validate>\n// { name: string; email: string }"
+  },
+  {
+    "id": "snippet-008",
+    "language": "TypeScript",
+    "pattern": "Rate Limiting",
+    "title": "Token Bucket Rate Limiter",
+    "description": "Implements the token bucket algorithm for rate limiting. Allows short bursts of requests while enforcing an average rate over time. Useful for API rate limiting and resource protection.",
+    "code": "class TokenBucket {\n  private tokens: number\n  private lastRefill: number\n\n  constructor(\n    private maxTokens: number,\n    private refillRate: number  // tokens per second\n  ) {\n    this.tokens = maxTokens\n    this.lastRefill = Date.now()\n  }\n\n  private refill(): void {\n    const now = Date.now()\n    const elapsed = (now - this.lastRefill) / 1000\n    this.tokens = Math.min(\n      this.maxTokens,\n      this.tokens + elapsed * this.refillRate\n    )\n    this.lastRefill = now\n  }\n\n  tryConsume(count = 1): boolean {\n    this.refill()\n    if (this.tokens >= count) {\n      this.tokens -= count\n      return true\n    }\n    return false\n  }\n\n  getAvailableTokens(): number {\n    this.refill()\n    return this.tokens\n  }\n}\n\n// Usage: 10 requests per second, burst up to 20\nconst limiter = new TokenBucket(20, 10)\n\nfunction handleRequest(req: Request, res: Response): void {\n  if (!limiter.tryConsume()) {\n    res.status(429).json({ error: 'Rate limit exceeded' })\n    return\n  }\n  // Process request\n}"
+  },
+  {
+    "id": "snippet-009",
+    "language": "TypeScript",
+    "pattern": "Connection Pool",
+    "title": "Generic Resource Pool",
+    "description": "A generic pool that manages reusable resources like database connections, browser instances, or worker threads. Handles acquisition, release, and cleanup of idle resources.",
+    "code": "interface PoolResource {\n  isAlive(): boolean\n  close(): Promise<void>\n}\n\nclass ResourcePool<T extends PoolResource> {\n  private available: T[] = []\n  private inUse = new Set<T>()\n  private waitQueue: Array<(resource: T) => void> = []\n\n  constructor(\n    private factory: () => Promise<T>,\n    private maxSize: number,\n    private idleTimeoutMs: number = 30000\n  ) {}\n\n  async acquire(): Promise<T> {\n    // Return an available resource if one exists\n    const live = this.available.find(r => r.isAlive())\n    if (live) {\n      this.available = this.available.filter(r => r !== live)\n      this.inUse.add(live)\n      return live\n    }\n\n    // Create a new resource if under limit\n    if (this.inUse.size + this.available.length < this.maxSize) {\n      const resource = await this.factory()\n      this.inUse.add(resource)\n      return resource\n    }\n\n    // Wait for a resource to be released\n    return new Promise(resolve => this.waitQueue.push(resolve))\n  }\n\n  release(resource: T): void {\n    this.inUse.delete(resource)\n    if (this.waitQueue.length > 0) {\n      this.inUse.add(resource)\n      const next = this.waitQueue.shift()!\n      next(resource)\n    } else {\n      this.available.push(resource)\n    }\n  }\n}"
+  },
+  {
+    "id": "snippet-010",
+    "language": "TypeScript",
+    "pattern": "Observer / Pub-Sub",
+    "title": "Redis-Based Pub/Sub with Type Safety",
+    "description": "Wraps Redis pub/sub to provide a typed message bus across processes. Enables communication between separate service instances without direct coupling.",
+    "code": "import Redis from 'ioredis'\n\ntype ChannelMap = {\n  'cache:invalidate': { keys: string[] }\n  'user:updated': { userId: string; fields: string[] }\n  'deployment:completed': { version: string; environment: string }\n}\n\nclass RedisMessageBus {\n  private publisher: Redis\n  private subscriber: Redis\n\n  constructor(redisUrl: string) {\n    this.publisher = new Redis(redisUrl)\n    this.subscriber = new Redis(redisUrl)\n  }\n\n  async publish<K extends keyof ChannelMap>(\n    channel: K,\n    message: ChannelMap[K]\n  ): Promise<void> {\n    await this.publisher.publish(\n      channel as string,\n      JSON.stringify(message)\n    )\n  }\n\n  async subscribe<K extends keyof ChannelMap>(\n    channel: K,\n    handler: (message: ChannelMap[K]) => void\n  ): Promise<void> {\n    await this.subscriber.subscribe(channel as string)\n    this.subscriber.on('message', (ch, raw) => {\n      if (ch === channel) {\n        handler(JSON.parse(raw))\n      }\n    })\n  }\n\n  async disconnect(): Promise<void> {\n    this.publisher.disconnect()\n    this.subscriber.disconnect()\n  }\n}"
+  },
+  {
+    "id": "snippet-011",
+    "language": "TypeScript",
+    "pattern": "Circuit Breaker",
+    "title": "Circuit Breaker for External Service Calls",
+    "description": "Prevents cascading failures by stopping requests to a failing external service. After a threshold of failures, the circuit opens and fast-fails. Periodically tests recovery with a half-open state.",
+    "code": "enum CircuitState { Closed, Open, HalfOpen }\n\nclass CircuitBreaker {\n  private state = CircuitState.Closed\n  private failureCount = 0\n  private lastFailureTime = 0\n\n  constructor(\n    private failureThreshold: number = 5,\n    private recoveryTimeout: number = 30000,\n    private halfOpenMaxCalls: number = 1\n  ) {}\n\n  async execute<T>(fn: () => Promise<T>): Promise<T> {\n    if (this.state === CircuitState.Open) {\n      if (Date.now() - this.lastFailureTime > this.recoveryTimeout) {\n        this.state = CircuitState.HalfOpen\n      } else {\n        throw new Error('Circuit breaker is open')\n      }\n    }\n\n    try {\n      const result = await fn()\n      this.onSuccess()\n      return result\n    } catch (err) {\n      this.onFailure()\n      throw err\n    }\n  }\n\n  private onSuccess(): void {\n    this.failureCount = 0\n    this.state = CircuitState.Closed\n  }\n\n  private onFailure(): void {\n    this.failureCount++\n    this.lastFailureTime = Date.now()\n    if (this.failureCount >= this.failureThreshold) {\n      this.state = CircuitState.Open\n    }\n  }\n}"
+  },
+  {
+    "id": "snippet-012",
+    "language": "Python",
+    "pattern": "Dataclass / Serialization",
+    "title": "Pydantic Model with Validation and Serialization",
+    "description": "Uses Pydantic to define data models with automatic validation, serialization, and type coercion. Provides a clean boundary between raw input and validated domain objects.",
+    "code": "from pydantic import BaseModel, EmailStr, field_validator\nfrom datetime import datetime\nfrom typing import Optional\n\nclass UserCreate(BaseModel):\n    name: str\n    email: EmailStr\n    age: Optional[int] = None\n\n    @field_validator('name')\n    @classmethod\n    def name_must_not_be_empty(cls, v: str) -> str:\n        if not v.strip():\n            raise ValueError('Name must not be empty')\n        return v.strip()\n\n    @field_validator('age')\n    @classmethod\n    def age_must_be_valid(cls, v: Optional[int]) -> Optional[int]:\n        if v is not None and (v < 0 or v > 150):\n            raise ValueError('Age must be between 0 and 150')\n        return v\n\nclass UserResponse(UserCreate):\n    id: str\n    created_at: datetime\n\n# Input validation\nuser = UserCreate(name='Alice', email='alice@example.com', age=30)\n\n# Serialization\nprint(user.model_dump_json())\n# {\"name\":\"Alice\",\"email\":\"alice@example.com\",\"age\":30}"
+  }
+]

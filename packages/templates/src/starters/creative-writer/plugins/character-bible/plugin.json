@@ -1,0 +1,72 @@
+{
+  "name": "character-bible",
+  "version": "1.0.0",
+  "description": "Character tracking and consistency management. Build detailed character profiles with arcs, relationships, contradictions, and growth trajectories. Never lose track of eye color, backstory details, or where a character was last Tuesday.",
+  "author": "Cocapn",
+  "commands": [
+    {
+      "name": "char:new",
+      "description": "Create a new character profile",
+      "args": ["name"],
+      "example": "char:new \"Maren Ashworth\""
+    },
+    {
+      "name": "char:profile",
+      "description": "View or update a character's full profile",
+      "args": ["name", "field?", "value?"],
+      "example": "char:profile \"Maren Ashworth\" occupation \"Government cartographer\""
+    },
+    {
+      "name": "char:arc",
+      "description": "Set or update a character's arc: lie, wound, want, need",
+      "args": ["name", "arcElement", "description"],
+      "example": "char:arc \"Maren\" lie \"Objective measurement reveals truth\""
+    },
+    {
+      "name": "char:relate",
+      "description": "Create or update a relationship between two characters",
+      "args": ["character1", "character2", "relationship"],
+      "example": "char:relate \"Maren\" \"Hale\" \"supervisor-subordinate, mutual respect, unspoken tension\""
+    },
+    {
+      "name": "char:scene",
+      "description": "Record a character's state/behavior in a specific scene for continuity tracking",
+      "args": ["name", "chapter", "notes"],
+      "example": "char:scene \"Maren\" \"ch4\" \"Confronts Hale, hands shaking, speaks in short clipped sentences\""
+    },
+    {
+      "name": "char:check",
+      "description": "Check a character's profile for consistency issues or gaps",
+      "args": ["name"],
+      "example": "char:check \"Maren Ashworth\""
+    },
+    {
+      "name": "char:cast",
+      "description": "List all characters in the current project with their roles",
+      "args": [],
+      "example": "char:cast"
+    },
+    {
+      "name": "char:map",
+      "description": "Show the relationship map for the current project",
+      "args": [],
+      "example": "char:map"
+    }
+  ],
+  "permissions": [
+    "brain:read",
+    "brain:write:facts",
+    "brain:write:memories",
+    "wiki:read"
+  ],
+  "config": {
+    "profileFields": [
+      "name", "aliases", "age", "occupation", "physicalDescription",
+      "voicePatterns", "lie", "wound", "want", "need",
+      "fears", "strengths", "contradictions", "arcStart", "arcEnd",
+      "firstAppearance", "lastAppearance", "notes"
+    ],
+    "trackPerScene": true,
+    "autoFlagInconsistencies": true
+  }
+}

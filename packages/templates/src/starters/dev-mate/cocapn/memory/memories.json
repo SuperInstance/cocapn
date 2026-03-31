@@ -1,0 +1,42 @@
+[
+  {
+    "id": "mem-001",
+    "type": "code-review",
+    "timestamp": "2026-03-28T14:30:00Z",
+    "confidence": 0.9,
+    "summary": "Code review session for authentication module refactor",
+    "details": "Reviewed PR #42 which refactored the auth module from callback-based to async/await. Identified three issues: (1) Missing error handling for JWT expiry in the refresh token flow, (2) SQL injection risk in the user search query that used string concatenation instead of parameterized queries, (3) Inconsistent error response format — some endpoints returned { error: string } while others returned { message: string }. The team agreed to standardize on { error: { code: string, message: string } } format going forward.",
+    "tags": ["security", "auth", "refactoring", "code-review"],
+    "resolution": "All three issues fixed in follow-up commits. ADR-008 created to document the error response format decision."
+  },
+  {
+    "id": "mem-002",
+    "type": "debugging",
+    "timestamp": "2026-03-25T09:15:00Z",
+    "confidence": 0.85,
+    "summary": "Debugging session for intermittent ECONNREFUSED errors in staging",
+    "details": "The staging environment was throwing ECONNREFUSED on the PostgreSQL connection roughly every 20 minutes. Traced the issue to the connection pool exhausting under load during scheduled batch jobs. The pool was configured for 10 connections, but batch jobs consumed 8 concurrently. Root cause: the health check query was running on a separate untracked connection that wasn't returned to the pool during high-load periods.",
+    "tags": ["debugging", "database", "connection-pool", "staging"],
+    "resolution": "Increased pool size to 20, added connection timeout of 30s, and moved health checks to use a dedicated monitoring connection. Issue has not recurred in 5 days."
+  },
+  {
+    "id": "mem-003",
+    "type": "architecture",
+    "timestamp": "2026-03-20T16:00:00Z",
+    "confidence": 0.95,
+    "summary": "Architecture decision: chose event-driven approach for notification system",
+    "details": "Evaluated three approaches for the notification system: (1) Polling — frontend checks for new notifications every 30 seconds, (2) Server-Sent Events — push notifications over HTTP, (3) WebSocket — bidirectional real-time channel. Team chose SSE because notifications are server-to-client only, the existing Redis pub/sub infrastructure can feed SSE streams directly, and it avoids the complexity of sticky sessions and connection state management. If bidirectional needs arise later, the SSE endpoint can be upgraded to a WebSocket handshake without changing the backend event pipeline.",
+    "tags": ["architecture", "notifications", "sse", "redis", "decision"],
+    "resolution": "ADR-012 created. Implementation completed in sprint 4. Performance baseline: 50ms p99 latency for notification delivery."
+  },
+  {
+    "id": "mem-004",
+    "type": "code-review",
+    "timestamp": "2026-03-15T11:00:00Z",
+    "confidence": 0.8,
+    "summary": "Review of caching layer implementation in the API gateway",
+    "details": "Reviewed the introduction of a Redis-based caching layer for GET /api/products. Identified that cache invalidation was only happening on product update but not on category reassignment. Also flagged the lack of cache warming on deploy, which caused a thundering herd on the first request after each deployment. The cache TTL was set to 300 seconds, which is appropriate for the current traffic pattern but should be revisited if product catalog update frequency increases.",
+    "tags": ["performance", "caching", "redis", "code-review"],
+    "resolution": "Added cache invalidation on category events and implemented cache warming in the deployment script."
+  }
+]

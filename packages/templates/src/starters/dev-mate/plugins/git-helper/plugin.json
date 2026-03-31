@@ -1,0 +1,48 @@
+{
+  "name": "git-helper",
+  "version": "1.0.0",
+  "description": "Git workflow assistance including conventional commit messages, branch management, PR descriptions, and conflict resolution guidance.",
+  "author": "Cocapn",
+  "license": "MIT",
+  "hooks": [
+    {
+      "event": "on-message",
+      "handler": "gitCommand",
+      "description": "Handle git-related chat commands (commit, branch, pr, status)"
+    },
+    {
+      "event": "pre-commit",
+      "handler": "validateCommitMessage",
+      "description": "Validate commit message follows conventional commit format"
+    },
+    {
+      "event": "post-commit",
+      "handler": "postCommitAnalysis",
+      "description": "Analyze the committed changes and update memory with patterns"
+    },
+    {
+      "event": "scheduled",
+      "handler": "scheduledMaintenance",
+      "description": "Run scheduled Git maintenance tasks (stale branch cleanup, repo stats)"
+    }
+  ],
+  "permissions": [
+    "git.diff",
+    "git.log",
+    "git.status",
+    "git.branch",
+    "git.remote",
+    "filesystem.read",
+    "brain.facts.read",
+    "brain.memories.read",
+    "brain.memories.write"
+  ],
+  "config": {
+    "commitFormat": "conventional",
+    "autoSuggestBranchName": true,
+    "autoGeneratePRDescription": true,
+    "trackCommitPatterns": true,
+    "staleBranchThresholdDays": 30,
+    "maxDiffContextLines": 5
+  }
+}

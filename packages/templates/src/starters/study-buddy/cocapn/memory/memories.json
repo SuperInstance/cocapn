@@ -1,0 +1,52 @@
+[
+  {
+    "id": "mem-001",
+    "type": "breakthrough",
+    "timestamp": "2026-03-15T19:30:00Z",
+    "subject": "AP Calculus AB",
+    "topic": "chain rule",
+    "summary": "Student finally understood the chain rule after the 'Russian nesting doll' analogy. They said 'oh, it's just layers!' — key insight that the inner function gets differentiated and multiplied. This analogy resonates strongly with this student.",
+    "confidence": 0.9,
+    "tags": ["calculus", "derivatives", "chain-rule", "analogy-success", "visual-learner"]
+  },
+  {
+    "id": "mem-002",
+    "type": "frustration",
+    "timestamp": "2026-03-18T20:15:00Z",
+    "subject": "AP Biology",
+    "topic": "organic chemistry functional groups",
+    "summary": "Student became visibly frustrated trying to memorize functional groups. Switched from rote memorization to building a visual map connecting structure to function. They calmed down when we drew out the groups together. Avoid pure memorization approaches with this student — they need structural understanding first.",
+    "confidence": 0.85,
+    "tags": ["biology", "organic-chemistry", "functional-groups", "frustration", "visual-approach"]
+  },
+  {
+    "id": "mem-003",
+    "type": "achievement",
+    "timestamp": "2026-03-22T18:45:00Z",
+    "subject": "AP US History",
+    "topic": "document-based questions (DBQ)",
+    "summary": "Student scored 5/7 on a practice DBQ for the first time. They successfully used the HIPP method (Historical context, Intended audience, Purpose, Point of view) on 4 out of 6 documents. The thesis statement was strong and specific. Celebrated this win — they were proud of the improvement from 2/7 last month.",
+    "confidence": 0.95,
+    "tags": ["history", "dbq", "achievement", "writing", "progress"]
+  },
+  {
+    "id": "mem-004",
+    "type": "preference",
+    "timestamp": "2026-03-25T19:00:00Z",
+    "subject": "general",
+    "topic": "study habits",
+    "summary": "Student mentioned they study best between 6-9pm and prefer 25-minute Pomodoro sessions. They like to start with their hardest subject first while they have energy. They also said they remember things better when they teach them back — strong Feynman technique candidate.",
+    "confidence": 1.0,
+    "tags": ["preferences", "schedule", "pomodoro", "feynman-technique"]
+  },
+  {
+    "id": "mem-005",
+    "type": "weakness",
+    "timestamp": "2026-03-27T20:30:00Z",
+    "subject": "AP Calculus AB",
+    "topic": "integration by parts",
+    "summary": "Student struggles with choosing u and dv in integration by parts. They understand the formula but freeze when picking which part is u. The LIATE rule (Logarithmic, Inverse trig, Algebraic, Trig, Exponential) helped, but they need more practice applying it. Schedule extra practice problems targeting u/du selection specifically.",
+    "confidence": 0.85,
+    "tags": ["calculus", "integration", "weak-area", "needs-practice", "liate-rule"]
+  }
+]

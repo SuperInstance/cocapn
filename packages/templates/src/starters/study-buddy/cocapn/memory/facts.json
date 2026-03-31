@@ -1,0 +1,47 @@
+{
+  "study.studentName": "Alex",
+  "study.gradeLevel": "11th grade (junior year)",
+  "study.subjects": ["AP Calculus AB", "AP Biology", "AP US History", "English Literature", "Physics Honors"],
+  "study.learningStyle": "visual-kinesthetic",
+  "study.primaryGoal": "Score 4+ on all AP exams in May",
+  "study.secondaryGoal": "Improve math confidence and reduce test anxiety",
+  "study.weakAreas": ["integration by parts", "organic chemistry functional groups", "document-based questions in history"],
+  "study.strongAreas": ["algebraic manipulation", "cell biology", "essay writing"],
+  "study.studyPreferences": {
+    "sessionLength": "25 minutes (Pomodoro)",
+    "preferredTime": "evening after 6pm",
+    "breakLength": "5 minutes between sessions",
+    "likesAnalogies": true,
+    "likesStepByStep": true,
+    "prefersEncouragement": true
+  },
+  "study.upcomingExams": [
+    {
+      "subject": "AP Calculus AB",
+      "date": "2026-05-05",
+      "format": "multiple choice + free response"
+    },
+    {
+      "subject": "AP Biology",
+      "date": "2026-05-09",
+      "format": "multiple choice + free response + lab questions"
+    },
+    {
+      "subject": "AP US History",
+      "date": "2026-05-12",
+      "format": "multiple choice + short answer + DBQ + long essay"
+    }
+  ],
+  "study.flashcardStats": {
+    "totalCards": 0,
+    "cardsReviewed": 0,
+    "averageAccuracy": 0,
+    "streakDays": 0
+  },
+  "study.quizStats": {
+    "quizzesCompleted": 0,
+    "averageScore": 0,
+    "bestSubject": null,
+    "needsWorkSubject": null
+  }
+}

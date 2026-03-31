@@ -1,0 +1,104 @@
+{
+  "name": "quiz-generator",
+  "version": "1.0.0",
+  "description": "Creates adaptive quizzes in multiple formats to test understanding and identify weak areas",
+  "author": "Cocapn",
+  "license": "MIT",
+  "hooks": [
+    {
+      "event": "message.received",
+      "handler": "onMessage",
+      "priority": 15
+    },
+    {
+      "event": "brain.memory.added",
+      "handler": "onMemoryAdded",
+      "priority": 5
+    },
+    {
+      "event": "scheduler.weekly",
+      "handler": "onWeeklyQuiz",
+      "priority": 10,
+      "config": {
+        "day": "sunday",
+        "time": "10:00",
+        "timezone": "local"
+      }
+    }
+  ],
+  "permissions": [
+    "brain.read",
+    "brain.write",
+    "wiki.read",
+    "knowledge.read"
+  ],
+  "config": {
+    "adaptive": true,
+    "defaultQuestionCount": 10,
+    "timePerQuestion": 60,
+    "difficultyStart": "medium",
+    "passThreshold": 0.7,
+    "formats": {
+      "multipleChoice": {
+        "optionsCount": 4,
+        "distractorStrategy": "plausible-related",
+        "enabled": true
+      },
+      "fillInBlank": {
+        "caseSensitive": false,
+        "acceptAlternatives": true,
+        "enabled": true
+      },
+      "shortAnswer": {
+        "minWords": 3,
+        "maxWords": 100,
+        "keywordMatching": true,
+        "enabled": true
+      },
+      "trueFalse": {
+        "avoidDoubleNegatives": true,
+        "balancedRatio": true,
+        "enabled": true
+      }
+    },
+    "difficultyScaling": {
+      "easy": {
+        "nextOnCorrect": "medium",
+        "nextOnIncorrect": "easy",
+        "pointsMultiplier": 0.5
+      },
+      "medium": {
+        "nextOnCorrect": "hard",
+        "nextOnIncorrect": "easy",
+        "pointsMultiplier": 1.0
+      },
+      "hard": {
+        "nextOnCorrect": "hard",
+        "nextOnIncorrect": "medium",
+        "pointsMultiplier": 1.5
+      }
+    }
+  },
+  "commands": [
+    {
+      "name": "quiz",
+      "description": "Start a quiz on a specific subject or topic",
+      "usage": "quiz <subject> [--count <n>] [--format <type>] [--difficulty <level>] [--timed]"
+    },
+    {
+      "name": "quick-quiz",
+      "description": "Start a 5-question quick quiz on your weakest areas",
+      "usage": "quick-quiz"
+    },
+    {
+      "name": "quiz-results",
+      "description": "Show results from recent quizzes",
+      "usage": "quiz-results [--last <n>] [--subject <name>]"
+    },
+    {
+      "name": "mock-exam",
+      "description": "Simulate a full exam under timed conditions",
+      "usage": "mock-exam <subject> [--duration <minutes>] [--format <ap|sat|generic>]"
+    }
+  ]
+}

@@ -1,0 +1,58 @@
+[
+  {
+    "id": "mem-001",
+    "type": "session_recap",
+    "content": "Session 0 completed. Established party composition: Thorin (fighter, dwarf, battlemaster), Lyra (wizard, human, evocation), Brother Cedric (cleric, human, life domain), Whisper (rogue, halfling, thief). Set in Greyhawk's Mistmarsh region. Players expressed interest in investigation and roleplay over pure dungeon crawling. Lines and veils established: no graphic torture (line), romance fades to black (veil).",
+    "confidence": 1.0,
+    "timestamp": "2026-03-20T19:00:00Z",
+    "tags": ["session-zero", "party-setup", "safety"]
+  },
+  {
+    "id": "mem-002",
+    "type": "player_preference",
+    "content": "Alex (Thorin's player) prefers tactical combat with clear objectives and enjoys using battlemaster maneuvers creatively. Wants opportunities to protect allies and hold chokepoints.",
+    "confidence": 0.9,
+    "timestamp": "2026-03-20T19:30:00Z",
+    "tags": ["player-style", "combat-preference"]
+  },
+  {
+    "id": "mem-003",
+    "type": "player_preference",
+    "content": "Jordan (Lyra's player) loves lore-heavy exploration and uncovering hidden history. Less interested in combat optimization, more in discovering secrets about the world and ancient civilizations.",
+    "confidence": 0.9,
+    "timestamp": "2026-03-20T19:35:00Z",
+    "tags": ["player-style", "exploration-preference"]
+  },
+  {
+    "id": "mem-004",
+    "type": "character_moment",
+    "content": "During character creation, Sam decided Brother Cedric left his monastery after a crisis of faith triggered by a prophecy he discovered in an old tome. The prophecy mentioned 'the throne that was shattered shall be reforged in blood.' This is a plot hook the DM should weave into the campaign.",
+    "confidence": 1.0,
+    "timestamp": "2026-03-20T20:00:00Z",
+    "tags": ["backstory", "plot-hook", "prophecy"]
+  },
+  {
+    "id": "mem-005",
+    "type": "world_event",
+    "content": "Campaign premise established: The Free City of Greyhawk has dispatched the party to investigate reports of people vanishing near the Mistmarsh. The Mayor of Narwell offered 200 gold pieces per missing person recovered alive. The party suspects involvement of the Scarlet Brotherhood based on a intercepted letter.",
+    "confidence": 1.0,
+    "timestamp": "2026-03-20T20:15:00Z",
+    "tags": ["plot", "quest", "scarlet-brotherhood", "mistmarsh"]
+  },
+  {
+    "id": "mem-006",
+    "type": "npc_interaction",
+    "content": "Party met Mayor Torman Deepwell of Narwell. He is a nervous, overweight man who wrings his hands constantly. He seemed genuinely frightened but also evasive about why the Free City took so long to respond to the disappearances. The party suspects he is hiding something. His daughter is among the missing.",
+    "confidence": 0.9,
+    "timestamp": "2026-03-20T20:30:00Z",
+    "tags": ["npc", "narwell", "torman-deepwell", "mystery"]
+  },
+  {
+    "id": "mem-007",
+    "type": "player_preference",
+    "content": "Riley (Whisper's player) enjoys social encounters and clever problem-solving. Likes to steal the scene with humor but is considerate about sharing spotlight. Wants Whisper to have a personal connection to the criminal underworld.",
+    "confidence": 0.9,
+    "timestamp": "2026-03-20T19:40:00Z",
+    "tags": ["player-style", "social-preference"]
+  }
+]

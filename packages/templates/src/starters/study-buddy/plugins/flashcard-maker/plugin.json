@@ -1,0 +1,87 @@
+{
+  "name": "flashcard-maker",
+  "version": "1.0.0",
+  "description": "Generates and manages spaced-repetition flashcard decks from study material",
+  "author": "Cocapn",
+  "license": "MIT",
+  "hooks": [
+    {
+      "event": "message.received",
+      "handler": "onMessage",
+      "priority": 10
+    },
+    {
+      "event": "brain.fact.updated",
+      "handler": "onFactUpdate",
+      "priority": 5
+    },
+    {
+      "event": "scheduler.daily",
+      "handler": "onDailyReview",
+      "priority": 20,
+      "config": {
+        "time": "09:00",
+        "timezone": "local"
+      }
+    }
+  ],
+  "permissions": [
+    "brain.read",
+    "brain.write",
+    "wiki.read",
+    "knowledge.read"
+  ],
+  "config": {
+    "algorithm": "sm2",
+    "defaultEaseFactor": 2.5,
+    "minimumEaseFactor": 1.3,
+    "newCardsPerDay": 10,
+    "reviewsPerDay": 50,
+    "learningSteps": [1, 10],
+    "graduatingInterval": 1,
+    "easyInterval": 4,
+    "maximumInterval": 365
+  },
+  "commands": [
+    {
+      "name": "create-deck",
+      "description": "Create a new flashcard deck from a topic or study material",
+      "usage": "create-deck <subject> [--count <n>] [--difficulty <level>]"
+    },
+    {
+      "name": "review",
+      "description": "Start a flashcard review session with due cards",
+      "usage": "review [--deck <name>] [--limit <n>]"
+    },
+    {
+      "name": "deck-stats",
+      "description": "Show statistics for flashcard decks",
+      "usage": "deck-stats [--deck <name>]"
+    },
+    {
+      "name": "export-deck",
+      "description": "Export a deck to CSV or JSON format",
+      "usage": "export-deck <name> --format <csv|json>"
+    }
+  ],
+  "card": {
+    "fields": ["front", "back", "subject", "topic", "tags", "difficulty"],
+    "templates": [
+      {
+        "name": "basic",
+        "front": "{{front}}",
+        "back": "{{back}}"
+      },
+      {
+        "name": "reverse",
+        "front": "{{back}}",
+        "back": "{{front}}"
+      },
+      {
+        "name": "cloze",
+        "front": "{{cloze_text}}",
+        "back": "{{full_text}}"
+      }
+    ]
+  }
+}

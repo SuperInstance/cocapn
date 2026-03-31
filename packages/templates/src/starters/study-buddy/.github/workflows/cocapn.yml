@@ -1,0 +1,180 @@
+name: Study Buddy CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    name: Validate Template
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Validate soul.md
+        run: |
+          if [ ! -f "soul.md" ]; then
+            echo "::error::soul.md not found"
+            exit 1
+          fi
+          echo "Checking soul.md frontmatter..."
+          head -1 soul.md | grep -q "^---" || { echo "::error::soul.md missing YAML frontmatter"; exit 1; }
+          echo "Checking soul.md sections..."
+          grep -q "^# Identity" soul.md || { echo "::error::soul.md missing # Identity section"; exit 1; }
+          grep -q "^## Personality" soul.md || { echo "::error::soul.md missing ## Personality section"; exit 1; }
+          grep -q "^## What You Do" soul.md || { echo "::error::soul.md missing ## What You Do section"; exit 1; }
+          grep -q "^## What You Don't Do" soul.md || { echo "::error::soul.md missing ## What You Don't Do section"; exit 1; }
+          echo "soul.md validation passed"
+
+      - name: Validate config.yml
+        run: |
+          if [ ! -f "config.yml" ]; then
+            echo "::error::config.yml not found"
+            exit 1
+          fi
+          echo "Checking config.yml structure..."
+          grep -q "^config:" config.yml || { echo "::error::config.yml missing config section"; exit 1; }
+          grep -q "^llm:" config.yml || { echo "::error::config.yml missing llm section"; exit 1; }
+          grep -q "^brain:" config.yml || { echo "::error::config.yml missing brain section"; exit 1; }
+          grep -q "^features:" config.yml || { echo "::error::config.yml missing features section"; exit 1; }
+          echo "config.yml validation passed"
+
+      - name: Validate theme.css
+        run: |
+          if [ ! -f "theme.css" ]; then
+            echo "::error::theme.css not found"
+            exit 1
+          fi
+          echo "Checking theme.css custom properties..."
+          grep -q "^:root" theme.css || { echo "::error::theme.css missing :root selector"; exit 1; }
+          grep -q "\-\-color-primary" theme.css || { echo "::error::theme.css missing --color-primary"; exit 1; }
+          grep -q "\-\-color-bg" theme.css || { echo "::error::theme.css missing --color-bg"; exit 1; }
+          grep -q "\-\-color-text" theme.css || { echo "::error::theme.css missing --color-text"; exit 1; }
+          echo "theme.css validation passed"
+
+      - name: Validate package.json
+        run: |
+          if [ ! -f "package.json" ]; then
+            echo "::error::package.json not found"
+            exit 1
+          fi
+          node -e "
+            const pkg = require('./package.json');
+            if (pkg.name !== '@cocapn/starter-study-buddy') {
+              console.error('package.json name must be @cocapn/starter-study-buddy');
+              process.exit(1);
+            }
+            if (!pkg.cocapn || pkg.cocapn.template !== 'study-buddy') {
+              console.error('package.json missing cocapn.template = study-buddy');
+              process.exit(1);
+            }
+            console.log('package.json validation passed');
+          "
+
+      - name: Validate memory files
+        run: |
+          echo "Checking memory files..."
+          for file in cocapn/memory/facts.json cocapn/memory/memories.json; do
+            if [ ! -f "$file" ]; then
+              echo "::error::$file not found"
+              exit 1
+            fi
+            node -e "JSON.parse(require('fs').readFileSync('$file', 'utf8'))" || {
+              echo "::error::$file is not valid JSON"
+              exit 1
+            }
+          done
+          echo "Memory files validation passed"
+
+      - name: Validate wiki files
+        run: |
+          echo "Checking wiki files..."
+          for file in \
+            wiki/methods/spaced-repetition.md \
+            wiki/methods/feynman-technique.md \
+            wiki/subjects/math-reference.md \
+            wiki/subjects/programming-reference.md \
+            wiki/tips/exam-prep.md; do
+            if [ ! -f "$file" ]; then
+              echo "::error::$file not found"
+              exit 1
+            fi
+            lines=$(wc -l < "$file")
+            if [ "$lines" -lt 30 ]; then
+              echo "::warning::$file has only $lines lines (expected 30+)"
+            fi
+          done
+          echo "Wiki files validation passed"
+
+      - name: Validate knowledge files
+        run: |
+          echo "Checking knowledge files..."
+          for file in knowledge/study-topics.json knowledge/learning-styles.json; do
+            if [ ! -f "$file" ]; then
+              echo "::error::$file not found"
+              exit 1
+            fi
+            node -e "JSON.parse(require('fs').readFileSync('$file', 'utf8'))" || {
+              echo "::error::$file is not valid JSON"
+              exit 1
+            }
+          done
+          echo "Knowledge files validation passed"
+
+      - name: Validate plugins
+        run: |
+          echo "Checking plugin manifests..."
+          for dir in plugins/flashcard-maker plugins/quiz-generator plugins/progress-tracker; do
+            if [ ! -f "$dir/plugin.json" ]; then
+              echo "::error::$dir/plugin.json not found"
+              exit 1
+            fi
+            if [ ! -f "$dir/README.md" ]; then
+              echo "::error::$dir/README.md not found"
+              exit 1
+            fi
+            node -e "
+              const p = require('./$dir/plugin.json');
+              if (!p.name || !p.version || !p.description) {
+                console.error('$dir/plugin.json missing required fields');
+                process.exit(1);
+              }
+            "
+          done
+          echo "Plugin validation passed"
+
+      - name: Summary
+        run: |
+          echo "========================================"
+          echo "  Study Buddy Template Validation"
+          echo "========================================"
+          echo ""
+          echo "Files checked:"
+          echo "  - soul.md"
+          echo "  - config.yml"
+          echo "  - theme.css"
+          echo "  - package.json"
+          echo "  - cocapn/memory/facts.json"
+          echo "  - cocapn/memory/memories.json"
+          echo "  - wiki/methods/spaced-repetition.md"
+          echo "  - wiki/methods/feynman-technique.md"
+          echo "  - wiki/subjects/math-reference.md"
+          echo "  - wiki/subjects/programming-reference.md"
+          echo "  - wiki/tips/exam-prep.md"
+          echo "  - knowledge/study-topics.json"
+          echo "  - knowledge/learning-styles.json"
+          echo "  - plugins/flashcard-maker/*"
+          echo "  - plugins/quiz-generator/*"
+          echo "  - plugins/progress-tracker/*"
+          echo ""
+          echo "All validations passed!"

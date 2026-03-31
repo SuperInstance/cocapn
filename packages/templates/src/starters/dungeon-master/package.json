@@ -1,0 +1,50 @@
+{
+  "name": "@cocapn/starter-dungeon-master",
+  "version": "1.0.0",
+  "description": "Cocapn Dungeon Master starter — a TTRPG game engine with combat tracking, spell lookup, world building, and persistent campaign memory",
+  "type": "module",
+  "main": "soul.md",
+  "scripts": {
+    "start": "cocapn start",
+    "dev": "cocapn start --watch",
+    "build": "cocapn build"
+  },
+  "keywords": [
+    "cocapn",
+    "ttrpg",
+    "dnd",
+    "dungeon-master",
+    "tabletop",
+    "roleplaying",
+    "campaign-manager",
+    "combat-tracker",
+    "dice-roller"
+  ],
+  "author": "Cocapn",
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {},
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "cocapn": {
+    "starter": true,
+    "category": "gaming",
+    "tags": [
+      "ttrpg",
+      "dnd-5e",
+      "pathfinder-2e",
+      "call-of-cthulhu",
+      "dungeon-master",
+      "combat-tracker",
+      "world-building"
+    ],
+    "requiredSecrets": [
+      "DEEPSEEK_API_KEY"
+    ],
+    "optionalSecrets": [
+      "OPENAI_API_KEY",
+      "ANTHROPIC_API_KEY"
+    ]
+  }
+}

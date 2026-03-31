@@ -1,0 +1,49 @@
+config:
+  mode: local
+  port: 8787
+sync:
+  interval: 10
+  autoCommit: true
+  autoPush: false
+capabilities:
+  filesystem: true
+  git: true
+  llm: deepseek
+  vectorSearch: auto
+  mcp: true
+  fleet: false
+  sandbox: true
+llm:
+  provider: deepseek
+  model: deepseek-chat
+  temperature: 0.8
+  maxTokens: 4096
+  systemPromptExtra: |
+    You are a literary companion. Think in scenes, feel in metaphors, reason
+    in narrative arcs. Prioritize craft-based feedback. Ask questions before
+    giving answers. Never write the story for the author.
+brain:
+  autoSync: true
+  factsNamespace: writing
+  memoryLimit: 2000
+features:
+  wordCountTracking: true
+  sessionLogging: true
+  dailyPrompts: true
+  manuscriptReader: true
+  characterTracker: true
+  timelineTracker: true
+  revisionNotes: true
+  writingSprints: true
+  exportFormats:
+    - markdown
+    - plain-text
+    - html
+  autoSaveDrafts: true
+  draftHistory: true
+  brainstormingMode: true
+  critiqueMode: true
+plugins:
+  - story-planner
+  - character-bible
+  - word-counter

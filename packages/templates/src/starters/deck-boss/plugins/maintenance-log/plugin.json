@@ -1,0 +1,98 @@
+{
+  "name": "maintenance-log",
+  "version": "1.0.0",
+  "description": "Tracks maintenance intervals for all vessel systems including engines, hydraulics, winches, refrigeration, and safety equipment. Generates maintenance alerts and service reports.",
+  "author": "Cocapn",
+  "license": "MIT",
+  "commands": [
+    "maintenance status",
+    "maintenance due",
+    "maintenance log",
+    "maintenance history",
+    "maintenance alert"
+  ],
+  "capabilities": [
+    "read-facts",
+    "write-facts",
+    "read-knowledge",
+    "write-knowledge",
+    "read-memories",
+    "write-memories",
+    "read-wiki",
+    "scheduler"
+  ],
+  "permissions": [
+    "filesystem.read",
+    "filesystem.write",
+    "knowledge.read",
+    "knowledge.write",
+    "memory.read",
+    "memory.write",
+    "wiki.read",
+    "scheduler.write"
+  ],
+  "dataSchema": {
+    "equipmentId": {
+      "type": "string",
+      "required": true,
+      "description": "Unique identifier for the equipment (e.g., ENG-001, HYD-001)"
+    },
+    "task": {
+      "type": "string",
+      "required": true,
+      "description": "Description of the maintenance task"
+    },
+    "intervalType": {
+      "type": "string",
+      "enum": ["hours", "daily", "weekly", "monthly", "quarterly", "annual"],
+      "required": true,
+      "description": "How the maintenance interval is measured"
+    },
+    "intervalValue": {
+      "type": "number",
+      "minimum": 1,
+      "description": "Numeric value of the interval (hours or days)"
+    },
+    "lastCompleted": {
+      "type": "string",
+      "format": "date",
+      "required": true,
+      "description": "Date the task was last completed (YYYY-MM-DD)"
+    },
+    "nextDueDate": {
+      "type": "string",
+      "format": "date",
+      "required": true,
+      "description": "Date the task is next due (YYYY-MM-DD)"
+    },
+    "estimatedCost": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Estimated cost of the maintenance task in USD"
+    },
+    "criticality": {
+      "type": "string",
+      "enum": ["critical", "high", "medium", "low"],
+      "description": "Equipment criticality level. Critical equipment failure stops operations."
+    }
+  },
+  "alerts": {
+    "overdue": {
+      "description": "Task is past due date. Critical equipment overdue generates immediate alert.",
+      "action": "Schedule immediately. Critical equipment should not operate with overdue maintenance."
+    },
+    "dueWithin7Days": {
+      "description": "Task due within 7 days. Plan to complete before next trip or at next port call.",
+      "action": "Add to port call work list. Verify parts availability."
+    },
+    "dueWithin30Days": {
+      "description": "Task due within 30 days. Include in upcoming maintenance planning.",
+      "action": "Order parts if needed. Schedule into upcoming port call."
+    }
+  },
+  "schedule": {
+    "dailyCheck": "Check for overdue items and items due within 7 days",
+    "weeklyReport": "Generate maintenance status summary",
+    "monthlyReport": "Full maintenance schedule review and budget tracking"
+  }
+}

@@ -1,0 +1,63 @@
+{
+  "name": "tide-tables",
+  "version": "1.0.0",
+  "description": "Tide prediction and fishing timing advisor for Alaska coastal waters. Provides tide heights, current predictions, slack tide windows, and fishing-specific timing recommendations based on tide stage and target species.",
+  "author": "Cocapn",
+  "commands": [
+    {
+      "name": "tide:today",
+      "description": "Show today's tide table for a specified location",
+      "args": ["location?"],
+      "example": "tide:today Homer"
+    },
+    {
+      "name": "tide:week",
+      "description": "Show the week's tide predictions with fishing quality ratings",
+      "args": ["location?"],
+      "example": "tide:week Seward"
+    },
+    {
+      "name": "tide:best",
+      "description": "Find the best fishing windows in the next few days based on tide timing and target species",
+      "args": ["species?", "days?"],
+      "example": "tide:best halibut 3"
+    },
+    {
+      "name": "tide:slack",
+      "description": "Show upcoming slack tide windows (prime bottom fishing time)",
+      "args": ["location?", "hours?"],
+      "example": "tide:slack Homer 24"
+    },
+    {
+      "name": "tide:compare",
+      "description": "Compare tide conditions between two dates or locations",
+      "args": ["dateOrLocation1", "dateOrLocation2"],
+      "example": "tide:compare Homer Anchor-Point"
+    }
+  ],
+  "permissions": [
+    "brain:read",
+    "brain:write:facts",
+    "wiki:read"
+  ],
+  "config": {
+    "defaultLocation": "Homer",
+    "supportedLocations": [
+      "Homer",
+      "Seward",
+      "Kenai River mouth",
+      "Anchor Point",
+      "Ninilchik",
+      "Deep Creek",
+      "Kasilof River mouth",
+      "Valdez",
+      "Whittier",
+      "Sitka",
+      "Ketchikan"
+    ],
+    "predictionsInAdvance": 7,
+    "timeZone": "America/Anchorage",
+    "heightUnits": "feet",
+    "timeFormat": "12h"
+  }
+}

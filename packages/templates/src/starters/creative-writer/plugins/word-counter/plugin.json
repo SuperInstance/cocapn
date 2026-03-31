@@ -1,0 +1,88 @@
+{
+  "name": "word-counter",
+  "version": "1.0.0",
+  "description": "Word count goals, sprint tracking, and writing productivity visualization. Set daily, weekly, and project-level targets. Run writing sprints. Track your output over time. Build momentum.",
+  "author": "Cocapn",
+  "commands": [
+    {
+      "name": "words:goal",
+      "description": "Set a word count goal (daily, weekly, monthly, or project)",
+      "args": ["type", "count"],
+      "example": "words:goal daily 1200"
+    },
+    {
+      "name": "words:log",
+      "description": "Log words written in a session",
+      "args": ["count", "project?"],
+      "example": "words:log 1340 \"The Cartographer's Ink\""
+    },
+    {
+      "name": "words:today",
+      "description": "Show today's word count and progress toward daily goal",
+      "args": [],
+      "example": "words:today"
+    },
+    {
+      "name": "words:week",
+      "description": "Show this week's word count and progress toward weekly goal",
+      "args": [],
+      "example": "words:week"
+    },
+    {
+      "name": "words:project",
+      "description": "Show project-level word count and progress toward manuscript goal",
+      "args": ["projectName?"],
+      "example": "words:project \"The Cartographer's Ink\""
+    },
+    {
+      "name": "words:sprint:start",
+      "description": "Start a writing sprint timer",
+      "args": ["minutes?"],
+      "example": "words:sprint:start 25"
+    },
+    {
+      "name": "words:sprint:end",
+      "description": "End the current sprint and log word count",
+      "args": ["wordCount"],
+      "example": "words:sprint:end 680"
+    },
+    {
+      "name": "words:streak",
+      "description": "Show current writing streak (consecutive days with words logged)",
+      "args": [],
+      "example": "words:streak"
+    },
+    {
+      "name": "words:history",
+      "description": "Show word count history for a time period",
+      "args": ["period"],
+      "example": "words:history month"
+    },
+    {
+      "name": "words:best",
+      "description": "Show personal best word counts (best day, best week, best sprint)",
+      "args": [],
+      "example": "words:best"
+    }
+  ],
+  "permissions": [
+    "brain:read",
+    "brain:write:facts",
+    "brain:write:memories"
+  ],
+  "config": {
+    "defaultDailyGoal": 1000,
+    "defaultSprintMinutes": 25,
+    "defaultRestMinutes": 5,
+    "trackByProject": true,
+    "trackStreaks": true,
+    "weekStartsOn": "monday",
+    "encouragementThresholds": [25, 50, 75, 100],
+    "celebrationMessages": {
+      "25": "A quarter of the way there. Keep going.",
+      "50": "Halfway. You're in the flow now.",
+      "75": "Almost there. Finish strong.",
+      "100": "Goal reached. You showed up and did the work."
+    }
+  }
+}

@@ -1,0 +1,73 @@
+{
+  "id": "energy-monitor",
+  "name": "Energy Monitor",
+  "version": "1.0.0",
+  "description": "Tracks real-time and historical energy consumption across all monitored devices, generates reports, and identifies optimization opportunities.",
+  "author": "Cocapn",
+  "license": "MIT",
+  "type": "plugin",
+  "category": "energy",
+  "permissions": [
+    "brain:read:facts",
+    "brain:read:memories",
+    "brain:write:memories",
+    "devices:read:state",
+    "devices:read:power",
+    "scheduler:read:schedules"
+  ],
+  "config": {
+    "sampleInterval": 60,
+    "reportInterval": 3600,
+    "anomalyThreshold": 0.20,
+    "dailyBudgetAlert": true,
+    "dailyBudgetLimit": 10.00,
+    "peakWarningEnabled": true,
+    "peakWarningMinutes": 15,
+    "monthlyReportDay": 1,
+    "trackedMetrics": ["watts", "kwh", "cost", "carbon"]
+  },
+  "triggers": {
+    "onDevicePowerChange": {
+      "description": "Fires when a device's power draw changes by more than 10%",
+      "threshold": 0.10
+    },
+    "onAnomalyDetected": {
+      "description": "Fires when a device exceeds its baseline power draw by the configured anomaly threshold",
+      "action": "notify"
+    },
+    "onPeakRateStart": {
+      "description": "Fires at the configured time before peak electricity rates begin",
+      "action": "suggest-optimization"
+    },
+    "onDailyBudgetExceeded": {
+      "description": "Fires when the day's cumulative energy cost exceeds the budget limit",
+      "action": "alert"
+    },
+    "onMonthlyReport": {
+      "description": "Generates a monthly energy consumption report on the configured day",
+      "action": "report"
+    }
+  },
+  "provides": {
+    "commands": [
+      "energy status",
+      "energy report [today|week|month]",
+      "energy top [n]",
+      "energy cost <device>",
+      "energy anomaly",
+      "energy budget <set|status>"
+    ],
+    "data": [
+      "energy.current.watts",
+      "energy.daily.kwh",
+      "energy.daily.cost",
+      "energy.monthly.kwh",
+      "energy.monthly.cost",
+      "energy.device.<id>.watts",
+      "energy.device.<id>.daily_kwh"
+    ]
+  },
+  "dependencies": {
+    "cocapn": ">=1.0.0"
+  }
+}

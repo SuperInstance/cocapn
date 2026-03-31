@@ -1,0 +1,61 @@
+{
+  "name": "story-planner",
+  "version": "1.0.0",
+  "description": "Story planning and beat sheet management. Create, track, and revise plot structures using established frameworks (three-act, hero's journey, save the cat, etc.).",
+  "author": "Cocapn",
+  "commands": [
+    {
+      "name": "plan:new",
+      "description": "Start a new story plan with a chosen structural framework",
+      "args": ["title", "framework"],
+      "example": "plan:new \"The Cartographer's Ink\" three-act"
+    },
+    {
+      "name": "plan:beat",
+      "description": "Add or update a beat in the current story plan",
+      "args": ["beatName", "description"],
+      "example": "plan:beat \"midpoint\" \"Maren discovers the survey company has always known about the maps' power\""
+    },
+    {
+      "name": "plan:scene",
+      "description": "Add a scene to a beat, with goal/conflict/disaster structure",
+      "args": ["beatName", "sceneDescription"],
+      "example": "plan:scene \"fun-and-games\" \"Maren tests her power by drawing a small change to a tide pool\""
+    },
+    {
+      "name": "plan:list",
+      "description": "List all beats in the current story plan with completion status",
+      "args": [],
+      "example": "plan:list"
+    },
+    {
+      "name": "plan:gaps",
+      "description": "Analyze the current plan for structural gaps or pacing issues",
+      "args": [],
+      "example": "plan:gaps"
+    },
+    {
+      "name": "plan:timeline",
+      "description": "Show the story's timeline with events in chronological order",
+      "args": [],
+      "example": "plan:timeline"
+    },
+    {
+      "name": "plan:export",
+      "description": "Export the story plan as markdown or JSON",
+      "args": ["format"],
+      "example": "plan:export markdown"
+    }
+  ],
+  "permissions": [
+    "brain:read",
+    "brain:write:facts",
+    "brain:write:memories",
+    "wiki:read"
+  ],
+  "config": {
+    "defaultFramework": "three-act",
+    "autoSave": true,
+    "trackCompletion": true
+  }
+}

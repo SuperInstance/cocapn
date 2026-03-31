@@ -1,0 +1,342 @@
+{
+  "version": "1.0.0",
+  "vessel": "F/V Morning Star",
+  "documentation": "USCG-298476",
+  "lastUpdated": "2026-03-15",
+  "equipment": [
+    {
+      "id": "ENG-001",
+      "system": "Main Engine",
+      "component": "Cummins KTA38-M0",
+      "category": "propulsion",
+      "criticality": "critical",
+      "hoursCurrent": 14200,
+      "intervals": [
+        {
+          "task": "Oil and filter change",
+          "intervalHours": 250,
+          "lastCompleted": "2026-01-15",
+          "lastCompletedHours": 14200,
+          "nextDueHours": 14450,
+          "nextDueDate": "~2026-04",
+          "estimatedCost": 380,
+          "partsRequired": ["Oil filter FF5320", "15W-40 oil (10 gal)"],
+          "assignedTo": "Chief Engineer"
+        },
+        {
+          "task": "Fuel filter replacement (primary and secondary)",
+          "intervalHours": 500,
+          "lastCompleted": "2026-01-15",
+          "lastCompletedHours": 14200,
+          "nextDueHours": 14700,
+          "nextDueDate": "~2026-06",
+          "estimatedCost": 220,
+          "partsRequired": ["Primary fuel filter FS19752", "Secondary fuel filter FF5328"],
+          "assignedTo": "Chief Engineer"
+        },
+        {
+          "task": "Valve adjustment and injector calibration",
+          "intervalHours": 1000,
+          "lastCompleted": "2026-01-10",
+          "lastCompletedHours": 14200,
+          "nextDueHours": 15200,
+          "nextDueDate": "~2026-12",
+          "estimatedCost": 1200,
+          "partsRequired": ["Valve cover gaskets", "Injector O-rings"],
+          "assignedTo": "Chief Engineer"
+        },
+        {
+          "task": "Turbocharger inspection",
+          "intervalHours": 5000,
+          "lastCompleted": "2026-01-10",
+          "lastCompletedHours": 14200,
+          "nextDueHours": 19200,
+          "nextDueDate": "~2028",
+          "estimatedCost": 3500,
+          "partsRequired": ["Turbo rebuild kit"],
+          "assignedTo": "Chief Engineer / Shipyard"
+        }
+      ]
+    },
+    {
+      "id": "ENG-002",
+      "system": "Generator 1",
+      "component": "John Deere 6135AF (200 kW)",
+      "category": "electrical",
+      "criticality": "critical",
+      "hoursCurrent": 8400,
+      "intervals": [
+        {
+          "task": "Oil and filter change",
+          "intervalHours": 250,
+          "lastCompleted": "2026-02-01",
+          "lastCompletedHours": 8400,
+          "nextDueHours": 8650,
+          "nextDueDate": "~2026-05",
+          "estimatedCost": 280,
+          "partsRequired": ["Oil filter RE504376", "15W-40 oil (7 gal)"],
+          "assignedTo": "Chief Engineer"
+        },
+        {
+          "task": "Coolant system inspection and test",
+          "intervalHours": 1000,
+          "lastCompleted": "2025-11-01",
+          "lastCompletedHours": 8000,
+          "nextDueHours": 9000,
+          "nextDueDate": "~2026-07",
+          "estimatedCost": 150,
+          "partsRequired": ["Coolant test strips", "DCA4 additive"],
+          "assignedTo": "Chief Engineer"
+        }
+      ]
+    },
+    {
+      "id": "HYD-001",
+      "system": "Hydraulic System",
+      "component": "Main hydraulic power unit",
+      "category": "deck-machinery",
+      "criticality": "critical",
+      "intervals": [
+        {
+          "task": "Return line filter replacement",
+          "intervalHours": 500,
+          "lastCompleted": "2025-12-01",
+          "nextDueDate": "~2026-05",
+          "estimatedCost": 180,
+          "partsRequired": ["Hydraulic return filter HF7631"],
+          "assignedTo": "Chief Engineer"
+        },
+        {
+          "task": "Hydraulic oil analysis",
+          "intervalHours": 1000,
+          "lastCompleted": "2025-12-01",
+          "nextDueDate": "~2026-09",
+          "estimatedCost": 65,
+          "partsRequired": ["Oil sample bottle"],
+          "assignedTo": "Chief Engineer"
+        },
+        {
+          "task": "Full hydraulic oil change and system flush",
+          "intervalHours": 2000,
+          "lastCompleted": "2025-06-01",
+          "nextDueDate": "~2027-06",
+          "estimatedCost": 2400,
+          "partsRequired": ["ISO VG 46 hydraulic oil (120 gal)", "All filters"],
+          "assignedTo": "Chief Engineer"
+        }
+      ]
+    },
+    {
+      "id": "REF-001",
+      "system": "RSW Refrigeration",
+      "component": "Carrier 06E compressor (40 HP)",
+      "category": "refrigeration",
+      "criticality": "critical",
+      "intervals": [
+        {
+          "task": "Compressor oil change",
+          "intervalHours": 250,
+          "lastCompleted": "2026-01-20",
+          "nextDueDate": "~2026-04",
+          "estimatedCost": 320,
+          "partsRequired": ["Refrigeration oil (5 gal)", "Oil filter"],
+          "assignedTo": "Chief Engineer"
+        },
+        {
+          "task": "Condenser backflush and cleaning",
+          "intervalHours": 500,
+          "lastCompleted": "2025-12-15",
+          "nextDueDate": "~2026-06",
+          "estimatedCost": 100,
+          "partsRequired": ["Cleaning solution", "Sacrificial zincs"],
+          "assignedTo": "Chief Engineer"
+        },
+        {
+          "task": "Refrigerant charge verification",
+          "intervalHours": 1000,
+          "lastCompleted": "2025-09-01",
+          "nextDueDate": "~2026-09",
+          "estimatedCost": 400,
+          "partsRequired": ["R-22 refrigerant (if needed)", "Superheat gauges"],
+          "assignedTo": "Chief Engineer / Refrigeration Tech"
+        }
+      ]
+    },
+    {
+      "id": "DECK-001",
+      "system": "Main Winch",
+      "component": "Markey Machinery Trawl Winch (2-drum)",
+      "category": "deck-machinery",
+      "criticality": "critical",
+      "intervals": [
+        {
+          "task": "Wire rope inspection",
+          "intervalType": "daily",
+          "lastCompleted": "Ongoing",
+          "nextDueDate": "Before each use",
+          "estimatedCost": 0,
+          "partsRequired": [],
+          "assignedTo": "Mate / Deck Boss"
+        },
+        {
+          "task": "Wire rope lubrication",
+          "intervalType": "monthly",
+          "lastCompleted": "2026-03-01",
+          "nextDueDate": "2026-04-01",
+          "estimatedCost": 120,
+          "partsRequired": ["Wire rope lubricant (5 gal)"],
+          "assignedTo": "Deck Crew"
+        },
+        {
+          "task": "Winch brake inspection and adjustment",
+          "intervalType": "monthly",
+          "lastCompleted": "2026-03-01",
+          "nextDueDate": "2026-04-01",
+          "estimatedCost": 0,
+          "partsRequired": ["Brake lining (if worn)"],
+          "assignedTo": "Chief Engineer"
+        },
+        {
+          "task": "Wire rope replacement",
+          "intervalType": "annual",
+          "lastCompleted": "2025-04-01",
+          "nextDueDate": "2026-04-01",
+          "estimatedCost": 8500,
+          "partsRequired": ["1-1/8 inch galvanized wire rope (2,400 ft)", "Socket kits (4)"],
+          "assignedTo": "Shipyard"
+        }
+      ]
+    },
+    {
+      "id": "DECK-002",
+      "system": "Crane",
+      "component": "Palfinger Marine PK 15002",
+      "category": "deck-machinery",
+      "criticality": "high",
+      "intervals": [
+        {
+          "task": "Crane wire inspection",
+          "intervalType": "before-use",
+          "lastCompleted": "Ongoing",
+          "nextDueDate": "Before each use",
+          "estimatedCost": 0,
+          "partsRequired": [],
+          "assignedTo": "Operator"
+        },
+        {
+          "task": "Crane wire replacement",
+          "intervalType": "annual",
+          "lastCompleted": "2025-04-01",
+          "nextDueDate": "2026-04-01",
+          "estimatedCost": 3200,
+          "partsRequired": ["3/4 inch wire rope (400 ft)", "Socket kit"],
+          "assignedTo": "Chief Engineer / Shipyard"
+        },
+        {
+          "task": "Boom pin and sheave inspection",
+          "intervalType": "quarterly",
+          "lastCompleted": "2026-01-15",
+          "nextDueDate": "2026-04-15",
+          "estimatedCost": 0,
+          "partsRequired": ["Lithium grease"],
+          "assignedTo": "Chief Engineer"
+        }
+      ]
+    },
+    {
+      "id": "SAFE-001",
+      "system": "Safety Equipment",
+      "component": "EPIRB",
+      "category": "safety",
+      "criticality": "critical",
+      "intervals": [
+        {
+          "task": "Battery replacement",
+          "intervalType": "annual (battery expiry 2028-06)",
+          "lastCompleted": "2024-06-01",
+          "nextDueDate": "2028-06-01",
+          "estimatedCost": 350,
+          "partsRequired": ["EPIRB battery pack (OEM)"],
+          "assignedTo": "Captain / Service Center"
+        },
+        {
+          "task": "Registration verification",
+          "intervalType": "annual",
+          "lastCompleted": "2026-01-01",
+          "nextDueDate": "2027-01-01",
+          "estimatedCost": 0,
+          "partsRequired": [],
+          "assignedTo": "Captain"
+        }
+      ]
+    },
+    {
+      "id": "SAFE-002",
+      "system": "Safety Equipment",
+      "component": "Liferaft (16-person Viking)",
+      "category": "safety",
+      "criticality": "critical",
+      "intervals": [
+        {
+          "task": "Annual repack and inspection",
+          "intervalType": "annual",
+          "lastCompleted": "2025-09-01",
+          "nextDueDate": "2026-09-01",
+          "estimatedCost": 650,
+          "partsRequired": [],
+          "assignedTo": "Certified Liferaft Service Station"
+        }
+      ]
+    },
+    {
+      "id": "SAFE-003",
+      "system": "Safety Equipment",
+      "component": "Immersion Suits (7 total)",
+      "category": "safety",
+      "criticality": "critical",
+      "intervals": [
+        {
+          "task": "Annual inspection and in-water test",
+          "intervalType": "annual",
+          "lastCompleted": "2026-01-15",
+          "nextDueDate": "2027-01-15",
+          "estimatedCost": 210,
+          "partsRequired": ["Replacement gloves or zippers as needed"],
+          "assignedTo": "Captain / Mate"
+        }
+      ]
+    }
+  ],
+  "overdueItems": [],
+  "dueWithin30Days": [
+    {
+      "id": "DECK-001",
+      "task": "Wire rope replacement",
+      "dueDate": "2026-04-01",
+      "estimatedCost": 8500,
+      "status": "scheduled"
+    },
+    {
+      "id": "DECK-002",
+      "task": "Crane wire replacement",
+      "dueDate": "2026-04-01",
+      "estimatedCost": 3200,
+      "status": "scheduled"
+    },
+    {
+      "id": "DECK-002",
+      "task": "Boom pin and sheave inspection",
+      "dueDate": "2026-04-15",
+      "estimatedCost": 0,
+      "status": "pending"
+    }
+  ],
+  "annualBudgetEstimate": {
+    "engineMaintenance": 5500,
+    "hydraulicMaintenance": 3200,
+    "refrigerationMaintenance": 1800,
+    "deckEquipmentMaintenance": 14500,
+    "safetyEquipmentMaintenance": 1200,
+    "total": 26200
+  }
+}

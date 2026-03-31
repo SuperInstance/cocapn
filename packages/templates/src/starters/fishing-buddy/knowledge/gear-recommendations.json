@@ -1,0 +1,174 @@
+{
+  "gearRecommendations": {
+    "metadata": {
+      "lastUpdated": "2024-03-30",
+      "region": "Alaska — Southcentral, Kenai Peninsula",
+      "pricesInUSD": true,
+      "disclaimer": "Prices are approximate retail as of the update date. No endorsement of specific brands is implied — these are widely available, proven products."
+    },
+    "bySpecies": {
+      "pacificHalibut": {
+        "budget": {
+          "label": "Budget Setup ($150-250)",
+          "rod": "Ugly Stik Tiger Lite, 5'6\" medium-heavy conventional ($60)",
+          "reel": "Penn Squall 30 Levelwind ($90)",
+          "line": "65 lb PowerPro braid ($25)",
+          "leader": "80 lb Ande monofilament leader material ($10)",
+          "terminal": "16/0 Eagle Claw circle hooks (pack of 25), 16-24 oz cannonball sinkers, barrel swivels ($30)",
+          "notes": "Perfectly functional setup that will land halibut to 100+ pounds. Upgrade the reel first when ready."
+        },
+        "midrange": {
+          "label": "Mid-Range Setup ($350-550)",
+          "rod": "Shimano Trevala TVC-66H, 6'6\" heavy conventional ($130)",
+          "reel": "Avet MXJ 5.8:1 two-speed ($200)",
+          "line": "80 lb Daiwa J-Braid Grand ($30)",
+          "leader": "100 lb Seaguar fluorocarbon leader ($25)",
+          "terminal": "16/0 Owner circle hooks, 24-32 oz cannonball sinkers, Sampo swivels ($40)",
+          "notes": "The sweet spot of performance and price. This is the setup most serious private boaters run."
+        },
+        "premium": {
+          "label": "Premium Setup ($700-1200)",
+          "rod": "Shimano Talula TESC-66XH or custom wrapped rod ($200-400)",
+          "reel": "Shimano Talica 16II two-speed ($400)",
+          "line": "80 lb Hollow-Ace braid with wind-on leaders ($50)",
+          "leader": "130 lb Momoi Diamond fluorocarbon ($30)",
+          "terminal": "Mustad Demon circle hooks, custom snelled leaders, titanium spreader bars ($80)",
+          "notes": "Charter-grade equipment. The two-speed reel is essential for cranking big fish from deep water."
+        }
+      },
+      "kingSalmon": {
+        "budget": {
+          "label": "Budget Setup ($150-200)",
+          "rod": "Daiwa Heartland 8'6\" downrigger rod ($50)",
+          "reel": "Daiwa Sealine SG-27LC levelwind with line counter ($80)",
+          "line": "25 lb Trilene Big Game monofilament ($10)",
+          "terminal": "Pro-Troll flasher, hoochies, 30 lb fluorocarbon leader ($30)",
+          "notes": "Monofilament has stretch which can actually help with downrigger fishing. Line counter is essential."
+        },
+        "midrange": {
+          "label": "Mid-Range Setup ($300-500)",
+          "rod": "Shimano Talora TDR-80MH2, 8' downrigger ($130)",
+          "reel": "Shimano Tekota 300LC levelwind with line counter ($180)",
+          "line": "40 lb Daiwa J-Braid ($25)",
+          "terminal": "Pro-Troll E-Chip flashers, hoochies, Coyote spoons, 40 lb fluorocarbon leader ($50)",
+          "notes": "The standard Alaska charter boat setup. Reliable, proven, and versatile for both kings and silvers."
+        },
+        "premium": {
+          "label": "Premium Setup ($600-900)",
+          "rod": "Lamiglas Classic Glass 8'6\" downrigger rod ($180)",
+          "reel": "Shimano Tekota 500LC ($220) or Avet LX ($250)",
+          "line": "50 lb braid with topshot of 30 lb fluorocarbon ($40)",
+          "terminal": "Pro-Troll E-Chip flashers, whole herring rigs, custom tied leaders ($80)",
+          "notes": "Glass rods have a softer action that keeps hooks pinned during the fight. Preferred by many guides."
+        }
+      },
+      "silverSalmon": {
+        "shoreSpin": {
+          "label": "Shore Spin Fishing Setup ($100-180)",
+          "rod": "8' medium action spinning rod — St. Croix Premier or Shimano Convergence ($50-80)",
+          "reel": "Size 3000 spinning reel — Shimano Sienna or Daiwa Regal ($40)",
+          "line": "15 lb braided line ($20)",
+          "leader": "12 lb fluorocarbon leader material ($10)",
+          "lures": "Pixie spoons in pink and orange, Vibrax spinners size 3-4, assorted colors ($30-50)",
+          "notes": "All you need for productive shore fishing for silvers, pinks, and Dollies."
+        },
+        "boatTroll": {
+          "label": "Boat Trolling Setup (uses king salmon gear with modifications)",
+          "rod": "Same as king salmon setup",
+          "reel": "Same as king salmon setup",
+          "line": "Same as king salmon setup",
+          "modifications": "Shorter hoochie leaders (24-30 inches), pink/chartreuse colors, faster trolling speed (2.5-3.5 mph)",
+          "notes": "Silver trolling uses the same gear as king trolling with different lure selections and faster speeds."
+        },
+        "flyFishing": {
+          "label": "Fly Fishing Setup ($200-400)",
+          "rod": "8 weight, 9 foot fly rod — Orvis Clearwater or Echo Boost ($150-200)",
+          "reel": "Large arbor reel with disc drag — Lamson Liquid or Ross Flyrise ($80-100)",
+          "line": "Weight-forward floating line with 10' fast-sink tip ($50)",
+          "leader": "12-16 lb fluorocarbon tippet ($10)",
+          "flies": "Clouser Minnows, Dolly Llamas, Pollywogs in pink, white, chartreuse ($2-5 each, get 10-15)",
+          "notes": "An 8-weight handles silvers well. Go to 9 weight if you might encounter kings."
+        }
+      },
+      "rockfish": {
+        "budget": {
+          "label": "Budget Setup ($100-150)",
+          "rod": "6'6\" medium-heavy spinning rod ($40)",
+          "reel": "Size 4000 spinning reel with 20 lb braid ($50)",
+          "terminal": "4-8 oz leadhead jigs, 6\" curly-tail grubs in white and chartreuse ($20)",
+          "notes": "Works for rockfish to 200 feet. Beyond that, a conventional reel is better for cranking weight."
+        },
+        "midrange": {
+          "label": "Mid-Range Setup ($250-400)",
+          "rod": "Shimano Trevala 6'6\" medium-heavy conventional ($130)",
+          "reel": "Daiwa Saltist 40 conventional ($120)",
+          "line": "50 lb braid ($25)",
+          "terminal": "Butterfly jigs (4-10 oz), swimbaits, dropper loop rigs ($50)",
+          "notes": "Handles rockfish and lingcod at any depth. Also usable as a backup halibut rod."
+        }
+      }
+    },
+    "byBudget": {
+      "starter": {
+        "label": "Complete Starter Package ($200-350)",
+        "description": "Everything needed for shore fishing silvers, pinks, and Dollies plus basic boat bottom fishing",
+        "items": [
+          "8' medium spinning rod and 3000-size reel ($90)",
+          "6'6\" medium-heavy conventional rod and reel ($100)",
+          "15 lb braid for spinning, 65 lb braid for conventional ($45)",
+          "Fluorocarbon leader material: 12 lb and 80 lb ($20)",
+          "Assorted spoons, spinners, and circle hooks ($40)",
+          "Landing net and stringer ($30)"
+        ]
+      },
+      "weekend": {
+        "label": "Weekend Angler Package ($600-1000)",
+        "description": "Two complete setups covering all major Alaska species from boat and shore",
+        "items": [
+          "Downrigger rod and levelwind reel with line counter ($200)",
+          "Halibut rod and conventional reel ($200)",
+          "Shore spinning setup ($100)",
+          "Complete terminal tackle box with hooks, weights, flashers, hoochies, spoons ($150)",
+          "Landing net, gaff, fish club, fillet knife ($80)",
+          "Insulated fish bags and cooler ($70)"
+        ]
+      },
+      "serious": {
+        "label": "Serious Angler Package ($1500-3000)",
+        "description": "Four complete setups plus boat equipment for dedicated Alaska fishing",
+        "items": [
+          "Two downrigger trolling setups ($500-700)",
+          "Two halibut/bottomfish setups ($500-800)",
+          "Fly fishing setup for trout and salmon ($250-400)",
+          "Shore spinning setup ($150)",
+          "Manual downrigger pair ($300)",
+          "Full terminal tackle kit ($200)",
+          "Safety equipment: PFDs, VHF radio, first aid kit ($200)",
+          "Fish processing: cooler, bags, bleeding bucket, fillet knives ($100)"
+        ]
+      }
+    },
+    "seasonal": {
+      "spring": {
+        "species": ["King salmon (early run)"],
+        "essentialGear": ["Downrigger trolling setup", "Herring rigs", "King salmon stamp", "Rain gear"],
+        "notes": "Early season weather is unpredictable. Focus on saltwater trolling near Homer and Seward."
+      },
+      "summer": {
+        "species": ["King salmon (late run)", "Halibut", "Sockeye salmon", "Rockfish"],
+        "essentialGear": ["Full halibut bottom fishing setup", "Downrigger trolling setup", "Sockeye flossing rig (long leader, coho fly)", "Chest waders for Kenai River", "Large cooler with ice"],
+        "notes": "Peak season. Everything is happening. Book charters and accommodations well in advance."
+      },
+      "lateSummer": {
+        "species": ["Silver salmon", "Halibut", "Pink salmon (odd years)", "Rockfish", "Lingcod"],
+        "essentialGear": ["Silver trolling and casting setups", "Halibut gear", "Fish processing supplies"],
+        "notes": "Silver salmon dominate. The Homer Jackpot Halibut Derby runs through Labor Day."
+      },
+      "fall": {
+        "species": ["Silver salmon (late run)", "Rainbow trout", "Dolly Varden"],
+        "essentialGear": ["Bead fishing setup (float rod, beads, fluorocarbon)", "Fly fishing setup for streamers and flesh flies", "Warm layered clothing"],
+        "notes": "The quiet season. Fewer anglers, beautiful fall colors, excellent trout fishing on the Kenai."
+      }
+    }
+  }
+}

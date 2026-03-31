@@ -1,0 +1,142 @@
+{
+  "regulations": {
+    "metadata": {
+      "year": 2024,
+      "region": "Southcentral Alaska — Cook Inlet, Kachemak Bay, Kenai Peninsula",
+      "source": "ADFG Southcentral Regulation Summary",
+      "disclaimer": "This is a reference guide. Emergency orders can change these limits at any time. Always verify with ADFG before fishing.",
+      "adfgWebsite": "https://www.adfg.alaska.gov",
+      "emergencyOrdersUrl": "https://www.adfg.alaska.gov/sf/EONR/"
+    },
+    "saltwater": {
+      "pacificHalibut": {
+        "dailyBagLimit": 2,
+        "sizeRestriction": "Second fish must be 32 inches or under (total length)",
+        "annualLimitResident": "No annual limit",
+        "annualLimitNonResident": "Subject to IPHC annual limits — verify annually",
+        "season": "February 1 through December 31 (subject to change)",
+        "circleHookRequired": true,
+        "notes": "Guided (charter) anglers may have additional restrictions. IPHC regulations apply in addition to state rules."
+      },
+      "kingSalmon": {
+        "dailyBagLimit": 1,
+        "annualLimitResident": 5,
+        "annualLimitNonResident": "1-3 depending on area (record on license)",
+        "kingStampRequired": true,
+        "minimumSize": "28 inches (fish under 28 inches are jacks, may not be retained in some areas)",
+        "season": "Year-round, but productive fishing May through July",
+        "notes": "Annual limits for non-residents vary by specific management area. Some areas require immediate recording of harvest on the back of the fishing license."
+      },
+      "silverSalmon": {
+        "dailyBagLimit": 3,
+        "annualLimit": "No annual limit",
+        "season": "July through September",
+        "notes": "Bag limit may be increased by emergency order in years of strong returns."
+      },
+      "sockeyeSalmon": {
+        "dailyBagLimit": 3,
+        "annualLimit": "No annual limit",
+        "season": "June through August",
+        "notes": "Limit may be 3 or 6 depending on area and run strength. Check area-specific regulations."
+      },
+      "pinkSalmon": {
+        "dailyBagLimit": 6,
+        "annualLimit": "No annual limit",
+        "season": "Odd years (2025, 2027), July through August",
+        "notes": "Pink salmon run in distinct odd-year cycles in Southcentral Alaska."
+      },
+      "rockfish": {
+        "dailyBagLimitCombined": 4,
+        "yelloweyeSubLimit": "May be restricted — check current regulations",
+        "pelagicSpecies": ["black rockfish", "dusky rockfish", "yellowtail rockfish", "widow rockfish"],
+        "nonPelagicSpecies": ["yelloweye rockfish", "quillback rockfish", "tiger rockfish", "copper rockfish", "china rockfish"],
+        "season": "Year-round",
+        "descendingDeviceRequired": "Recommended for all non-pelagic rockfish released from depth over 100 feet",
+        "notes": "Non-pelagic rockfish are extremely long-lived and slow to reproduce. Conservation is critical. Prefer targeting pelagic species."
+      },
+      "lingcod": {
+        "dailyBagLimit": 1,
+        "minimumSize": "35 inches",
+        "possessionLimit": 1,
+        "season": "July 1 through December 31",
+        "closedSeason": "January 1 through June 30 (spawning closure)",
+        "notes": "Season dates protect spawning fish. Verify current dates annually."
+      }
+    },
+    "freshwater": {
+      "kenaiRiver": {
+        "kingSalmon": {
+          "earlyRun": {
+            "dates": "January 1 through June 30",
+            "bagLimit": "Subject to frequent emergency order closures",
+            "baitAllowed": false,
+            "notes": "Early run has been heavily restricted or closed in recent years due to weak returns. Verify EO status."
+          },
+          "lateRun": {
+            "dates": "July 1 through July 31",
+            "bagLimit": 1,
+            "annualLimitNonResident": "Typically 1-2 from the Kenai (set by EO)",
+            "baitAllowed": true,
+            "slotLimit": "May apply — check current regulations",
+            "gearRestrictions": "Single hook only in some sections",
+            "notes": "The premier king salmon fishery. Extremely competitive and heavily regulated."
+          },
+          "upperRiverClosed": true
+        },
+        "sockeyeSalmon": {
+          "bagLimit": "3-6 per day depending on run strength and EO",
+          "season": "July through August, specific dates set annually",
+          "russianRiver": {
+            "bagLimit": 3,
+            "separatePermit": "Russian River/Kenai River sockeye permit may be required",
+            "flyFishingOnly": "Some sections near the confluence"
+          }
+        },
+        "silverSalmon": {
+          "bagLimit": 2,
+          "season": "July through October, varies by section",
+          "baitAllowed": true,
+          "notes": "September and October offer the best fishing with fewer crowds."
+        },
+        "rainbowTrout": {
+          "upperKenai": "Catch and release only",
+          "seasonClosures": "Some sections closed April through June for spawning",
+          "baitRestrictions": "Artificial lures only in most sections",
+          "maximumRetention": "No retention of rainbow trout over 16 inches in most sections"
+        }
+      },
+      "homerArea": {
+        "nickDudiakFishingLagoon": {
+          "type": "Stocked tidal lagoon on Homer Spit",
+          "kingSalmon": "June — specific dates announced annually",
+          "silverSalmon": "August — specific dates announced annually",
+          "snaggingProhibited": true,
+          "separateRegulations": "May differ from general Cook Inlet rules"
+        }
+      }
+    },
+    "dipnet": {
+      "eligibility": "Alaska residents only",
+      "kenaiRiver": {
+        "season": "Typically July, specific dates announced annually",
+        "limitPerHeadOfHousehold": 25,
+        "limitPerAdditionalMember": 10,
+        "permitRequired": true,
+        "reportingRequired": true
+      },
+      "kasilofRiver": {
+        "season": "Specific dates announced annually",
+        "limitPerHeadOfHousehold": 25,
+        "limitPerAdditionalMember": 10,
+        "permitRequired": true,
+        "reportingRequired": true
+      }
+    },
+    "contacts": {
+      "adfgAnchorage": "(907) 267-2218",
+      "adfgSoldotna": "(907) 262-9368",
+      "adfgHomer": "(907) 235-8191",
+      "coastGuardEmergency": "VHF Channel 16"
+    }
+  }
+}

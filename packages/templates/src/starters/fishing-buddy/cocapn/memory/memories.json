@@ -1,0 +1,42 @@
+[
+  {
+    "id": "mem_001",
+    "type": "catch",
+    "content": "Landed a 38-pound halibut off Homer Spit near the Flat Island ledge. Fishing at 180 feet on an incoming tide, using a salmon head strip on a 16/0 circle hook with 32 ounces of lead. The fish hit right at the tide slack. Water was flat calm, overcast sky, air temp around 48 degrees. The fight took about 15 minutes on the Shimano Trevala with the drag set at 18 pounds. Fillet yield was approximately 55 percent, yielding two beautiful 10-pound fletches. Best halibut of the season so far.",
+    "confidence": 0.95,
+    "timestamp": "2024-06-22T14:30:00Z",
+    "tags": ["catch", "halibut", "homer-spit", "bottom-fishing", "summer-2024"]
+  },
+  {
+    "id": "mem_002",
+    "type": "catch",
+    "content": "Hooked into a chrome-bright king salmon while trolling outside the Homer harbor near Cohen Island. Fishing 45 feet on the downrigger with a green splatter back Pro-Troll Flasher and a whole plug-cut herring. Speed was 2.2 mph on the GPS. The king hit hard and made three strong runs before coming to the boat. Weighed 28 pounds on the digital scale, 42 inches long. This was the user's personal best king salmon. Released a smaller jack king earlier that morning at the same depth.",
+    "confidence": 0.95,
+    "timestamp": "2024-07-08T09:15:00Z",
+    "tags": ["catch", "king-salmon", "trolling", "homer", "personal-best", "summer-2024"]
+  },
+  {
+    "id": "mem_003",
+    "type": "catch",
+    "content": "Limited out on silver salmon at the Nick Dudiak Fishing Lagoon on the Homer Spit. Fishing with a pixie spoon in pink and orange, casting and retrieving with a slow flutter. The silvers were stacked up at the inlet channel during incoming tide. Caught four fish in about 90 minutes, all between 8 and 12 pounds. Two were dime-bright ocean fish, two had started to color up. The bite shut off completely by 11 AM when the tide started to ebb. All fish bled and iced immediately.",
+    "confidence": 0.9,
+    "timestamp": "2024-08-12T08:45:00Z",
+    "tags": ["catch", "silver-salmon", "coho", "homer-spit", "fishing-lagoon", "summer-2024"]
+  },
+  {
+    "id": "mem_004",
+    "type": "trip",
+    "content": "Planned a multi-day fishing trip to Seward for the silver salmon derby in mid-August. Launched from the Seward boat harbor and ran out through Resurrection Bay. Fished along the shoreline near Thumb Cove and caught pinks and silvers on trolling gear. Weather turned rough in the afternoon with 3-foot seas and 15-knot winds from the southeast. Pulled gear and ran back to the harbor. The Hewescraft handled the chop well but the user mentioned wanting to add a second bilge pump before the next offshore trip. Total catch: 6 silvers, 4 pinks, 1 rockfish released.",
+    "confidence": 0.85,
+    "timestamp": "2024-08-17T18:00:00Z",
+    "tags": ["trip", "seward", "resurrection-bay", "silver-salmon", "weather", "boat-safety", "summer-2024"]
+  },
+  {
+    "id": "mem_005",
+    "type": "technique",
+    "content": "Discussed mooching technique for king salmon with the user. They want to try mooching this season instead of only trolling. Explained the basics: use a 4-ounce mooching weight, leader length of 4 to 6 feet, whole herring with a plug-cut or a hoochie. Fish near bait balls marked on the sounder, usually 30 to 80 feet down. Let the bait flutter down on a free spool, then engage and wind up slowly. The strike feels like a thump, not a grab. Set the hook by reeling fast rather than swinging the rod. User plans to try this at the Homer Spit hole on the next good weather window.",
+    "confidence": 0.85,
+    "timestamp": "2024-06-10T11:00:00Z",
+    "tags": ["technique", "mooching", "king-salmon", "homer", "learning"]
+  }
+]

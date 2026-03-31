@@ -1,0 +1,62 @@
+{
+  "name": "catch-logger",
+  "version": "1.0.0",
+  "description": "Structured catch logging with species identification, measurements, location, weather conditions, and bait tracking. Builds a personal fishing history over time with season-over-season comparisons and catch statistics.",
+  "author": "Cocapn",
+  "commands": [
+    {
+      "name": "catch:log",
+      "description": "Log a new catch with species, weight, length, location, and conditions",
+      "args": ["species", "weight?", "length?", "location?"],
+      "example": "catch:log halibut 38lb Homer Spit incoming tide salmon head"
+    },
+    {
+      "name": "catch:list",
+      "description": "List recent catches, optionally filtered by species or date range",
+      "args": ["species?", "days?"],
+      "example": "catch:list halibut 30"
+    },
+    {
+      "name": "catch:stats",
+      "description": "Show catch statistics for a species or time period",
+      "args": ["species?", "period?"],
+      "example": "catch:stats halibut summer-2024"
+    },
+    {
+      "name": "catch:detail",
+      "description": "Show full details of a specific catch by ID or date",
+      "args": ["idOrDate"],
+      "example": "catch:detail mem_001"
+    },
+    {
+      "name": "catch:compare",
+      "description": "Compare catches across seasons or locations",
+      "args": ["dimension"],
+      "example": "catch:compare season 2023 vs 2024"
+    },
+    {
+      "name": "catch:export",
+      "description": "Export catch log as JSON, CSV, or markdown",
+      "args": ["format", "dateRange?"],
+      "example": "catch:export csv 2024-06-01:2024-09-30"
+    }
+  ],
+  "permissions": [
+    "brain:read",
+    "brain:write:facts",
+    "brain:write:memories",
+    "wiki:read"
+  ],
+  "config": {
+    "requiredFields": ["species", "date"],
+    "optionalFields": [
+      "weight", "length", "location", "depth", "tide", "weather",
+      "bait", "technique", "companions", "notes", "released",
+      "filletYield", "gpsCoordinates"
+    ],
+    "autoTimestamp": true,
+    "autoWeather": false,
+    "memoryNamespace": "catch",
+    "maxEntries": 5000
+  }
+}

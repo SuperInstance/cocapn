@@ -1,0 +1,108 @@
+{
+  "structures": [
+    {
+      "name": "Three-Act Structure",
+      "description": "The classic Western narrative framework: setup, confrontation, resolution. Works for almost any story length and genre.",
+      "bestFor": ["first novels", "genre fiction", "screenplays", "stories with clear forward momentum"],
+      "beats": [
+        { "name": "Setup", "range": "0-25%", "description": "Establish ordinary world, introduce protagonist, present inciting incident, propel into Act II" },
+        { "name": "Confrontation", "range": "25-75%", "description": "Rising action, midpoint reversal, escalating obstacles, all-is-lost moment" },
+        { "name": "Resolution", "range": "75-100%", "description": "Climax, dramatic question answered, new status quo established" }
+      ]
+    },
+    {
+      "name": "Hero's Journey",
+      "description": "Joseph Campbell's monomyth adapted by Christopher Vogler. A cyclical transformation structure: departure, initiation, return.",
+      "bestFor": ["epic fantasy", "adventure", "transformation narratives", "quest stories"],
+      "beats": [
+        { "name": "Ordinary World", "range": "0-5%", "description": "The hero's normal life before the adventure" },
+        { "name": "Call to Adventure", "range": "5-10%", "description": "The challenge or quest is presented" },
+        { "name": "Refusal of the Call", "range": "10-12%", "description": "Fear, hesitation, or obligation holds the hero back" },
+        { "name": "Meeting the Mentor", "range": "12-15%", "description": "A guide appears with wisdom or tools" },
+        { "name": "Crossing the Threshold", "range": "15-20%", "description": "The hero commits to the journey" },
+        { "name": "Tests, Allies, Enemies", "range": "20-40%", "description": "The hero learns the rules of the special world" },
+        { "name": "Approach to the Inmost Cave", "range": "40-45%", "description": "Preparation for the major ordeal" },
+        { "name": "The Ordeal", "range": "45-55%", "description": "The hero faces their greatest fear or foe" },
+        { "name": "Reward", "range": "55-60%", "description": "The hero claims what they came for" },
+        { "name": "The Road Back", "range": "60-75%", "description": "The hero must return, often chased or pressured" },
+        { "name": "Resurrection", "range": "75-90%", "description": "A final test where the hero applies everything learned" },
+        { "name": "Return with the Elixir", "range": "90-100%", "description": "The hero returns transformed, bearing gifts for the ordinary world" }
+      ]
+    },
+    {
+      "name": "Save the Cat",
+      "description": "Blake Snyder's beat sheet with precise percentage targets. Originally for screenplays, now widely used in novel plotting.",
+      "bestFor": ["plot-driven novels", "thrillers", "romance", "tight pacing", "commercial fiction"],
+      "beats": [
+        { "name": "Opening Image", "range": "0-1%", "description": "Snapshot of the protagonist's starting state" },
+        { "name": "Theme Stated", "range": "5%", "description": "Someone hints at the story's thematic question" },
+        { "name": "Set-Up", "range": "1-10%", "description": "Introduce world, characters, stakes" },
+        { "name": "Catalyst", "range": "10%", "description": "The inciting incident" },
+        { "name": "Debate", "range": "10-20%", "description": "The protagonist wrestles with whether to act" },
+        { "name": "Break into Two", "range": "20%", "description": "The protagonist commits to the journey" },
+        { "name": "B Story", "range": "22%", "description": "Subplot (often a relationship) that carries the theme" },
+        { "name": "Fun and Games", "range": "20-50%", "description": "The promise of the premise delivered" },
+        { "name": "Midpoint", "range": "50%", "description": "Stakes raised; false victory or false defeat" },
+        { "name": "Bad Guys Close In", "range": "50-75%", "description": "External pressures tighten, internal flaws surface" },
+        { "name": "All Is Lost", "range": "75%", "description": "The lowest point; something or someone is lost" },
+        { "name": "Dark Night of the Soul", "range": "75-80%", "description": "The protagonist processes the loss" },
+        { "name": "Break into Three", "range": "80%", "description": "The protagonist finds a new way forward" },
+        { "name": "Finale", "range": "80-99%", "description": "The protagonist confronts the conflict with new understanding" },
+        { "name": "Final Image", "range": "99-100%", "description": "Snapshot of the protagonist's transformed state" }
+      ]
+    },
+    {
+      "name": "Seven-Point Story Structure",
+      "description": "Dan Wells' streamlined framework. Works well for plotters who want flexibility within structure. Can be expanded or compressed to any length.",
+      "bestFor": ["pantsers learning to plot", "short stories", "novel outlines", "flexible structure"],
+      "beats": [
+        { "name": "Hook", "range": "0-10%", "description": "The protagonist's starting state -- the opposite of the ending state" },
+        { "name": "Plot Turn 1", "range": "15-20%", "description": "The inciting incident. The world changes." },
+        { "name": "Pinch 1", "range": "33%", "description": "Pressure applied. The antagonist or opposition forces the protagonist to act." },
+        { "name": "Midpoint", "range": "50%", "description": "The protagonist moves from reaction to action. They decide to push forward." },
+        { "name": "Pinch 2", "range": "66%", "description": "More pressure. The situation looks impossible. The protagonist is squeezed." },
+        { "name": "Plot Turn 2", "range": "75-80%", "description": "The protagonist learns what they need to succeed. The final piece falls into place." },
+        { "name": "Resolution", "range": "80-100%", "description": "The protagonist applies what they've learned. The story's question is answered." }
+      ]
+    },
+    {
+      "name": "Kishotenketsu",
+      "description": "A four-act structure common in East Asian storytelling. There is no central conflict or antagonist. Instead, the story develops through contrast and revelation. Conflict is optional.",
+      "bestFor": ["literary fiction", "character studies", "quiet stories", "stories about change without confrontation", "experimental narratives"],
+      "beats": [
+        { "name": "Ki (Introduction)", "range": "0-25%", "description": "Establish the world and characters. Set the baseline." },
+        { "name": "Sho (Development)", "range": "25-50%", "description": "Expand on the introduction. Deepen and complicate without conflict." },
+        { "name": "Ten (Twist)", "range": "50-75%", "description": "An unexpected element is introduced -- a surprise that reframes everything." },
+        { "name": "Ketsu (Conclusion)", "range": "75-100%", "description": "The twist is reconciled with the introduction. A new understanding emerges." }
+      ]
+    },
+    {
+      "name": "Fichtean Curve",
+      "description": "Rising-action-driven structure with no initial equilibrium. The story starts with conflict and escalates continuously through crises toward a climax and resolution.",
+      "bestFor": ["thrillers", "action stories", "stories that start in medias res", "fast-paced narratives"],
+      "beats": [
+        { "name": "Rising Action", "range": "0-70%", "description": "A series of escalating crises. No setup period -- start with the first conflict." },
+        { "name": "Climax", "range": "70-85%", "description": "The tension peaks. The protagonist faces their greatest challenge." },
+        { "name": "Falling Action", "range": "85-95%", "description": "The aftermath of the climax. Consequences play out." },
+        { "name": "Resolution", "range": "95-100%", "description": "New normal established. The protagonist has changed." }
+      ]
+    },
+    {
+      "name": "Snowflake Method",
+      "description": "Randy Ingermanson's iterative expansion approach. Start with a one-sentence summary, expand to a paragraph, expand each sentence to a paragraph, and so on. A plotting method rather than a structure, but it produces three-act-shaped stories.",
+      "bestFor": ["novelists who hate outlining", "discovery writers who need guardrails", "complex multi-plot stories"],
+      "steps": [
+        { "step": 1, "description": "Write a one-sentence summary of your story" },
+        { "step": 2, "description": "Expand the sentence into a paragraph: setup, three disasters, ending" },
+        { "step": 3, "description": "Write a one-page summary for each major character" },
+        { "step": 4, "description": "Expand each sentence from step 2 into its own paragraph" },
+        { "step": 5, "description": "Write a one-page synopsis from each major character's POV" },
+        { "step": 6, "description": "Expand the four-paragraph plot into a four-page synopsis" },
+        { "step": 7, "description": "Expand character summaries into full character charts" },
+        { "step": 8, "description": "Create a scene list from the synopsis" },
+        { "step": 9, "description": "Write a narrative description of each scene" },
+        { "step": 10, "description": "Write the first draft" }
+      ]
+    }
+  ]
+}

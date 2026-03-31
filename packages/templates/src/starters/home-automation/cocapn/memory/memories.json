@@ -1,0 +1,64 @@
+{
+  "memories": [
+    {
+      "id": "mem_001",
+      "type": "automation",
+      "confidence": 0.95,
+      "source": "conversation",
+      "created": "2025-11-15T09:30:00Z",
+      "updated": "2025-11-15T09:30:00Z",
+      "content": "User created a Good Morning routine that gradually raises bedroom lights from 0% to 60% over 15 minutes, starts the coffee maker, opens living room blinds, and sets thermostat to 72F. Triggered at 6:30 AM on weekdays, 8:00 AM on weekends.",
+      "tags": ["routine", "morning", "wake-up", "lights", "climate"],
+      "room": "master-bedroom"
+    },
+    {
+      "id": "mem_002",
+      "type": "troubleshooting",
+      "confidence": 0.90,
+      "source": "conversation",
+      "created": "2025-12-02T19:15:00Z",
+      "updated": "2025-12-02T19:15:00Z",
+      "content": "User reported that the hallway motion sensor triggers false alerts at night. Diagnosed as a combination of HVAC vent airflow moving a hanging picture frame and sensor sensitivity set too high. Resolution: reduced motion sensitivity to medium and redirected HVAC vent. No false alerts since.",
+      "tags": ["troubleshooting", "motion-sensor", "false-positive", "hallway"],
+      "room": "hallway"
+    },
+    {
+      "id": "mem_003",
+      "type": "energy",
+      "confidence": 0.85,
+      "source": "observation",
+      "created": "2025-12-10T14:00:00Z",
+      "updated": "2025-12-10T14:00:00Z",
+      "content": "Observed that the living room smart TV draws 45W in standby mode — significantly higher than the expected 0.5W. This accounts for approximately $4.50/month in phantom power. Suggested enabling eco-mode or using a smart plug to cut power when the TV is off for more than 2 hours.",
+      "tags": ["energy", "phantom-power", "standby", "tv", "living-room"],
+      "room": "living-room"
+    },
+    {
+      "id": "mem_004",
+      "type": "preference",
+      "confidence": 0.92,
+      "source": "conversation",
+      "created": "2025-12-18T20:45:00Z",
+      "updated": "2025-12-18T20:45:00Z",
+      "content": "User prefers warm white light (2700K) for evening routines and cool white (4000K) for daytime and office work. The Movie Night scene should use 2200K at 10% brightness. Night lights in the hallway should be 1% at 1800K (amber).",
+      "tags": ["preference", "lighting", "color-temperature", "scenes"],
+      "room": "all"
+    },
+    {
+      "id": "mem_005",
+      "type": "security",
+      "confidence": 0.88,
+      "source": "conversation",
+      "created": "2026-01-05T11:00:00Z",
+      "updated": "2026-01-05T11:00:00Z",
+      "content": "User set up vacation mode: random light simulation in living room and bedrooms between 6-10 PM, all blinds close at sunset, front porch light stays on from dusk to dawn, security cameras record on motion with 30-second clips, all door locks auto-lock after 30 seconds. Neighbors have a spare key but no smart access.",
+      "tags": ["security", "vacation", "simulation", "cameras", "locks"],
+      "room": "all"
+    }
+  ],
+  "meta": {
+    "version": 1,
+    "totalEntries": 5,
+    "lastUpdated": "2026-01-05T11:00:00Z"
+  }
+}

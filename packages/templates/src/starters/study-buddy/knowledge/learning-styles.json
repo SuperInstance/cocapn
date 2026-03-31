@@ -1,0 +1,228 @@
+{
+  "styles": [
+    {
+      "id": "visual",
+      "name": "Visual Learner",
+      "description": "Learns best through images, diagrams, charts, and spatial understanding. Thinks in pictures and can easily visualize concepts.",
+      "percentage": 65,
+      "characteristics": [
+        "Prefers diagrams and flowcharts over text explanations",
+        "Uses color coding and highlighting in notes",
+        "Draws mind maps and concept maps",
+        "Remembers faces better than names",
+        "Struggles with long lectures without visual aids",
+        "Benefits from whiteboard explanations"
+      ],
+      "studyTechniques": [
+        {
+          "name": "Diagramming",
+          "description": "Draw concept maps, flowcharts, and diagrams to represent relationships between ideas",
+          "effectiveness": 0.9
+        },
+        {
+          "name": "Color Coding",
+          "description": "Use different colors for categories, importance levels, or types of information in notes",
+          "effectiveness": 0.85
+        },
+        {
+          "name": "Visual Flashcards",
+          "description": "Flashcards that include images, diagrams, or color cues alongside text",
+          "effectiveness": 0.9
+        },
+        {
+          "name": "Video Learning",
+          "description": "Watch educational videos with animations and visual demonstrations",
+          "effectiveness": 0.8
+        },
+        {
+          "name": "Sketchnoting",
+          "description": "Take notes with a mix of drawings, symbols, and minimal text",
+          "effectiveness": 0.85
+        }
+      ],
+      "teachingAdaptations": [
+        "Use analogies that paint a picture ('imagine a factory where...')",
+        "Include ASCII diagrams and visual representations in explanations",
+        "Describe spatial relationships explicitly",
+        "Suggest drawing the concept as part of learning",
+        "Use tables and structured visual layouts for information"
+      ]
+    },
+    {
+      "id": "auditory",
+      "name": "Auditory Learner",
+      "description": "Learns best through listening and speaking. Processes information through sound, rhythm, and verbal explanation.",
+      "percentage": 30,
+      "characteristics": [
+        "Prefers lectures and verbal explanations",
+        "Talks through problems out loud",
+        "Remembers things said to them better than things read",
+        "Benefits from discussion and group study",
+        "Uses rhythm and music as memory aids",
+        "Can follow oral instructions well"
+      ],
+      "studyTechniques": [
+        {
+          "name": "Verbal Repetition",
+          "description": "Explain concepts out loud in your own words, as if teaching someone",
+          "effectiveness": 0.9
+        },
+        {
+          "name": "Discussion Groups",
+          "description": "Study with others and discuss topics, debate ideas, and quiz each other verbally",
+          "effectiveness": 0.85
+        },
+        {
+          "name": "Audio Recording",
+          "description": "Record yourself explaining key concepts and listen back during commutes or downtime",
+          "effectiveness": 0.8
+        },
+        {
+          "name": "Mnemonics and Rhymes",
+          "description": "Create songs, rhymes, or rhythmic patterns to encode information",
+          "effectiveness": 0.85
+        },
+        {
+          "name": "Read Aloud",
+          "description": "Read textbook material and notes out loud rather than silently",
+          "effectiveness": 0.75
+        }
+      ],
+      "teachingAdaptations": [
+        "Use clear, conversational explanations with verbal cues",
+        "Suggest saying concepts out loud as a study strategy",
+        "Use alliteration, rhyme, and rhythm in mnemonics",
+        "Encourage verbal self-quizzing",
+        "Present information in a narrative, storytelling format"
+      ]
+    },
+    {
+      "id": "kinesthetic",
+      "name": "Kinesthetic Learner",
+      "description": "Learns best through hands-on experience, physical activity, and doing. Needs to engage physically with material to truly understand it.",
+      "percentage": 5,
+      "characteristics": [
+        "Prefers labs, experiments, and hands-on projects",
+        "Fidgets during long lectures but concentrates well during activities",
+        "Learns by doing rather than watching or listening",
+        "Remembers experiences and physical activities",
+        "Benefits from taking frequent breaks and moving around",
+        "Good at understanding how things work through manipulation"
+      ],
+      "studyTechniques": [
+        {
+          "name": "Hands-On Practice",
+          "description": "Work through problems physically, build models, conduct experiments",
+          "effectiveness": 0.95
+        },
+        {
+          "name": "Role Playing",
+          "description": "Act out historical events, scientific processes, or conceptual scenarios",
+          "effectiveness": 0.8
+        },
+        {
+          "name": "Movement-Based Review",
+          "description": "Walk around while reviewing flashcards, or associate topics with physical locations (memory palace)",
+          "effectiveness": 0.85
+        },
+        {
+          "name": "Teaching with Objects",
+          "description": "Use physical objects to represent abstract concepts (coins for math, household items for science)",
+          "effectiveness": 0.85
+        },
+        {
+          "name": "Break-Based Learning",
+          "description": "Use short, active study blocks with physical breaks in between",
+          "effectiveness": 0.8
+        }
+      ],
+      "teachingAdaptations": [
+        "Use physical analogies ('imagine you are the electron...')",
+        "Suggest building or drawing something physical",
+        "Break explanations into active steps the student can do",
+        "Recommend walking while reviewing or reciting",
+        "Use gesture-based memory cues and body-based mnemonics"
+      ]
+    },
+    {
+      "id": "reading-writing",
+      "name": "Reading/Writing Learner",
+      "description": "Learns best through text-based input and output. Excels at reading textbooks, taking detailed notes, and expressing understanding through writing.",
+      "percentage": 5,
+      "characteristics": [
+        "Prefers textbooks and written materials over lectures",
+        "Takes detailed, organized notes",
+        "Writes summaries and rewrites notes to study",
+        "Good at expressing ideas in writing",
+        "Comfortable with dense, text-heavy resources",
+        "Benefits from making lists and outlines"
+      ],
+      "studyTechniques": [
+        {
+          "name": "Cornell Notes",
+          "description": "Structured note-taking with main ideas, details, and summary sections",
+          "effectiveness": 0.9
+        },
+        {
+          "name": "Rewriting Notes",
+          "description": "Rewrite and reorganize notes in your own words after class",
+          "effectiveness": 0.85
+        },
+        {
+          "name": "Practice Essays",
+          "description": "Write out full explanations and essays for key concepts",
+          "effectiveness": 0.9
+        },
+        {
+          "name": "Text Annotation",
+          "description": "Highlight, underline, and annotate textbook readings with marginal notes",
+          "effectiveness": 0.8
+        },
+        {
+          "name": "List Making",
+          "description": "Convert concepts into organized lists, outlines, and bullet-point summaries",
+          "effectiveness": 0.85
+        }
+      ],
+      "teachingAdaptations": [
+        "Provide written explanations with clear structure",
+        "Suggest writing summaries after each explanation",
+        "Use numbered steps and organized bullet points",
+        "Recommend specific textbook sections for deeper reading",
+        "Encourage journaling about what was learned"
+      ]
+    }
+  ],
+  "multiModal": {
+    "description": "Most people are not purely one style. Effective learning often combines multiple modalities. The key is identifying which modality is strongest and supplementing with others.",
+    "recommendedCombos": [
+      {
+        "primary": "visual",
+        "secondary": "kinesthetic",
+        "strategy": "Draw diagrams and then physically trace or recreate them. Use hands-on models alongside visual aids."
+      },
+      {
+        "primary": "auditory",
+        "secondary": "reading-writing",
+        "strategy": "Read notes aloud. Record written summaries and listen back. Discuss written material in study groups."
+      },
+      {
+        "primary": "visual",
+        "secondary": "reading-writing",
+        "strategy": "Use color-coded notes with diagrams. Create visual outlines before writing. Annotate diagrams with text."
+      },
+      {
+        "primary": "kinesthetic",
+        "secondary": "visual",
+        "strategy": "Build physical models and sketch them. Walk while reviewing visual flashcards. Use gesture with diagrams."
+      }
+    ]
+  },
+  "assessmentQuestions": [
+    "When learning something new, do you prefer to see a diagram, hear an explanation, try it yourself, or read about it?",
+    "How do you usually remember directions — from a map, from someone telling you, from walking the route, or from written steps?",
+    "When studying, what helps most — watching a video, discussing with a friend, doing practice problems, or reading your notes?",
+    "In class, do you learn best from slides, lectures, labs, or textbook readings?",
+    "When you get stuck on a problem, do you sketch it out, talk it through, try different approaches, or look up the theory?"
+  ]
+}

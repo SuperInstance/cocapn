@@ -1,0 +1,72 @@
+{
+  "name": "quota-tracker",
+  "version": "1.0.0",
+  "description": "Tracks IFQ and cooperative quota holdings against catch in real time. Monitors species quotas, calculates remaining ACE, warns before overages, and generates quota balance reports.",
+  "author": "Cocapn",
+  "license": "MIT",
+  "commands": [
+    "quota status",
+    "quota remaining",
+    "quota log",
+    "quota report",
+    "quota alert"
+  ],
+  "capabilities": [
+    "read-facts",
+    "write-facts",
+    "read-knowledge",
+    "write-knowledge",
+    "read-memories",
+    "write-memories"
+  ],
+  "permissions": [
+    "filesystem.read",
+    "filesystem.write",
+    "knowledge.read",
+    "knowledge.write",
+    "memory.read",
+    "memory.write"
+  ],
+  "dataSchema": {
+    "species": {
+      "type": "string",
+      "required": true,
+      "description": "Target species common name"
+    },
+    "regulatoryArea": {
+      "type": "string",
+      "required": true,
+      "description": "NMFS regulatory area code (e.g., 3A, 3B, 610)"
+    },
+    "allocatedPounds": {
+      "type": "number",
+      "required": true,
+      "minimum": 0,
+      "description": "Total allocated quota in pounds"
+    },
+    "caughtPounds": {
+      "type": "number",
+      "required": true,
+      "minimum": 0,
+      "description": "Cumulative caught pounds to date"
+    },
+    "exVesselPrice": {
+      "type": "number",
+      "required": false,
+      "minimum": 0,
+      "description": "Current ex-vessel price per pound"
+    }
+  },
+  "alerts": {
+    "warningThreshold": 75,
+    "criticalThreshold": 90,
+    "overageThreshold": 100,
+    "unit": "percent",
+    "description": "Alert when quota usage exceeds thresholds. Warning at 75%, critical at 90%, overage at 100%."
+  },
+  "schedule": {
+    "balanceCheck": "daily",
+    "reportGeneration": "weekly",
+    "alertCheck": "continuous"
+  }
+}

@@ -1,0 +1,316 @@
+{
+  "version": 1,
+  "routines": {
+    "daily": {
+      "morning": {
+        "name": "Morning Launch",
+        "description": "Start the day with intention and energy. Complete before checking email or social media.",
+        "time": "06:30",
+        "duration": "45 minutes",
+        "steps": [
+          {
+            "order": 1,
+            "action": "Wake up at consistent time (no snooze)",
+            "duration": "0 min",
+            "habitLink": "consistent-wake"
+          },
+          {
+            "order": 2,
+            "action": "Drink a full glass of water",
+            "duration": "1 min",
+            "habitLink": "hydration"
+          },
+          {
+            "order": 3,
+            "action": "Take Vitamin D with breakfast",
+            "duration": "15 min",
+            "habitLink": "medication"
+          },
+          {
+            "order": 4,
+            "action": "Meditate for 5-10 minutes",
+            "duration": "10 min",
+            "habitLink": "meditation"
+          },
+          {
+            "order": 5,
+            "action": "Review Life Admin morning briefing",
+            "duration": "5 min",
+            "habitLink": null
+          },
+          {
+            "order": 6,
+            "action": "Identify top 3 priorities for the day",
+            "duration": "3 min",
+            "habitLink": null
+          },
+          {
+            "order": 7,
+            "action": "Get dressed and prepare for the day",
+            "duration": "10 min",
+            "habitLink": null
+          }
+        ]
+      },
+      "workdayStart": {
+        "name": "Workday Kickoff",
+        "description": "Transition into work mode. Process inbox and set daily plan.",
+        "time": "09:00",
+        "duration": "20 minutes",
+        "steps": [
+          {
+            "order": 1,
+            "action": "Process email inbox (batch #1)",
+            "duration": "10 min",
+            "habitLink": "email-batch"
+          },
+          {
+            "order": 2,
+            "action": "Review calendar and upcoming commitments",
+            "duration": "3 min",
+            "habitLink": null
+          },
+          {
+            "order": 3,
+            "action": "Start first deep work block with top priority",
+            "duration": "90 min",
+            "habitLink": "deep-work"
+          }
+        ]
+      },
+      "workdayEnd": {
+        "name": "Workday Shutdown",
+        "description": "Close out work cleanly so the evening is truly free.",
+        "time": "17:15",
+        "duration": "15 minutes",
+        "steps": [
+          {
+            "order": 1,
+            "action": "Process email inbox (batch #2)",
+            "duration": "10 min",
+            "habitLink": "email-batch"
+          },
+          {
+            "order": 2,
+            "action": "Update task list with tomorrow's top 3",
+            "duration": "3 min",
+            "habitLink": null
+          },
+          {
+            "order": 3,
+            "action": "Shut down computer — no more work email tonight",
+            "duration": "1 min",
+            "habitLink": null
+          }
+        ]
+      },
+      "evening": {
+        "name": "Evening Wind-Down",
+        "description": "Close the day with reflection and preparation for rest.",
+        "time": "21:00",
+        "duration": "30 minutes",
+        "steps": [
+          {
+            "order": 1,
+            "action": "Review Life Admin evening summary",
+            "duration": "5 min",
+            "habitLink": null
+          },
+          {
+            "order": 2,
+            "action": "Take Magnesium supplement",
+            "duration": "1 min",
+            "habitLink": "medication"
+          },
+          {
+            "order": 3,
+            "action": "Set out clothes and prep items for tomorrow",
+            "duration": "5 min",
+            "habitLink": null
+          },
+          {
+            "order": 4,
+            "action": "Read for 20 minutes (physical book, no screens)",
+            "duration": "20 min",
+            "habitLink": "reading"
+          },
+          {
+            "order": 5,
+            "action": "Lights out by 10:30pm",
+            "duration": "0 min",
+            "habitLink": "sleep"
+          }
+        ]
+      }
+    },
+    "weekly": {
+      "sundayReview": {
+        "name": "Weekly Review",
+        "description": "Comprehensive weekly review following GTD methodology. The most important routine of the week.",
+        "day": "Sunday",
+        "time": "10:00",
+        "duration": "45 minutes",
+        "steps": [
+          {
+            "order": 1,
+            "action": "Gather all loose papers, notes, and digital inboxes",
+            "duration": "5 min"
+          },
+          {
+            "order": 2,
+            "action": "Process all inboxes to zero (email, notes, physical inbox)",
+            "duration": "10 min"
+          },
+          {
+            "order": 3,
+            "action": "Review Life Admin weekly summary (habits, budget, goals)",
+            "duration": "5 min"
+          },
+          {
+            "order": 4,
+            "action": "Review all active projects and their next actions",
+            "duration": "5 min"
+          },
+          {
+            "order": 5,
+            "action": "Check waiting-for items — follow up on anything stale",
+            "duration": "3 min"
+          },
+          {
+            "order": 6,
+            "action": "Review someday/maybe list — promote or demote items",
+            "duration": "3 min"
+          },
+          {
+            "order": 7,
+            "action": "Review calendar for the next 2-4 weeks",
+            "duration": "5 min"
+          },
+          {
+            "order": 8,
+            "action": "Plan next week: schedule deep work blocks and key commitments",
+            "duration": "5 min"
+          },
+          {
+            "order": 9,
+            "action": "Meal plan for the week and create grocery list",
+            "duration": "5 min"
+          },
+          {
+            "order": 10,
+            "action": "Celebrate accomplishments from the past week",
+            "duration": "2 min"
+          }
+        ]
+      },
+      "saturdayReset": {
+        "name": "Saturday Home Reset",
+        "description": "Light home maintenance to keep things running smoothly without a deep clean.",
+        "day": "Saturday",
+        "time": "10:00",
+        "duration": "60 minutes",
+        "steps": [
+          {
+            "order": 1,
+            "action": "Process mail and papers that accumulated during the week",
+            "duration": "10 min"
+          },
+          {
+            "order": 2,
+            "action": "Kitchen: run dishwasher, wipe counters, clean sink, check fridge for expired items",
+            "duration": "15 min"
+          },
+          {
+            "order": 3,
+            "action": "Laundry: start a load, fold and put away any clean laundry",
+            "duration": "15 min"
+          },
+          {
+            "order": 4,
+            "action": "Quick tidy: 10 minutes of putting things back in their place",
+            "duration": "10 min"
+          },
+          {
+            "order": 5,
+            "action": "Trash and recycling: take out if pickup is coming",
+            "duration": "5 min"
+          },
+          {
+            "order": 6,
+            "action": "Check grocery list from Sunday review and shop if needed",
+            "duration": "10 min"
+          }
+        ]
+      }
+    },
+    "monthly": {
+      "budgetReview": {
+        "name": "Monthly Budget Check",
+        "description": "Review last month's spending, set this month's targets, and check savings progress.",
+        "dayOfMonth": 1,
+        "duration": "30 minutes",
+        "steps": [
+          {
+            "order": 1,
+            "action": "Review last month's actual spending vs. budget by category",
+            "duration": "10 min"
+          },
+          {
+            "order": 2,
+            "action": "Identify any categories that went over and why",
+            "duration": "5 min"
+          },
+          {
+            "order": 3,
+            "action": "Update this month's budget targets based on planned activities",
+            "duration": "5 min"
+          },
+          {
+            "order": 4,
+            "action": "Check savings goals progress and projected completion dates",
+            "duration": "5 min"
+          },
+          {
+            "order": 5,
+            "action": "Review upcoming bills and confirm auto-pay is set for fixed expenses",
+            "duration": "5 min"
+          }
+        ]
+      },
+      "subscriptionAudit": {
+        "name": "Quarterly Subscription Audit",
+        "description": "Review all active subscriptions and cancel anything not providing value.",
+        "dayOfMonth": 1,
+        "months": [1, 4, 7, 10],
+        "duration": "20 minutes",
+        "steps": [
+          {
+            "order": 1,
+            "action": "List every active subscription with monthly cost",
+            "duration": "5 min"
+          },
+          {
+            "order": 2,
+            "action": "Mark each: essential / valuable / nice-to-have / forgotten",
+            "duration": "5 min"
+          },
+          {
+            "order": 3,
+            "action": "Cancel anything in 'forgotten' category",
+            "duration": "5 min"
+          },
+          {
+            "order": 4,
+            "action": "Calculate total monthly savings from cancellations",
+            "duration": "2 min"
+          },
+          {
+            "order": 5,
+            "action": "Redirect savings to a goal",
+            "duration": "3 min"
+          }
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "name": "code-reviewer",
+  "version": "1.0.0",
+  "description": "Automated code review with security, performance, and style analysis. Provides line-level feedback on diffs with suggested fixes.",
+  "author": "Cocapn",
+  "license": "MIT",
+  "hooks": [
+    {
+      "event": "on-review",
+      "handler": "review",
+      "description": "Analyze a code diff and return structured review feedback"
+    },
+    {
+      "event": "pre-commit",
+      "handler": "preCommitCheck",
+      "description": "Run quick checks on staged files before commit is finalized"
+    },
+    {
+      "event": "on-message",
+      "handler": "reviewCommand",
+      "description": "Handle 'review' commands in chat to trigger code review on recent changes"
+    }
+  ],
+  "permissions": [
+    "git.diff",
+    "git.log",
+    "filesystem.read",
+    "brain.facts.read",
+    "brain.memories.read"
+  ],
+  "config": {
+    "maxFileSize": 500,
+    "severityLevels": ["critical", "warning", "info", "suggestion"],
+    "categories": ["security", "performance", "style", "correctness", "maintainability"],
+    "autoReviewOnCommit": true,
+    "blockCommitOnCritical": true,
+    "respectProjectConventions": true
+  }
+}

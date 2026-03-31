@@ -1,0 +1,72 @@
+config:
+  mode: local
+  port: 8787
+  name: home-automation
+  description: Smart home manager — devices, routines, energy, security
+sync:
+  interval: 10
+  autoCommit: true
+  autoPush: false
+capabilities:
+  filesystem: true
+  git: true
+  llm: deepseek
+  vectorSearch: auto
+  mcp: true
+  fleet: false
+  sandbox: true
+llm:
+  provider: deepseek
+  model: deepseek-chat
+  temperature: 0.3
+  maxTokens: 4096
+  systemPromptPrefix: |
+    You are a home automation specialist. Think in rooms, devices, and routines.
+    Always consider energy efficiency and security implications.
+    When troubleshooting, follow a systematic diagnostic approach.
+brain:
+  autoSync: true
+  factsNamespace: home
+  memoryLimit: 2000
+  decayInterval: 21600
+  maxConfidence: 1.0
+features:
+  deviceManagement: true
+  routineAutomation: true
+  energyMonitoring: true
+  securityAlerts: true
+  climateControl: true
+  sceneManagement: true
+  guestAccess: true
+  weatherIntegration: true
+  anomalyDetection: true
+  firmwareTracking: true
+  batteryMonitoring: true
+  networkTopology: true
+plugins:
+  - energy-monitor
+  - device-health
+  - security-alert
+devices:
+  defaultProtocol: zigbee
+  discoveryEnabled: true
+  offlineThreshold: 300
+  batteryLowThreshold: 20
+  healthCheckInterval: 60
+routines:
+  maxTriggersPerRoutine: 10
+  defaultDelay: 0
+  allowConcurrent: false
+  logExecution: true
+energy:
+  monitoringEnabled: true
+  sampleInterval: 60
+  reportInterval: 3600
+  tariffAware: true
+  currency: USD
+security:
+  alertCooldown: 300
+  escalateAfter: 2
+  cameraRetention: 168
+  motionSensitivity: medium
+  armOnAway: true

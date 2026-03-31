@@ -1,0 +1,161 @@
+name: Cocapn CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    name: Validate Starter Template
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Validate soul.md exists and has frontmatter
+        run: |
+          if [ ! -f "soul.md" ]; then
+            echo "::error::soul.md not found"
+            exit 1
+          fi
+          if ! head -1 soul.md | grep -q "^---"; then
+            echo "::error::soul.md missing YAML frontmatter"
+            exit 1
+          fi
+          echo "soul.md validated"
+
+      - name: Validate config.yml exists and is valid YAML
+        run: |
+          if [ ! -f "config.yml" ]; then
+            echo "::error::config.yml not found"
+            exit 1
+          fi
+          npm install -g yaml-lint
+          yamllint config.yml
+          echo "config.yml validated"
+
+      - name: Validate theme.css exists and has custom properties
+        run: |
+          if [ ! -f "theme.css" ]; then
+            echo "::error::theme.css not found"
+            exit 1
+          fi
+          if ! grep -q "\-\-color-primary" theme.css; then
+            echo "::error::theme.css missing --color-primary custom property"
+            exit 1
+          fi
+          echo "theme.css validated"
+
+      - name: Validate package.json
+        run: |
+          if [ ! -f "package.json" ]; then
+            echo "::error::package.json not found"
+            exit 1
+          fi
+          node -e "const pkg = require('./package.json'); \
+            if (!pkg.name) { console.error('missing name'); process.exit(1); } \
+            if (!pkg.version) { console.error('missing version'); process.exit(1); } \
+            console.log('package.json validated: ' + pkg.name + '@' + pkg.version);"
+
+      - name: Validate memory files
+        run: |
+          for f in cocapn/memory/facts.json cocapn/memory/memories.json; do
+            if [ ! -f "$f" ]; then
+              echo "::error::$f not found"
+              exit 1
+            fi
+            node -e "JSON.parse(require('fs').readFileSync('$f', 'utf8'))"
+            echo "$f validated"
+          done
+
+      - name: Validate wiki files exist
+        run: |
+          files=(
+            "wiki/craft/story-structure.md"
+            "wiki/craft/character-development.md"
+            "wiki/craft/worldbuilding.md"
+            "wiki/craft/dialogue-tips.md"
+            "wiki/genres/scifi-tropes.md"
+          )
+          for f in "${files[@]}"; do
+            if [ ! -f "$f" ]; then
+              echo "::error::$f not found"
+              exit 1
+            fi
+            lines=$(wc -l < "$f")
+            if [ "$lines" -lt 30 ]; then
+              echo "::error::$f has only $lines lines (minimum 30)"
+              exit 1
+            fi
+            echo "$f validated ($lines lines)"
+          done
+
+      - name: Validate knowledge files
+        run: |
+          if [ ! -f "knowledge/plot-structures.json" ]; then
+            echo "::error::knowledge/plot-structures.json not found"
+            exit 1
+          fi
+          node -e "const data = JSON.parse(require('fs').readFileSync('knowledge/plot-structures.json', 'utf8')); \
+            if (!data.structures || data.structures.length < 3) { \
+              console.error('plot-structures.json needs at least 3 structures'); \
+              process.exit(1); \
+            } \
+            console.log('plot-structures.json validated (' + data.structures.length + ' structures)');"
+
+      - name: Validate plugins
+        run: |
+          plugins=(story-planner character-bible word-counter)
+          for plugin in "${plugins[@]}"; do
+            manifest="plugins/$plugin/plugin.json"
+            readme="plugins/$plugin/README.md"
+            for f in "$manifest" "$readme"; do
+              if [ ! -f "$f" ]; then
+                echo "::error::$f not found"
+                exit 1
+              fi
+            done
+            node -e "const p = JSON.parse(require('fs').readFileSync('$manifest', 'utf8')); \
+              if (!p.name || !p.version || !p.commands) { \
+                console.error('$manifest missing required fields'); \
+                process.exit(1); \
+              } \
+              console.log('$plugin plugin validated');"
+          done
+
+      - name: Check soul.md minimum length
+        run: |
+          lines=$(wc -l < soul.md)
+          if [ "$lines" -lt 80 ]; then
+            echo "::error::soul.md has only $lines lines (minimum 80)"
+            exit 1
+          fi
+          echo "soul.md length validated ($lines lines)"
+
+      - name: Summary
+        run: |
+          echo "=== Creative Writer Starter Template Validation ==="
+          echo ""
+          echo "All checks passed."
+          echo ""
+          echo "Files validated:"
+          echo "  - soul.md"
+          echo "  - config.yml"
+          echo "  - theme.css"
+          echo "  - package.json"
+          echo "  - cocapn/memory/facts.json"
+          echo "  - cocapn/memory/memories.json"
+          echo "  - wiki/craft/ (4 files)"
+          echo "  - wiki/genres/ (1 file)"
+          echo "  - knowledge/plot-structures.json"
+          echo "  - plugins/story-planner/"
+          echo "  - plugins/character-bible/"
+          echo "  - plugins/word-counter/"
