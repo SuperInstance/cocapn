@@ -80,6 +80,10 @@
  *   cocapn settings set <k> <v> — Set a setting
  *   cocapn settings reset [key] — Reset to defaults
  *   cocapn settings edit       — Open config in $EDITOR
+ *   cocapn themes list         — List available themes
+ *   cocapn themes apply <name> — Apply a theme
+ *   cocapn themes create       — Create custom theme interactively
+ *   cocapn themes preview <n>  — Show theme colors in terminal
  *   cocapn version             — Show version
  */
 
@@ -124,6 +128,7 @@ import { createOnboardCommand } from "./commands/onboard.js";
 import { createMobileCommand } from "./commands/mobile.js";
 import { createAgentsCommand } from "./commands/agents.js";
 import { createSettingsCommand } from "./commands/settings.js";
+import { createThemesCommand } from "./commands/themes.js";
 
 const VERSION = "0.1.0";
 
@@ -236,6 +241,9 @@ export function createCLI(): Command {
 
   // Settings command
   program.addCommand(createSettingsCommand());
+
+  // Theme management commands
+  program.addCommand(createThemesCommand());
 
   return program;
 }
