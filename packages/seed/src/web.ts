@@ -25,23 +25,27 @@ import type { Memory } from './memory.js';
 import type { Awareness } from './awareness.js';
 import type { Soul } from './soul.js';
 import { log as gitLog, stats as gitStats, diff as gitDiff } from './git.js';
+import { loadTheme, themeToCSS } from './theme.js';
 
 // ─── Inline HTML (loaded from public/index.html at startup) ────────────────────
 
 let htmlCache: string | null = null;
+let themedHTML: string | null = null;
 
-function getHTML(): string {
-  if (htmlCache) return htmlCache;
-  const paths = [
-    join(resolve('.'), 'public', 'index.html'),
-    join(import.meta.dirname ?? '.', '..', 'public', 'index.html'),
-  ];
-  for (const p of paths) {
-    if (existsSync(p)) { htmlCache = readFileSync(p, 'utf-8'); return htmlCache; }
+function getHTML(themeCSS: string): string {
+  if (themedHTML) return themedHTML;
+  if (!htmlCache) {
+    const paths = [
+      join(resolve('.'), 'public', 'index.html'),
+      join(import.meta.dirname ?? '.', '..', 'public', 'index.html'),
+    ];
+    for (const p of paths) {
+      if (existsSync(p)) { htmlCache = readFileSync(p, 'utf-8'); break; }
+    }
+    if (!htmlCache) htmlCache = `<!DOCTYPE html><html><body style="background:#0a0a0a;color:#e0e0e0;font-family:monospace;display:flex;justify-content:center;align-items:center;height:100vh"><div><h1>cocapn</h1><p>Chat UI not found. Use POST /api/chat</p></div></body></html>`;
   }
-  // Fallback minimal UI
-  htmlCache = `<!DOCTYPE html><html><body style="background:#0a0a0a;color:#e0e0e0;font-family:monospace;display:flex;justify-content:center;align-items:center;height:100vh"><div><h1>cocapn</h1><p>Chat UI not found. Use POST /api/chat</p></div></body></html>`;
-  return htmlCache;
+  themedHTML = htmlCache.replace('/*__THEME__*/', themeCSS);
+  return themedHTML;
 }
 
 // ─── JSON helper ───────────────────────────────────────────────────────────────
@@ -68,9 +72,12 @@ export function startWebServer(
   awareness: Awareness,
   soul: Soul,
 ) {
+  const theme = loadTheme(process.cwd(), soul.theme);
+  const themeCSS = themeToCSS(theme);
   const systemPrompt = `You are ${soul.name}. Your tone is ${soul.tone}.\n\n${soul.body}`;
   const self = awareness.perceive();
   const repoDir = process.cwd();
+  const avatar = soul.avatar || '🤖';
 
   const server = createServer(async (req, res) => {
     // CORS
@@ -85,7 +92,7 @@ export function startWebServer(
     // GET / — chat UI
     if (req.method === 'GET' && (path === '/' || path === '/index.html')) {
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-      res.end(getHTML());
+      res.end(getHTML(themeCSS));
       return;
     }
 
@@ -102,6 +109,7 @@ export function startWebServer(
       json(res, {
         name: soul.name,
         tone: soul.tone,
+        avatar,
         born: fresh.born,
         age: fresh.age,
         commits: fresh.commits,
@@ -112,6 +120,7 @@ export function startWebServer(
         feeling: fresh.feeling,
         memoryCount: memory.messages.length,
         factCount: Object.keys(memory.facts).length,
+        theme: { accent: theme.accent, mode: theme.mode },
       });
       return;
     }
