@@ -26,7 +26,7 @@ export function loadTheme(dir: string, preset?: string): Theme {
     const fp = join(resolve(dir), name);
     if (!existsSync(fp)) continue;
     const css = readFileSync(fp, 'utf-8');
-    const g = (n: string) => (css.match(new RegExp(`--${n}:\\s*([^;]+)`)) || [])[1]?.trim();
+    const g = (n: string) => (css.match(new RegExp(`--${n}:\\s*([^;\\s}]+)`)) || [])[1]?.trim();
     if (g('accent') || g('color-primary')) base.accent = g('accent') || g('color-primary')!;
     if (g('color-secondary')) base.accent2 = g('color-secondary');
   }

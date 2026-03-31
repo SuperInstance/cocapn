@@ -22,6 +22,7 @@ import * as contextMod from '../src/context.ts';
 import * as reflectMod from '../src/reflect.ts';
 import * as summarizeMod from '../src/summarize.ts';
 import * as pluginsMod from '../src/plugins.ts';
+import * as themeMod from '../src/theme.ts';
 
 const { loadSoul, soulToSystemPrompt, buildFullSystemPrompt } = soulMod;
 const { Memory } = memoryMod;
@@ -1236,5 +1237,118 @@ describe('PluginLoader', () => {
     await loader.load(pluginDir);
     expect(loader.plugins.length).toBe(1);
     expect(loader.list()[0].commands).toEqual([]);
+  });
+});
+
+// ─── Theme Tests ──────────────────────────────────────────────────────────────
+
+describe('Theme', () => {
+  let testDir: string;
+  beforeEach(() => { testDir = join(tmpdir(), `cocapn-theme-${uid()}`); mkdirSync(testDir, { recursive: true }); });
+  afterEach(() => { try { rmSync(testDir, { recursive: true, force: true }); } catch {} });
+
+  it('loads default theme when no preset or css', () => {
+    const theme = themeMod.loadTheme(testDir);
+    expect(theme.accent).toBe('#22c55e');
+    expect(theme.accent2).toBe('#16a34a');
+    expect(theme.mode).toBe('dark');
+    expect(theme.font).toBe('monospace');
+  });
+
+  it('loads ocean preset', () => {
+    const theme = themeMod.loadTheme(testDir, 'ocean');
+    expect(theme.accent).toBe('#1a73e8');
+    expect(theme.accent2).toBe('#1557b0');
+    expect(theme.mode).toBe('dark');
+    expect(theme.font).toBe('sans-serif');
+  });
+
+  it('loads forest preset', () => {
+    const theme = themeMod.loadTheme(testDir, 'forest');
+    expect(theme.accent).toBe('#2e7d32');
+    expect(theme.mode).toBe('dark');
+  });
+
+  it('loads sunset preset', () => {
+    const theme = themeMod.loadTheme(testDir, 'sunset');
+    expect(theme.accent).toBe('#e65100');
+  });
+
+  it('loads midnight preset', () => {
+    const theme = themeMod.loadTheme(testDir, 'midnight');
+    expect(theme.accent).toBe('#6a1b9a');
+    expect(theme.accent2).toBe('#4a148c');
+  });
+
+  it('loads minimal preset (light mode)', () => {
+    const theme = themeMod.loadTheme(testDir, 'minimal');
+    expect(theme.accent).toBe('#000000');
+    expect(theme.mode).toBe('light');
+    expect(theme.font).toBe('monospace');
+  });
+
+  it('falls back to default on unknown preset', () => {
+    const theme = themeMod.loadTheme(testDir, 'nonexistent');
+    expect(theme.accent).toBe('#22c55e');
+  });
+
+  it('overrides accent from theme.css', () => {
+    writeFileSync(join(testDir, 'theme.css'), ':root{--accent:#ff0000;--color-secondary:#880000}');
+    const theme = themeMod.loadTheme(testDir, 'ocean');
+    expect(theme.accent).toBe('#ff0000');
+    expect(theme.accent2).toBe('#880000');
+  });
+
+  it('reads color-primary as accent fallback', () => {
+    writeFileSync(join(testDir, 'theme.css'), ':root{--color-primary:#00ff00}');
+    const theme = themeMod.loadTheme(testDir);
+    expect(theme.accent).toBe('#00ff00');
+  });
+
+  it('reads theme.css from cocapn/ subdirectory', () => {
+    mkdirSync(join(testDir, 'cocapn'), { recursive: true });
+    writeFileSync(join(testDir, 'cocapn', 'theme.css'), ':root{--accent:#abcdef}');
+    const theme = themeMod.loadTheme(testDir);
+    expect(theme.accent).toBe('#abcdef');
+  });
+});
+
+describe('Theme CSS Generation', () => {
+  it('generates CSS variables for dark mode', () => {
+    const css = themeMod.themeToCSS({ accent: '#22c55e', accent2: '#16a34a', mode: 'dark', font: 'monospace' });
+    expect(css).toContain('--accent:#22c55e');
+    expect(css).toContain('--accent2:#16a34a');
+    expect(css).toContain('--bg:#09090b');
+    expect(css).toContain('--text:#d4d4d8');
+    expect(css).toContain('--user-bg:#1e3a5f');
+  });
+
+  it('generates CSS variables for light mode', () => {
+    const css = themeMod.themeToCSS({ accent: '#000', accent2: '#333', mode: 'light', font: 'sans-serif' });
+    expect(css).toContain('--bg:#ffffff');
+    expect(css).toContain('--text:#1a1a1a');
+    expect(css).toContain('--user-bg:#dbeafe');
+    expect(css).toContain('--bot-bg:#f0f0f0');
+  });
+
+  it('generates correct font for monospace', () => {
+    const css = themeMod.themeToCSS({ accent: '#000', accent2: '#333', mode: 'dark', font: 'monospace' });
+    expect(css).toContain('SF Mono');
+  });
+
+  it('generates correct font for sans-serif', () => {
+    const css = themeMod.themeToCSS({ accent: '#000', accent2: '#333', mode: 'dark', font: 'sans-serif' });
+    expect(css).toContain('system-ui');
+  });
+
+  it('generates correct font for serif', () => {
+    const css = themeMod.themeToCSS({ accent: '#000', accent2: '#333', mode: 'dark', font: 'serif' });
+    expect(css).toContain('Georgia');
+  });
+
+  it('output is valid CSS variable format', () => {
+    const css = themeMod.themeToCSS({ accent: '#1a73e8', accent2: '#1557b0', mode: 'dark', font: 'sans-serif' });
+    expect(css).toMatch(/^:root\{--[\w-]+:[^;]+;/);
+    expect(css).toContain('}');
   });
 });
