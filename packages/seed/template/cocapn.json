@@ -1,0 +1,8 @@
+{
+  "name": "unnamed",
+  "version": "0.1.0",
+  "model": "deepseek",
+  "memory": "cocapn/memory.json",
+  "soul": "soul.md",
+  "mode": "private"
+}
