@@ -1,0 +1,11 @@
+name = "cocapn-seed"
+main = "src/worker.ts"
+compatibility_date = "2024-12-01"
+
+[vars]
+PROVIDER = "deepseek"
+MODEL = "deepseek-chat"
+
+[[kv_namespaces]]
+binding = "MEMORY"
+id = "PLACEHOLDER_KV_ID"

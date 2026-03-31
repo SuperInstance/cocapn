@@ -891,6 +891,110 @@ describe('buildFullSystemPrompt', () => {
 
 import * as configMod from '../src/config.ts';
 
+// ─── Deployment Tests ─────────────────────────────────────────────────────────
+
+describe('Deployment — Dockerfile', () => {
+  const seedDir = join(import.meta.dirname ?? '.', '..');
+
+  it('Dockerfile exists and has multi-stage build', () => {
+    const dockerfilePath = join(seedDir, 'Dockerfile');
+    expect(existsSync(dockerfilePath)).toBe(true);
+    const content = readFileSync(dockerfilePath, 'utf-8');
+    // Multi-stage: builder + runtime
+    expect(content).toContain('AS builder');
+    expect(content).toContain('node:22-alpine');
+    expect(content).toContain('EXPOSE 3100');
+    expect(content).toContain('HEALTHCHECK');
+    expect(content).toContain('"node"');
+    expect(content).toContain('"--web"');
+    expect(content).toContain('"3100"');
+  });
+
+  it('Dockerfile is under 20 lines', () => {
+    const content = readFileSync(join(seedDir, 'Dockerfile'), 'utf-8');
+    const lines = content.split('\n').filter(l => l.trim() && !l.trim().startsWith('#'));
+    expect(lines.length).toBeLessThan(20);
+  });
+
+  it('docker-compose.yml exists and is valid', () => {
+    const composePath = join(seedDir, 'docker-compose.yml');
+    expect(existsSync(composePath)).toBe(true);
+    const content = readFileSync(composePath, 'utf-8');
+    expect(content).toContain('services:');
+    expect(content).toContain('cocapn:');
+    expect(content).toContain('build:');
+    expect(content).toContain('3100');
+    expect(content).toContain('DEEPSEEK_API_KEY');
+  });
+});
+
+describe('Deployment — Cloudflare Worker', () => {
+  const seedDir = join(import.meta.dirname ?? '.', '..');
+
+  it('wrangler.toml exists and is valid', () => {
+    const wranglerPath = join(seedDir, 'wrangler.toml');
+    expect(existsSync(wranglerPath)).toBe(true);
+    const content = readFileSync(wranglerPath, 'utf-8');
+    expect(content).toContain('main = "src/worker.ts"');
+    expect(content).toContain('MEMORY');
+    expect(content).toContain('kv_namespaces');
+  });
+
+  it('worker.ts module can be imported', async () => {
+    // Dynamic import to check the module loads without errors
+    const workerPath = join(seedDir, 'src', 'worker.ts');
+    expect(existsSync(workerPath)).toBe(true);
+    const content = readFileSync(workerPath, 'utf-8');
+    // Check it exports a fetch handler
+    expect(content).toContain('export default');
+    expect(content).toContain('fetch');
+    expect(content).toContain('handleChat');
+    expect(content).toContain('/api/chat');
+    expect(content).toContain('/api/status');
+    expect(content).toContain('/api/memory');
+    expect(content).toContain('KVNamespace');
+  });
+
+  it('worker.ts has SSE streaming for chat', () => {
+    const content = readFileSync(join(seedDir, 'src', 'worker.ts'), 'utf-8');
+    expect(content).toContain('text/event-stream');
+    expect(content).toContain('[DONE]');
+  });
+
+  it('worker.ts has inline HTML UI', () => {
+    const content = readFileSync(join(seedDir, 'src', 'worker.ts'), 'utf-8');
+    expect(content).toContain('cocapn');
+    expect(content).toContain('DOCTYPE html');
+  });
+});
+
+describe('Deployment — deploy script', () => {
+  const seedDir = join(import.meta.dirname ?? '.', '..');
+
+  it('deploy.sh exists and is executable content', () => {
+    const deployPath = join(seedDir, 'scripts', 'deploy.sh');
+    expect(existsSync(deployPath)).toBe(true);
+    const content = readFileSync(deployPath, 'utf-8');
+    expect(content).toContain('#!/usr/bin/env bash');
+    expect(content).toContain('deploy_local');
+    expect(content).toContain('deploy_docker');
+    expect(content).toContain('deploy_cloudflare');
+  });
+
+  it('deploy script handles all three platforms', () => {
+    const content = readFileSync(join(seedDir, 'scripts', 'deploy.sh'), 'utf-8');
+    expect(content).toContain('local|docker|cloudflare');
+    expect(content).toContain('detect_platform');
+  });
+
+  it('deploy script references correct port and command', () => {
+    const content = readFileSync(join(seedDir, 'scripts', 'deploy.sh'), 'utf-8');
+    expect(content).toContain('3100');
+    expect(content).toContain('--web');
+    expect(content).toContain('wrangler deploy');
+  });
+});
+
 describe('Config Validation', () => {
   it('accepts valid config with all fields', () => {
     const errors = configMod.validateConfig({ mode: 'private', port: 3100, llm: { provider: 'deepseek', model: 'deepseek-chat', temperature: 0.7, maxTokens: 2048 } });

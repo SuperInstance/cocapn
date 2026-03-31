@@ -1,0 +1,11 @@
+services:
+  cocapn:
+    build: .
+    ports:
+      - "${COCAPN_PORT:-3100}:3100"
+    volumes:
+      - ./cocapn:/app/cocapn
+    environment:
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY:-}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+    restart: unless-stopped

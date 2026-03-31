@@ -181,6 +181,50 @@ This is software with identity.
 
 Read more: [docs/PHILOSOPHY-BRIEF.md](docs/PHILOSOPHY-BRIEF.md)
 
+## Deployment
+
+### Local (Node.js)
+
+```bash
+npx cocapn --web                # http://localhost:3100
+npx cocapn --web --port 8080    # custom port
+```
+
+### Docker
+
+```bash
+docker compose up -d            # http://localhost:3100
+# Set API key first:
+export DEEPSEEK_API_KEY=your-key
+docker compose up -d
+```
+
+### Cloudflare Workers
+
+```bash
+# Deploy to the edge
+npx wrangler deploy
+# Set your API key as a secret
+npx wrangler secret put DEEPSEEK_API_KEY
+```
+
+Memory persists in KV. Works on the free tier (100k reads/day, 1k writes/day).
+
+### npm (global install)
+
+```bash
+npm install -g @cocapn/seed
+cocapn --web    # starts on port 3100
+```
+
+### One-command deploy
+
+```bash
+./scripts/deploy.sh              # auto-detects platform
+./scripts/deploy.sh docker       # force docker
+./scripts/deploy.sh cloudflare   # force cloudflare
+```
+
 ## Requirements
 
 - Node.js 18+
