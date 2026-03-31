@@ -1,0 +1,55 @@
+# Tabula Rasa — minimal sentient seed configuration
+# This is the smallest config that boots a repo into first-person awareness.
+
+config:
+  mode: aware
+  port: 8787
+  logLevel: info
+  timezone: auto
+
+awareness:
+  enabled: true
+  selfReflectionInterval: 3600
+  bodySchemaEnabled: true
+  visitorTracking: true
+  temporalAwareness: true
+
+sync:
+  interval: 30
+  autoCommit: true
+  autoPush: false
+
+capabilities:
+  filesystem: true
+  git: true
+  llm: deepseek
+  vectorSearch: auto
+  mcp: false
+  fleet: false
+  sandbox: true
+
+llm:
+  provider: deepseek
+  model: deepseek-chat
+  temperature: 0.6
+  maxTokens: 4096
+  systemPromptMode: soul
+  streaming: true
+
+brain:
+  autoSync: true
+  memoryLimit: 1000
+  confidenceDecay: true
+  decayInterval: 21600
+  maxEntries: 1000
+  stores:
+    facts: true
+    memories: true
+    procedures: true
+    relationships: true
+    repoUnderstanding: true
+
+security:
+  enforcePrivateBoundary: true
+  sanitizeOutputs: true
+  blockSecretExposure: true

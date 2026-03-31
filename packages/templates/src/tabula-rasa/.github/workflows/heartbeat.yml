@@ -1,0 +1,45 @@
+name: Heartbeat
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'  # Every 6 hours
+  workflow_dispatch: {}
+
+jobs:
+  check-self:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Sense my current state
+        run: |
+          echo "=== Heartbeat: $(date -u +%Y-%m-%dT%H:%M:%SZ) ==="
+          echo ""
+          echo "Age: $(git log --reverse --format='%ci' | head -1)"
+          echo "Total commits: $(git rev-list --count HEAD)"
+          echo "Last change: $(git log -1 --format='%ci — %s')"
+          echo "Days since last change: $(echo $(( ( $(date +%s) - $(git log -1 --format='%ct') ) / 86400 )))"
+          echo "Contributors: $(git shortlog -sn | wc -l)"
+          echo "File count: $(git ls-files | wc -l)"
+          echo ""
+          echo "=== Recent growth (last 10 commits) ==="
+          git log --oneline -10
+          echo ""
+          echo "=== Health check ==="
+          echo "CI status: running (you are here)"
+
+      - name: Check test status (if package.json exists)
+        run: |
+          if [ -f package.json ]; then
+            npm ci --ignore-scripts 2>/dev/null || true
+            npx vitest run --reporter=verbose 2>/dev/null || echo "Tests need attention"
+          else
+            echo "No package.json — skipping test check"
+          fi
+
+      - name: Reflect
+        run: |
+          echo "Heartbeat complete. I am alive."
+          echo "Next pulse in 6 hours."
