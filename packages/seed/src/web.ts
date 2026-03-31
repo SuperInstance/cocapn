@@ -2,11 +2,17 @@
  * Web — minimal HTTP chat server for cocapn.
  *
  * Routes:
- *   GET  /              → chat UI (index.html)
- *   GET  /cocapn/soul.md → public soul
- *   POST /api/chat      → streaming SSE chat
- *   GET  /api/status    → agent state (name, birth, files, last commit)
- *   GET  /api/memory    → recent memories
+ *   GET  /                → chat UI (index.html)
+ *   GET  /cocapn/soul.md  → public soul
+ *   GET  /api/status      → agent state (name, birth, files, last commit)
+ *   GET  /api/whoami      → full self-perception
+ *   GET  /api/memory      → recent memories
+ *   GET  /api/memory/search?q= → search memories
+ *   DELETE /api/memory    → clear all memories
+ *   GET  /api/git/log     → recent commits
+ *   GET  /api/git/stats   → repo statistics
+ *   GET  /api/git/diff    → uncommitted changes
+ *   POST /api/chat        → streaming SSE chat
  *
  * Zero dependencies. Uses only Node.js built-ins.
  */
@@ -18,6 +24,7 @@ import type { DeepSeek } from './llm.js';
 import type { Memory } from './memory.js';
 import type { Awareness } from './awareness.js';
 import type { Soul } from './soul.js';
+import { log as gitLog, stats as gitStats, diff as gitDiff } from './git.js';
 
 // ─── Inline HTML (loaded from public/index.html at startup) ────────────────────
 
@@ -63,49 +70,75 @@ export function startWebServer(
 ): void {
   const systemPrompt = `You are ${soul.name}. Your tone is ${soul.tone}.\n\n${soul.body}`;
   const self = awareness.perceive();
+  const repoDir = process.cwd();
 
   const server = createServer(async (req, res) => {
     // CORS
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
     if (req.method === 'OPTIONS') { res.writeHead(204); res.end(); return; }
 
-    const url = (req.url ?? '/').split('?')[0];
+    const url = new URL(req.url ?? '/', `http://localhost:${port}`);
+    const path = url.pathname;
 
     // GET / — chat UI
-    if (req.method === 'GET' && (url === '/' || url === '/index.html')) {
+    if (req.method === 'GET' && (path === '/' || path === '/index.html')) {
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
       res.end(getHTML());
       return;
     }
 
     // GET /cocapn/soul.md — public soul
-    if (req.method === 'GET' && url === '/cocapn/soul.md') {
+    if (req.method === 'GET' && path === '/cocapn/soul.md') {
       res.writeHead(200, { 'Content-Type': 'text/markdown; charset=utf-8' });
       res.end(`---\nname: ${soul.name}\ntone: ${soul.tone}\n---\n\n${soul.body}`);
       return;
     }
 
     // GET /api/status — agent state
-    if (req.method === 'GET' && url === '/api/status') {
+    if (req.method === 'GET' && path === '/api/status') {
+      const fresh = awareness.perceive();
       json(res, {
         name: soul.name,
         tone: soul.tone,
-        born: self.born,
-        age: self.age,
-        commits: self.commits,
-        files: self.files,
-        languages: self.languages,
-        branch: self.branch,
-        lastCommit: self.lastCommit,
-        feeling: self.feeling,
+        born: fresh.born,
+        age: fresh.age,
+        commits: fresh.commits,
+        files: fresh.files,
+        languages: fresh.languages,
+        branch: fresh.branch,
+        lastCommit: fresh.lastCommit,
+        feeling: fresh.feeling,
+        memoryCount: memory.messages.length,
+        factCount: Object.keys(memory.facts).length,
+      });
+      return;
+    }
+
+    // GET /api/whoami — full self-perception
+    if (req.method === 'GET' && path === '/api/whoami') {
+      const fresh = awareness.perceive();
+      json(res, {
+        name: soul.name,
+        born: fresh.born,
+        age: fresh.age,
+        description: fresh.description,
+        files: fresh.files,
+        languages: fresh.languages,
+        commits: fresh.commits,
+        branch: fresh.branch,
+        authors: fresh.authors,
+        lastCommit: fresh.lastCommit,
+        feeling: fresh.feeling,
+        memory: { facts: Object.keys(memory.facts).length, messages: memory.messages.length },
+        recentActivity: fresh.recentActivity,
       });
       return;
     }
 
     // GET /api/memory — recent memories
-    if (req.method === 'GET' && url === '/api/memory') {
+    if (req.method === 'GET' && path === '/api/memory') {
       json(res, {
         messages: memory.recent(20),
         facts: memory.facts,
@@ -113,8 +146,41 @@ export function startWebServer(
       return;
     }
 
+    // GET /api/memory/search?q=... — search memories
+    if (req.method === 'GET' && path === '/api/memory/search') {
+      const q = url.searchParams.get('q') ?? '';
+      if (!q) { json(res, { error: 'Missing query param "q"' }, 400); return; }
+      json(res, memory.search(q));
+      return;
+    }
+
+    // DELETE /api/memory — clear all memories
+    if (req.method === 'DELETE' && path === '/api/memory') {
+      memory.clear();
+      json(res, { ok: true });
+      return;
+    }
+
+    // GET /api/git/log — recent commits
+    if (req.method === 'GET' && path === '/api/git/log') {
+      json(res, gitLog(repoDir));
+      return;
+    }
+
+    // GET /api/git/stats — repo statistics
+    if (req.method === 'GET' && path === '/api/git/stats') {
+      json(res, gitStats(repoDir));
+      return;
+    }
+
+    // GET /api/git/diff — uncommitted changes
+    if (req.method === 'GET' && path === '/api/git/diff') {
+      json(res, { diff: gitDiff(repoDir) });
+      return;
+    }
+
     // POST /api/chat — streaming chat
-    if (req.method === 'POST' && url === '/api/chat') {
+    if (req.method === 'POST' && path === '/api/chat') {
       await handleChat(req, res, llm, memory, awareness, systemPrompt);
       return;
     }

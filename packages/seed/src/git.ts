@@ -47,3 +47,37 @@ export function narrate(dir: string): string {
   }
   return parts.join('\n');
 }
+
+export function log(dir: string, count = 10): Array<{ hash: string; date: string; author: string; msg: string }> {
+  const raw = git(`log -${count} --format="%h|%ai|%an|%s"`, dir);
+  if (!raw) return [];
+  return raw.split('\n').filter(Boolean).map(l => {
+    const [hash, date, author, ...msgParts] = l.split('|');
+    return { hash, date, author, msg: msgParts.join('|') };
+  });
+}
+
+export function stats(dir: string): { files: number; lines: number; languages: Record<string, number> } {
+  const files = parseInt(git('ls-files | wc -l', dir)) || 0;
+  const lines = parseInt(git("ls-files | xargs wc -l 2>/dev/null | tail -1 | awk '{print $1}'", dir)) || 0;
+
+  const langMap: Record<string, string> = {
+    '.ts': 'TypeScript', '.tsx': 'TypeScript', '.js': 'JavaScript', '.py': 'Python',
+    '.rs': 'Rust', '.go': 'Go', '.rb': 'Ruby', '.java': 'Java', '.cpp': 'C++',
+    '.c': 'C', '.cs': 'C#', '.swift': 'Swift', '.kt': 'Kotlin', '.md': 'Markdown',
+  };
+  const languages: Record<string, number> = {};
+  const fileList = git('ls-files', dir);
+  if (fileList) {
+    for (const f of fileList.split('\n')) {
+      const ext = f.slice(f.lastIndexOf('.'));
+      const lang = langMap[ext];
+      if (lang) languages[lang] = (languages[lang] || 0) + 1;
+    }
+  }
+  return { files, lines, languages };
+}
+
+export function diff(dir: string): string {
+  return git('diff --stat', dir) || git('diff --cached --stat', dir) || 'No uncommitted changes.';
+}

@@ -119,7 +119,7 @@ export class DeepSeek {
 
   // ── Internal ─────────────────────────────────────────────────────────────────
 
-  private async fetchAPI(body: Record<string, unknown>): Promise<Response> {
+  private async fetchAPI(body: Record<string, unknown>, retries = 1): Promise<Response> {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), this.timeout);
     try {
@@ -138,6 +138,12 @@ export class DeepSeek {
         }),
         signal: controller.signal,
       });
+    } catch (err) {
+      if (retries > 0) return this.fetchAPI(body, retries - 1);
+      if (err instanceof DOMException && err.name === 'AbortError') {
+        throw new Error(`Request timed out after ${this.timeout / 1000}s. The API may be slow or unreachable.`);
+      }
+      throw new Error(`Network error: ${String(err)}. Check your internet connection.`);
     } finally {
       clearTimeout(timer);
     }

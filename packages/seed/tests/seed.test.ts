@@ -2,7 +2,7 @@
 // @ts-nocheck
 /**
  * Seed tests for cocapn.
- * Tests soul, memory, awareness, LLM, and web modules.
+ * Tests soul, memory, awareness, LLM, web, and git modules.
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
@@ -16,6 +16,7 @@ import * as memoryMod from '../src/memory.ts';
 import * as awarenessMod from '../src/awareness.ts';
 import * as llmMod from '../src/llm.ts';
 import * as webMod from '../src/web.ts';
+import * as gitMod from '../src/git.ts';
 
 const { loadSoul, soulToSystemPrompt } = soulMod;
 const { Memory } = memoryMod;
@@ -123,7 +124,6 @@ describe('Memory', () => {
     const corruptDir = join(tmpdir(), `cocapn-corrupt-${uid()}-${Date.now()}`);
     mkdirSync(join(corruptDir, '.cocapn'), { recursive: true });
     writeFileSync(join(corruptDir, '.cocapn', 'memory.json'), 'bad json {{{');
-    // Verify the corrupted file is there
     const content = readFileSync(join(corruptDir, '.cocapn', 'memory.json'), 'utf-8');
     expect(content).toBe('bad json {{{');
     const mem = new Memory(corruptDir);
@@ -139,6 +139,40 @@ describe('Memory', () => {
     const r = mem.recent(2);
     expect(r.length).toBe(2);
     expect(r[0].content).toBe('b');
+  });
+
+  it('clears all data', () => {
+    const mem = new Memory(testDir);
+    mem.addMessage('user', 'Hello');
+    mem.setFact('key', 'value');
+    mem.clear();
+    expect(mem.messages).toEqual([]);
+    expect(mem.facts).toEqual({});
+    // Verify persistence
+    const mem2 = new Memory(testDir);
+    expect(mem2.messages).toEqual([]);
+    expect(mem2.facts).toEqual({});
+  });
+
+  it('searches messages and facts', () => {
+    const mem = new Memory(testDir);
+    mem.addMessage('user', 'I love TypeScript');
+    mem.addMessage('assistant', 'TypeScript is great');
+    mem.addMessage('user', 'What about Python?');
+    mem.setFact('language', 'TypeScript');
+
+    const results = mem.search('typescript');
+    expect(results.messages.length).toBe(2);
+    expect(results.facts.length).toBe(1);
+    expect(results.facts[0].key).toBe('language');
+  });
+
+  it('search returns empty on no match', () => {
+    const mem = new Memory(testDir);
+    mem.addMessage('user', 'Hello world');
+    const results = mem.search('xyz');
+    expect(results.messages.length).toBe(0);
+    expect(results.facts.length).toBe(0);
   });
 });
 
@@ -218,6 +252,66 @@ describe('DeepSeek', () => {
   });
 });
 
+// ─── Git Tests ─────────────────────────────────────────────────────────────────
+
+describe('Git module', () => {
+  let dir: string;
+  beforeEach(() => {
+    dir = join(tmpdir(), `cocapn-git-${uid()}`);
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(join(dir, 'app.ts'), 'const x = 1;\n');
+    writeFileSync(join(dir, 'util.py'), 'def foo(): pass\n');
+    execSync('git init', { cwd: dir, timeout: 5000 });
+    execSync('git config user.email test@test.com', { cwd: dir });
+    execSync('git config user.name Test', { cwd: dir });
+    execSync('git add .', { cwd: dir });
+    execSync('git commit -m "init"', { cwd: dir, timeout: 5000 });
+  });
+  afterEach(() => { try { rmSync(dir, { recursive: true, force: true }); } catch {} });
+
+  it('perceives git repo', () => {
+    const self = gitMod.perceive(dir);
+    expect(self.commits).toBe(1);
+    expect(self.files).toBe(2);
+    expect(self.lines).toBeGreaterThan(0);
+    expect(self.pulse).toBe('active');
+  });
+
+  it('narrates in first person', () => {
+    const text = gitMod.narrate(dir);
+    expect(text).toContain('memories');
+    expect(text).toContain('files');
+  });
+
+  it('returns log entries', () => {
+    const entries = gitMod.log(dir);
+    expect(entries.length).toBe(1);
+    expect(entries[0].msg).toBe('init');
+    expect(entries[0].hash).toBeTruthy();
+  });
+
+  it('returns stats', () => {
+    const s = gitMod.stats(dir);
+    expect(s.files).toBe(2);
+    expect(s.lines).toBeGreaterThan(0);
+    expect(s.languages.TypeScript).toBe(1);
+    expect(s.languages.Python).toBe(1);
+  });
+
+  it('returns diff', () => {
+    const d = gitMod.diff(dir);
+    expect(typeof d).toBe('string');
+  });
+
+  it('shows uncommitted changes in diff', () => {
+    writeFileSync(join(dir, 'new-file.ts'), 'export const y = 2;\n');
+    execSync('git add new-file.ts', { cwd: dir });
+    const d = gitMod.diff(dir);
+    // Staged changes should show
+    expect(d.length).toBeGreaterThan(0);
+  });
+});
+
 // ─── Web Route Tests ───────────────────────────────────────────────────────────
 
 describe('Web Routes', () => {
@@ -238,19 +332,27 @@ describe('Web Routes', () => {
 
   afterEach(() => { try { rmSync(dir, { recursive: true, force: true }); } catch {} });
 
-  it('GET / returns HTML chat UI', async () => {
-    const memory = new Memory(dir);
-    const awareness = new Awareness(dir);
-    const soul = { name: 'WebBot', tone: 'friendly', model: 'deepseek', body: 'I am a test bot.' };
-    const mockLlm = {
+  function makeMockLlm(response = 'Echo: ') {
+    return {
       async *chatStream(messages: any[]) {
         const userMsg = messages.find((m: any) => m.role === 'user');
-        if (userMsg) yield { type: 'content' as const, text: 'Echo: ' + userMsg.content };
+        if (userMsg) yield { type: 'content' as const, text: response + userMsg.content };
         yield { type: 'done' as const };
       },
     };
-    port = 3100 + Math.floor(Math.random() * 900);
-    webMod.startWebServer(port, mockLlm, memory, awareness, soul);
+  }
+
+  function setupServer(p: number, mockLlm: any) {
+    const memory = new Memory(dir);
+    const awareness = new Awareness(dir);
+    const soul = { name: 'WebBot', tone: 'friendly', model: 'deepseek', body: 'I am a test bot.' };
+    webMod.startWebServer(p, mockLlm, memory, awareness, soul);
+    return { memory, awareness, soul };
+  }
+
+  it('GET / returns HTML chat UI', async () => {
+    port = 4100 + Math.floor(Math.random() * 900);
+    setupServer(port, makeMockLlm());
     await new Promise(r => setTimeout(r, 100));
 
     const res = await fetch(`http://localhost:${port}/`);
@@ -258,15 +360,12 @@ describe('Web Routes', () => {
     const html = await res.text();
     expect(html).toContain('cocapn');
     expect(html).toContain('input');
+    expect(html).toContain('whoami');
   });
 
   it('GET /api/status returns agent info', async () => {
-    const memory = new Memory(dir);
-    const awareness = new Awareness(dir);
-    const soul = { name: 'WebBot', tone: 'friendly', model: 'deepseek', body: 'Test.' };
-    const mockLlm = { async *chatStream() { yield { type: 'done' as const }; } };
-    port = 3200 + Math.floor(Math.random() * 900);
-    webMod.startWebServer(port, mockLlm, memory, awareness, soul);
+    port = 4200 + Math.floor(Math.random() * 900);
+    setupServer(port, makeMockLlm());
     await new Promise(r => setTimeout(r, 100));
 
     const res = await fetch(`http://localhost:${port}/api/status`);
@@ -274,21 +373,27 @@ describe('Web Routes', () => {
     const data = await res.json() as any;
     expect(data.name).toBe('WebBot');
     expect(data.tone).toBe('friendly');
+    expect(data.memoryCount).toBeDefined();
+    expect(data.factCount).toBeDefined();
+  });
+
+  it('GET /api/whoami returns full self-perception', async () => {
+    port = 4300 + Math.floor(Math.random() * 900);
+    setupServer(port, makeMockLlm());
+    await new Promise(r => setTimeout(r, 100));
+
+    const res = await fetch(`http://localhost:${port}/api/whoami`);
+    expect(res.status).toBe(200);
+    const data = await res.json() as any;
+    expect(data.name).toBe('WebBot');
+    expect(data.memory).toBeDefined();
+    expect(data.memory.facts).toBe(0);
+    expect(data.authors).toBeDefined();
   });
 
   it('POST /api/chat streams and saves', async () => {
-    const memory = new Memory(dir);
-    const awareness = new Awareness(dir);
-    const soul = { name: 'WebBot', tone: 'friendly', model: 'deepseek', body: 'Test.' };
-    const mockLlm = {
-      async *chatStream(messages: any[]) {
-        const userMsg = messages.find((m: any) => m.role === 'user');
-        if (userMsg) yield { type: 'content' as const, text: 'Echo: ' + userMsg.content };
-        yield { type: 'done' as const };
-      },
-    };
-    port = 3300 + Math.floor(Math.random() * 900);
-    webMod.startWebServer(port, mockLlm, memory, awareness, soul);
+    port = 4400 + Math.floor(Math.random() * 900);
+    const { memory } = setupServer(port, makeMockLlm());
     await new Promise(r => setTimeout(r, 100));
 
     const res = await fetch(`http://localhost:${port}/api/chat`, {
@@ -306,12 +411,8 @@ describe('Web Routes', () => {
   });
 
   it('POST /api/chat rejects empty message', async () => {
-    const memory = new Memory(dir);
-    const awareness = new Awareness(dir);
-    const soul = { name: 'WebBot', tone: 'friendly', model: 'deepseek', body: 'Test.' };
-    const mockLlm = { async *chatStream() { yield { type: 'done' as const }; } };
-    port = 3400 + Math.floor(Math.random() * 900);
-    webMod.startWebServer(port, mockLlm, memory, awareness, soul);
+    port = 4500 + Math.floor(Math.random() * 900);
+    setupServer(port, makeMockLlm());
     await new Promise(r => setTimeout(r, 100));
 
     const res = await fetch(`http://localhost:${port}/api/chat`, {
@@ -323,17 +424,81 @@ describe('Web Routes', () => {
   });
 
   it('GET /cocapn/soul.md returns public soul', async () => {
-    const memory = new Memory(dir);
-    const awareness = new Awareness(dir);
-    const soul = { name: 'WebBot', tone: 'friendly', model: 'deepseek', body: 'I am a web test bot.' };
-    const mockLlm = { async *chatStream() { yield { type: 'done' as const }; } };
-    port = 3500 + Math.floor(Math.random() * 900);
-    webMod.startWebServer(port, mockLlm, memory, awareness, soul);
+    port = 4600 + Math.floor(Math.random() * 900);
+    setupServer(port, makeMockLlm());
     await new Promise(r => setTimeout(r, 100));
 
     const res = await fetch(`http://localhost:${port}/cocapn/soul.md`);
     expect(res.status).toBe(200);
     expect((await res.text())).toContain('WebBot');
+  });
+
+  it('GET /api/memory/search finds messages', async () => {
+    port = 4700 + Math.floor(Math.random() * 900);
+    const { memory } = setupServer(port, makeMockLlm());
+    memory.addMessage('user', 'I love TypeScript');
+    memory.addMessage('assistant', 'TypeScript is great');
+    await new Promise(r => setTimeout(r, 100));
+
+    const res = await fetch(`http://localhost:${port}/api/memory/search?q=typescript`);
+    expect(res.status).toBe(200);
+    const data = await res.json() as any;
+    expect(data.messages.length).toBe(2);
+  });
+
+  it('GET /api/memory/search requires q param', async () => {
+    port = 4750 + Math.floor(Math.random() * 900);
+    setupServer(port, makeMockLlm());
+    await new Promise(r => setTimeout(r, 100));
+
+    const res = await fetch(`http://localhost:${port}/api/memory/search`);
+    expect(res.status).toBe(400);
+  });
+
+  it('DELETE /api/memory clears memories', async () => {
+    port = 4800 + Math.floor(Math.random() * 900);
+    const { memory } = setupServer(port, makeMockLlm());
+    memory.addMessage('user', 'Remember this');
+    await new Promise(r => setTimeout(r, 100));
+
+    const res = await fetch(`http://localhost:${port}/api/memory`, { method: 'DELETE' });
+    expect(res.status).toBe(200);
+    const data = await res.json() as any;
+    expect(data.ok).toBe(true);
+  });
+
+  it('GET /api/git/log returns commits', async () => {
+    port = 4900 + Math.floor(Math.random() * 900);
+    setupServer(port, makeMockLlm());
+    await new Promise(r => setTimeout(r, 100));
+
+    const res = await fetch(`http://localhost:${port}/api/git/log`);
+    expect(res.status).toBe(200);
+    const data = await res.json() as any;
+    expect(Array.isArray(data)).toBe(true);
+  });
+
+  it('GET /api/git/stats returns stats', async () => {
+    port = 5000 + Math.floor(Math.random() * 900);
+    setupServer(port, makeMockLlm());
+    await new Promise(r => setTimeout(r, 100));
+
+    const res = await fetch(`http://localhost:${port}/api/git/stats`);
+    expect(res.status).toBe(200);
+    const data = await res.json() as any;
+    expect(data.files).toBeDefined();
+    expect(data.lines).toBeDefined();
+  });
+
+  it('GET /api/git/diff returns diff', async () => {
+    port = 5100 + Math.floor(Math.random() * 900);
+    setupServer(port, makeMockLlm());
+    await new Promise(r => setTimeout(r, 100));
+
+    const res = await fetch(`http://localhost:${port}/api/git/diff`);
+    expect(res.status).toBe(200);
+    const data = await res.json() as any;
+    expect(data.diff).toBeDefined();
   });
 });
 

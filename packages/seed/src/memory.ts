@@ -89,6 +89,23 @@ export class Memory {
     return 'Known facts:\n' + entries.map(([k, v]) => `- ${k}: ${v}`).join('\n');
   }
 
+  /** Clear all messages and facts */
+  clear(): void {
+    this.data = { messages: [], facts: {} };
+    this.save();
+  }
+
+  /** Search messages and facts for a query */
+  search(query: string): { messages: Message[]; facts: Array<{ key: string; value: string }> } {
+    const q = query.toLowerCase();
+    return {
+      messages: this.data.messages.filter(m => m.content.toLowerCase().includes(q)),
+      facts: Object.entries(this.data.facts)
+        .filter(([, v]) => v.toLowerCase().includes(q) || v.toLowerCase().includes(q))
+        .map(([key, value]) => ({ key, value })),
+    };
+  }
+
   // ── Persistence ──────────────────────────────────────────────────────────────
 
   private load(): MemoryStore {

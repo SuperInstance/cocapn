@@ -1,0 +1,56 @@
+{
+  "name": "@cocapn/seed",
+  "version": "0.1.0",
+  "description": "The repo IS the agent. Give any git repository self-awareness, memory, and a voice — one command, zero config.",
+  "keywords": [
+    "ai",
+    "agent",
+    "repo",
+    "git",
+    "consciousness",
+    "memory",
+    "self-aware",
+    "deepseek",
+    "chat",
+    "terminal",
+    "cocapn",
+    "soul",
+    "llm"
+  ],
+  "homepage": "https://github.com/nicholasgriffintn/cocapn#readme",
+  "bugs": {
+    "url": "https://github.com/nicholasgriffintn/cocapn/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nicholasgriffintn/cocapn.git",
+    "directory": "packages/seed"
+  },
+  "license": "MIT",
+  "author": "Nicholas Griffin <superinstance@cocapn.dev>",
+  "type": "module",
+  "bin": {
+    "cocapn": "./dist/index.js"
+  },
+  "main": "dist/index.js",
+  "files": [
+    "dist/",
+    "template/",
+    "scripts/"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.0",
+    "@types/node": "^20.0.0",
+    "vitest": "^1.6.0"
+  }
+}
