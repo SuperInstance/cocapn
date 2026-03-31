@@ -128,7 +128,7 @@ describe("getPrivateRepoTemplate", () => {
     expect(workflow).toBeTruthy();
     expect(workflow!.content).toContain("push:");
     expect(workflow!.content).toContain("schedule:");
-    expect(workflow!.content).toContain("cocapn maintain");
+    expect(workflow!.content).toContain("cocapn start --ci");
   });
 
   it("Dockerfile exposes port 3100", () => {

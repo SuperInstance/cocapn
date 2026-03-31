@@ -4,21 +4,49 @@ on:
   push:
     branches: [main]
   schedule:
-    - cron: "0 */6 * * *"  # Run every 6 hours for maintenance
+    - cron: '*/30 * * * *'  # Every 30 minutes
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Agent action'
+        required: false
+        default: 'status'
+        type: choice
+        options:
+          - status
+          - sync
+          - health-check
+          - reindex
 
 jobs:
   agent:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for RepoLearner
 
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: 22
 
-      - run: npm install
+      - name: Install cocapn
+        run: npm install -g cocapn
 
-      - name: Run agent maintenance
+      - name: Load secrets
+        run: |
+          echo "DEEPSEEK_API_KEY=${{ secrets.DEEPSEEK_API_KEY }}" >> .env.local
+          echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> .env.local
+
+      - name: Run agent
+        run: cocapn start --ci
         env:
-          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
-        run: npx cocapn maintain
+          COCAPN_MODE: private
+          COCAPN_CI: true
+
+      - name: Health check
+        run: cocapn status --json
+
+      - name: Auto-sync
+        if: github.event_name == 'push'
+        run: cocapn sync

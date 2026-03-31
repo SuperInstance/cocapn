@@ -1,0 +1,26 @@
+name: Sync Public Face
+
+on:
+  workflow_run:
+    workflows: ['Cocapn Agent']
+    types: [completed]
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion == 'success'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository_owner }}/my-agent-public
+          token: ${{ secrets.PUBLIC_REPO_TOKEN }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Pull from private repo
+        run: |
+          git remote add private ${{ github.server_url }}/${{ github.repository }}
+          git fetch private main
+          cocapn publish --from ../private-repo
