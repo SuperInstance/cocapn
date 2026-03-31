@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>cocapn</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{--bg:#09090b;--surface:#111113;--border:#1e1e22;--text:#d4d4d8;--muted:#71717a;
+    --accent:#22c55e;--accent2:#16a34a;--user-bg:#1e3a5f;--bot-bg:#16161a;--mono:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+  body{font-family:var(--mono);background:var(--bg);color:var(--text);height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden}
+  header{padding:14px 20px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 6px var(--accent);animation:pulse 2s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+  header h1{font-size:13px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--text)}
+  header .meta{font-size:11px;color:var(--muted);margin-left:auto}
+  #greeting{padding:20px 24px 8px;font-size:12px;color:var(--muted);line-height:1.6;flex-shrink:0}
+  #messages{flex:1;overflow-y:auto;padding:12px 20px 20px;scroll-behavior:smooth}
+  #messages::-webkit-scrollbar{width:4px}
+  #messages::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+  .msg{margin-bottom:14px;max-width:680px;animation:fadeIn .2s ease}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+  .msg.user{margin-left:auto;text-align:right}
+  .msg .role{font-size:10px;color:var(--muted);margin-bottom:3px;text-transform:uppercase;letter-spacing:.5px}
+  .msg .bubble{padding:10px 14px;border-radius:10px;white-space:pre-wrap;line-height:1.6;font-size:13px;word-break:break-word}
+  .msg.user .bubble{background:var(--user-bg);border-bottom-right-radius:2px;display:inline-block;text-align:left}
+  .msg.assistant .bubble{background:var(--bot-bg);border:1px solid var(--border);border-bottom-left-radius:2px}
+  .typing{display:inline-flex;gap:4px;padding:10px 14px}
+  .typing span{width:6px;height:6px;background:var(--muted);border-radius:50%;animation:bounce .6s ease-in-out infinite}
+  .typing span:nth-child(2){animation-delay:.1s}
+  .typing span:nth-child(3){animation-delay:.2s}
+  @keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+  #input-area{padding:14px 20px;background:var(--surface);border-top:1px solid var(--border);display:flex;gap:8px;flex-shrink:0}
+  #input{flex:1;padding:10px 14px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-family:var(--mono);font-size:13px;outline:none;transition:border-color .15s}
+  #input:focus{border-color:var(--accent)}
+  #input::placeholder{color:var(--muted)}
+  #send{padding:10px 18px;border-radius:8px;border:none;background:var(--accent);color:#000;font-family:var(--mono);font-weight:600;font-size:12px;cursor:pointer;transition:background .15s;letter-spacing:.3px}
+  #send:hover{background:var(--accent2)}
+  #send:disabled{opacity:.4;cursor:not-allowed}
+  @media(max-width:600px){
+    #messages{padding:12px}
+    #input-area{padding:10px 12px}
+    .msg{max-width:100%}
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="dot"></div>
+  <h1 id="agent-name">cocapn</h1>
+  <span class="meta" id="agent-meta"></span>
+</header>
+<div id="greeting"></div>
+<div id="messages"></div>
+<div id="input-area">
+  <input id="input" placeholder="Say something..." autofocus autocomplete="off" />
+  <button id="send">Send</button>
+</div>
+<script>
+const $=s=>document.querySelector(s);
+const msgs=$('#messages'),input=$('#input'),sendBtn=$('#send');
+let busy=false;
+
+// Load agent info on boot
+(async()=>{
+  try{
+    const r=await fetch('/api/status');
+    const s=await r.json();
+    $('#agent-name').textContent=s.name||'cocapn';
+    $('#agent-meta').textContent=`${s.commits} commits · ${s.files} files · ${s.branch}`;
+    $('#greeting').textContent=`I am ${s.name}. Born ${s.age||'recently'}. ${s.feeling||''}`;
+  }catch(e){
+    $('#greeting').textContent='Ready. Type a message to begin.';
+  }
+})();
+
+function esc(t){const d=document.createElement('div');d.textContent=t;return d.innerHTML}
+
+function addMsg(role,text){
+  const div=document.createElement('div');
+  div.className='msg '+role;
+  div.innerHTML=`<div class="role">${role}</div><div class="bubble">${esc(text)}</div>`;
+  msgs.appendChild(div);
+  msgs.scrollTop=msgs.scrollHeight;
+  return div;
+}
+
+function showTyping(){
+  const div=document.createElement('div');
+  div.className='msg assistant';div.id='typing';
+  div.innerHTML='<div class="role">assistant</div><div class="typing"><span></span><span></span><span></span></div>';
+  msgs.appendChild(div);msgs.scrollTop=msgs.scrollHeight;
+}
+
+function removeTyping(){const t=$('#typing');if(t)t.remove()}
+
+async function send(){
+  const text=input.value.trim();
+  if(!text||busy)return;
+  input.value='';busy=true;sendBtn.disabled=true;
+  addMsg('user',text);
+  showTyping();
+
+  try{
+    const res=await fetch('/api/chat',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({message:text}),
+    });
+    removeTyping();
+    const reader=res.body.getReader();
+    const dec=new TextDecoder();
+    let full='',msgDiv=null;
+
+    while(true){
+      const{done,value}=await reader.read();
+      if(done)break;
+      const chunk=dec.decode(value,{stream:true});
+      for(const line of chunk.split('\n')){
+        if(!line.startsWith('data: '))continue;
+        const p=line.slice(6).trim();
+        if(p==='[DONE]')break;
+        try{
+          const d=JSON.parse(p);
+          if(d.content){
+            full+=d.content;
+            if(!msgDiv)msgDiv=addMsg('assistant','');
+            msgDiv.querySelector('.bubble').textContent=full;
+            msgs.scrollTop=msgs.scrollHeight;
+          }
+          if(d.error){addMsg('assistant','Error: '+d.error);break;}
+        }catch{}
+      }
+    }
+    if(!full&&!msgDiv)addMsg('assistant','(no response)');
+  }catch(e){
+    removeTyping();
+    addMsg('assistant','Error: '+e.message);
+  }
+  busy=false;sendBtn.disabled=false;input.focus();
+}
+
+sendBtn.onclick=send;
+input.onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}};
+</script>
+</body>
+</html>
