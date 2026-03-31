@@ -156,5 +156,53 @@
     "ts": "2026-03-31T17:58:43.335Z",
     "channel": "webhook",
     "user": "slackbot"
+  },
+  {
+    "type": "message",
+    "ts": "2023-11-14T22:13:20.000Z",
+    "channel": "telegram",
+    "user": "testuser"
+  },
+  {
+    "type": "response",
+    "ts": "2026-03-31T21:23:27.162Z",
+    "channel": "telegram",
+    "user": "testuser"
+  },
+  {
+    "type": "message",
+    "ts": "2026-03-31T21:23:27.993Z",
+    "channel": "webhook",
+    "user": "slackbot"
+  },
+  {
+    "type": "response",
+    "ts": "2026-03-31T21:23:27.994Z",
+    "channel": "webhook",
+    "user": "slackbot"
+  },
+  {
+    "type": "message",
+    "ts": "2023-11-14T22:13:20.000Z",
+    "channel": "telegram",
+    "user": "testuser"
+  },
+  {
+    "type": "response",
+    "ts": "2026-03-31T21:24:12.280Z",
+    "channel": "telegram",
+    "user": "testuser"
+  },
+  {
+    "type": "message",
+    "ts": "2026-03-31T21:24:13.153Z",
+    "channel": "webhook",
+    "user": "slackbot"
+  },
+  {
+    "type": "response",
+    "ts": "2026-03-31T21:24:13.154Z",
+    "channel": "webhook",
+    "user": "slackbot"
   }
 ]
