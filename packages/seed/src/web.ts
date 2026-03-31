@@ -47,6 +47,7 @@ import type { A2AHub } from './a2a.js';
 import { Knowledge } from './knowledge.js';
 import { Analytics } from './analytics.js';
 import { normalizers, handleChannelMessage } from './channels.js';
+import { generateRepoMap } from './repo-map.js';
 
 // ─── Session helpers ───────────────────────────────────────────────────────────
 
@@ -131,7 +132,7 @@ export function startWebServer(
   const themeCSS = themeToCSS(theme);
   const systemPrompt = `You are ${soul.name}. Your tone is ${soul.tone}.\n\n${soul.body}`;
   const self = awareness.perceive();
-  const repoDir = process.cwd();
+  const repoDir = (awareness as any)['repoDir'] ?? process.cwd();
   const avatar = soul.avatar || '🤖';
 
   const knowledge = new Knowledge(repoDir);
@@ -351,8 +352,9 @@ export function startWebServer(
     // GET /api/files — list repo files (git ls-files)
     if (req.method === 'GET' && path === '/api/files') {
       try {
-        const files = execSync('git ls-files', { cwd: repoDir, encoding: 'utf-8', timeout: 5000 }).trim().split('\n').filter(Boolean);
-        json(res, files);
+        const tracked = execSync('git ls-files', { cwd: repoDir, encoding: 'utf-8', timeout: 5000 }).trim().split('\n').filter(Boolean);
+        const untracked = execSync('git ls-files -o --exclude-standard', { cwd: repoDir, encoding: 'utf-8', timeout: 5000 }).trim().split('\n').filter(Boolean);
+        json(res, [...new Set([...tracked, ...untracked])].sort());
       } catch { json(res, []); }
       return;
     }
@@ -377,6 +379,12 @@ export function startWebServer(
     // GET /api/analytics — usage stats
     if (req.method === 'GET' && path === '/api/analytics') {
       json(res, analytics.getStats());
+      return;
+    }
+
+    // GET /api/repo-map — file ranking map
+    if (req.method === 'GET' && path === '/api/repo-map') {
+      json(res, generateRepoMap(repoDir));
       return;
     }
 
@@ -429,7 +437,7 @@ export function startWebServer(
         analytics.track({ type: 'message', ts: msg.ts, channel: 'telegram', user: msg.from });
         const reply = await handleChannelMessage(msg, llm, systemPrompt);
         analytics.track({ type: 'response', ts: new Date().toISOString(), channel: 'telegram', user: msg.from });
-        json(res, reply.replyTo ?? { ok: true, text: reply.text });
+        json(res, reply.replyTo ? { ok: true, ...reply.replyTo } : { ok: true, text: reply.text });
       } catch { json(res, { ok: false, error: 'Invalid request' }, 400); }
       return;
     }

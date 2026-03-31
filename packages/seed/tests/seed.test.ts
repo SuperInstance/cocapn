@@ -2732,8 +2732,9 @@ describe('Analytics', () => {
   afterEach(() => { try { rmSync(testDir, { recursive: true, force: true }); } catch {} });
 
   it('tracks events and persists', () => {
-    analytics.track({ type: 'message', ts: '2024-01-01T00:00:00Z', user: 'u1' });
-    analytics.track({ type: 'response', ts: '2024-01-01T00:00:01Z', user: 'u1', duration: 500 });
+    const now = new Date().toISOString();
+    analytics.track({ type: 'message', ts: now, user: 'u1' });
+    analytics.track({ type: 'response', ts: now, user: 'u1', duration: 500 });
     const stats = analytics.getStats(7);
     expect(stats.total).toBe(1);
     expect(stats.avgResponseMs).toBe(500);
@@ -3109,5 +3110,121 @@ describe('PWA — manifest and service worker', () => {
     const html = readFileSync(htmlPath, 'utf-8');
     expect(html).toContain('/analytics');
     expect(html).toContain('/api/analytics');
+  });
+});
+
+// ─── Repo Map Tests ──────────────────────────────────────────────────────────────
+
+import * as repoMapMod from '../src/repo-map.ts';
+
+describe('Repo Map', () => {
+  let testDir: string;
+  beforeEach(() => {
+    testDir = join(tmpdir(), `cocapn-repomap-${uid()}`);
+    mkdirSync(join(testDir, 'src'), { recursive: true });
+    writeFileSync(join(testDir, 'src', 'core.ts'), 'export function greet(name: string): string { return `Hello ${name}`; }\nexport const VERSION = "1.0";\n');
+    writeFileSync(join(testDir, 'src', 'app.ts'), 'import { greet } from "./core.js";\nexport function main() { console.log(greet("world")); }\n');
+    writeFileSync(join(testDir, 'src', 'util.py'), 'def helper():\n    return 42\n');
+    writeFileSync(join(testDir, 'readme.md'), '# My Project\n\nA test project.\n');
+  });
+  afterEach(() => { try { rmSync(testDir, { recursive: true, force: true }); } catch {} });
+
+  it('scans source files with correct extensions', () => {
+    const files = repoMapMod.scanFiles(testDir);
+    expect(files).toContain('src/core.ts');
+    expect(files).toContain('src/app.ts');
+    expect(files).toContain('src/util.py');
+    expect(files).toContain('readme.md');
+  });
+
+  it('extracts function and export names', () => {
+    const content = 'export function foo() {}\nexport const bar = 1;\nclass Baz {}';
+    const names = repoMapMod.extractNames(content);
+    expect(names).toContain('foo');
+    expect(names).toContain('bar');
+    expect(names).toContain('Baz');
+  });
+
+  it('extracts import paths', () => {
+    const content = 'import { x } from "./mod.js";\nconst y = require("./other.js")';
+    const imports = repoMapMod.extractImports(content);
+    expect(imports).toContain('./mod.js');
+    expect(imports).toContain('./other.js');
+  });
+
+  it('ranks files by importance', () => {
+    const result = repoMapMod.generateRepoMap(testDir);
+    // core.ts is imported by app.ts, so it should rank higher
+    const core = result.find(e => e.path === 'src/core.ts');
+    const app = result.find(e => e.path === 'src/app.ts');
+    expect(core).toBeDefined();
+    expect(app).toBeDefined();
+    expect(core!.rank).toBeGreaterThan(app!.rank);
+  });
+
+  it('returns ordered list with all fields', () => {
+    const result = repoMapMod.generateRepoMap(testDir);
+    expect(result.length).toBeGreaterThan(0);
+    for (const entry of result) {
+      expect(entry.path).toBeTruthy();
+      expect(typeof entry.rank).toBe('number');
+      expect(typeof entry.importCount).toBe('number');
+      expect(Array.isArray(entry.exports)).toBe(true);
+      expect(Array.isArray(entry.imports)).toBe(true);
+    }
+  });
+});
+
+describe('Web — Repo Map API', () => {
+  let dir: string;
+  let port: number;
+
+  beforeEach(async () => {
+    dir = join(tmpdir(), `cocapn-rmapi-${uid()}`);
+    mkdirSync(dir, { recursive: true });
+    mkdirSync(join(dir, 'src'), { recursive: true });
+    writeFileSync(join(dir, 'package.json'), JSON.stringify({ name: 'rmapi-test' }));
+    writeFileSync(join(dir, 'src', 'core.ts'), 'export function greet() {}\n');
+    writeFileSync(join(dir, 'src', 'app.ts'), 'import { greet } from "./core.js";\n');
+    writeFileSync(join(dir, 'soul.md'), '---\nname: MapBot\ntone: neutral\n---\nI map repos.');
+    execSync('git init', { cwd: dir, timeout: 5000 });
+    execSync('git config user.email test@test.com', { cwd: dir });
+    execSync('git config user.name Test', { cwd: dir });
+    execSync('git add .', { cwd: dir });
+    execSync('git commit -m init', { cwd: dir, timeout: 5000 });
+  });
+
+  afterEach(() => { try { rmSync(dir, { recursive: true, force: true }); } catch {} });
+
+  function makeMockLlm() {
+    return {
+      async *chatStream(messages: any[]) {
+        const userMsg = messages.find((m: any) => m.role === 'user');
+        if (userMsg) yield { type: 'content' as const, text: 'Echo: ' + userMsg.content };
+        yield { type: 'done' as const };
+      },
+    };
+  }
+
+  function setupServer(p: number) {
+    const mem = new Memory(dir);
+    const aw = new Awareness(dir);
+    const soul = { name: 'MapBot', tone: 'neutral', model: 'deepseek', body: 'I map repos.' };
+    webMod.startWebServer(p, makeMockLlm(), mem, aw, soul);
+  }
+
+  it('GET /api/repo-map returns ranked file list', async () => {
+    port = 7900 + Math.floor(Math.random() * 900);
+    setupServer(port);
+    await new Promise(r => setTimeout(r, 100));
+
+    const res = await fetch(`http://localhost:${port}/api/repo-map`);
+    expect(res.status).toBe(200);
+    const data = await res.json() as any[];
+    expect(Array.isArray(data)).toBe(true);
+    expect(data.length).toBeGreaterThan(0);
+    const core = data.find((e: any) => e.path === 'src/core.ts');
+    expect(core).toBeDefined();
+    expect(core.rank).toBeGreaterThan(0);
   });
 });
