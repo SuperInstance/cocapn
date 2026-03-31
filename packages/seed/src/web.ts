@@ -315,6 +315,16 @@ export function startWebServer(
     res.end('Not found');
   });
 
+  server.on('error', (err: NodeJS.ErrnoException) => {
+    if (err.code === 'EADDRINUSE') {
+      console.error(`[cocapn] Port ${port} already in use. Use --port to specify a different port.`);
+      process.exit(1);
+    } else {
+      console.error(`[cocapn] Server error: ${err.message}`);
+      process.exit(1);
+    }
+  });
+
   server.listen(port, () => {
     console.log(`[cocapn] Web chat at http://localhost:${port}`);
   });
