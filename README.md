@@ -18,6 +18,39 @@ The repository IS the agent. Not a runtime that works on repos — the repo itse
 
 ---
 
+## Getting Started in 60 Seconds
+
+```bash
+# 1. Install cocapn into any git repo
+curl -fsSL https://cocapn.dev/install.sh | bash
+
+# 2. Set your API key (DeepSeek, OpenAI, or use local Ollama)
+export DEEPSEEK_API_KEY=your-key-here
+
+# 3. Talk to your repo
+npx cocapn
+```
+
+That's it. Your repo is alive. It knows its name, its history, and its purpose. It will learn about you and remember across sessions.
+
+```
+cocapn — the repo IS the agent
+I am myproject. My purpose: Build cool stuff. I was born 3 months ago, on 2024-01-15.
+I have 47 files in my body. I speak TypeScript, Python. I remember 152 commits.
+Type /help for commands
+
+you> Hello!
+myproject: ...
+```
+
+**Prefer a web UI?** `npx cocapn --web` starts a chat server at `http://localhost:3100`.
+
+**No API key?** Install [Ollama](https://ollama.com) and cocapn auto-detects it — fully local, no internet needed.
+
+**Customize your agent:** Edit `soul.md` to change who the agent is. See [packages/seed/docs/SOUL-GUIDE.md](packages/seed/docs/SOUL-GUIDE.md) for tips.
+
+---
+
 ## What It Is
 
 Cocapn is an open-source agent framework where **the repo is the agent**. Every repo you create with it is a self-contained AI entity — it remembers, learns, and grows. Git is the database. `soul.md` is the personality. The agent doesn't search your code — it *is* your code.
