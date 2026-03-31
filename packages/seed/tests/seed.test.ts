@@ -1461,3 +1461,392 @@ describe('A2A soul prompt', () => {
     expect(prompt).not.toContain('from undefined');
   });
 });
+
+// ─── Multi-User Memory Tests ──────────────────────────────────────────────────
+
+describe('Multi-User Memory', () => {
+  let testDir: string;
+  beforeEach(() => { testDir = join(tmpdir(), `cocapn-multi-${uid()}`); mkdirSync(testDir, { recursive: true }); });
+  afterEach(() => { try { rmSync(testDir, { recursive: true, force: true }); } catch {} });
+
+  it('creates and retrieves user records', () => {
+    const mem = new Memory(testDir);
+    const user = mem.getOrCreateUser('casey-1', 'Casey');
+    expect(user.name).toBe('Casey');
+    expect(user.messageCount).toBe(0);
+    expect(user.preferences).toEqual({});
+
+    const user2 = mem.getOrCreateUser('casey-1');
+    expect(user2.name).toBe('Casey'); // still Casey, not overwritten
+  });
+
+  it('creates second user independently', () => {
+    const mem = new Memory(testDir);
+    mem.getOrCreateUser('casey-1', 'Casey');
+    mem.getOrCreateUser('alex-2', 'Alex');
+
+    const users = mem.getUsers();
+    expect(users.length).toBe(2);
+    expect(users.some(u => u.name === 'Casey')).toBe(true);
+    expect(users.some(u => u.name === 'Alex')).toBe(true);
+  });
+
+  it('persists users across memory instances', () => {
+    const mem = new Memory(testDir);
+    mem.getOrCreateUser('casey-1', 'Casey');
+    const mem2 = new Memory(testDir);
+    const users = mem2.getUsers();
+    expect(users.length).toBe(1);
+    expect(users[0].name).toBe('Casey');
+  });
+
+  it('tags messages with userId', () => {
+    const mem = new Memory(testDir);
+    mem.getOrCreateUser('casey-1', 'Casey');
+    mem.addMessage('user', 'Hello from Casey', 'casey-1');
+    mem.addMessage('assistant', 'Hi Casey!', 'casey-1');
+    mem.getOrCreateUser('alex-2', 'Alex');
+    mem.addMessage('user', 'Hello from Alex', 'alex-2');
+
+    expect(mem.messages.length).toBe(3);
+    expect(mem.messages[0].userId).toBe('casey-1');
+    expect(mem.messages[2].userId).toBe('alex-2');
+  });
+
+  it('filters messages per user', () => {
+    const mem = new Memory(testDir);
+    mem.getOrCreateUser('casey-1', 'Casey');
+    mem.getOrCreateUser('alex-2', 'Alex');
+    mem.addMessage('user', 'Casey msg 1', 'casey-1');
+    mem.addMessage('assistant', 'Reply to Casey', 'casey-1');
+    mem.addMessage('user', 'Alex msg 1', 'alex-2');
+    mem.addMessage('assistant', 'Reply to Alex', 'alex-2');
+    mem.addMessage('user', 'Casey msg 2', 'casey-1');
+
+    const caseyMsgs = mem.recentForUser('casey-1', 20);
+    expect(caseyMsgs.length).toBe(3); // 2 user + 1 assistant
+    expect(caseyMsgs.every(m => !m.userId || m.userId === 'casey-1')).toBe(true);
+    expect(caseyMsgs.some(m => m.content.includes('Alex'))).toBe(false);
+  });
+
+  it('stores and retrieves per-user facts', () => {
+    const mem = new Memory(testDir);
+    mem.facts['global.fact'] = 'shared'; // global
+    mem['save']();
+    mem.setUserFact('casey-1', 'user.location', 'Portland');
+    mem.setUserFact('alex-2', 'user.location', 'Berlin');
+
+    const caseyFacts = mem.getFactsForUser('casey-1');
+    expect(caseyFacts['global.fact']).toBe('shared');
+    expect(caseyFacts['user.location']).toBe('Portland');
+
+    const alexFacts = mem.getFactsForUser('alex-2');
+    expect(alexFacts['global.fact']).toBe('shared');
+    expect(alexFacts['user.location']).toBe('Berlin');
+  });
+
+  it('does not leak user facts across users', () => {
+    const mem = new Memory(testDir);
+    mem.setUserFact('casey-1', 'user.secret', 'caseys-secret');
+    mem.setUserFact('alex-2', 'user.secret', 'alexs-secret');
+
+    const caseyFacts = mem.getFactsForUser('casey-1');
+    const alexFacts = mem.getFactsForUser('alex-2');
+
+    expect(caseyFacts['user.secret']).toBe('caseys-secret');
+    expect(alexFacts['user.secret']).toBe('alexs-secret');
+    expect(caseyFacts['user.secret']).not.toBe('alexs-secret');
+  });
+
+  it('formats per-user facts', () => {
+    const mem = new Memory(testDir);
+    mem.facts['global.color'] = 'blue';
+    mem['save']();
+    mem.setUserFact('casey-1', 'user.name', 'Casey');
+
+    const text = mem.formatFactsForUser('casey-1');
+    expect(text).toContain('global.color: blue');
+    expect(text).toContain('user.name: Casey');
+  });
+
+  it('updates messageCount on addMessage with userId', () => {
+    const mem = new Memory(testDir);
+    mem.getOrCreateUser('casey-1', 'Casey');
+    mem.addMessage('user', 'msg1', 'casey-1');
+    mem.addMessage('user', 'msg2', 'casey-1');
+
+    const user = mem.getOrCreateUser('casey-1');
+    expect(user.messageCount).toBe(2);
+  });
+
+  it('per-user facts persist across instances', () => {
+    const mem = new Memory(testDir);
+    mem.setUserFact('casey-1', 'user.likes', 'TypeScript');
+
+    const mem2 = new Memory(testDir);
+    const facts = mem2.getFactsForUser('casey-1');
+    expect(facts['user.likes']).toBe('TypeScript');
+  });
+});
+
+// ─── Multi-User Extract Tests ────────────────────────────────────────────────
+
+describe('Multi-User Extract', () => {
+  let testDir: string;
+  beforeEach(() => { testDir = join(tmpdir(), `cocapn-multi-ext-${uid()}`); mkdirSync(testDir, { recursive: true }); });
+  afterEach(() => { try { rmSync(testDir, { recursive: true, force: true }); } catch {} });
+
+  it('saves facts to user store when userId provided', () => {
+    const mem = new Memory(testDir);
+    mem.getOrCreateUser('casey-1', 'Casey');
+    const result = extractMod.extract('My name is Casey', mem, 'casey-1');
+    expect(result.facts).toContainEqual({ key: 'user.name', value: 'Casey' });
+
+    const facts = mem.getFactsForUser('casey-1');
+    expect(facts['user.name']).toBe('Casey');
+  });
+
+  it('saves facts to global store when no userId', () => {
+    const mem = new Memory(testDir);
+    extractMod.extract('My name is Casey', mem);
+    expect(mem.facts['user.name']).toBe('Casey');
+  });
+
+  it('separates facts between users', () => {
+    const mem = new Memory(testDir);
+    mem.getOrCreateUser('casey-1', 'Casey');
+    mem.getOrCreateUser('alex-2', 'Alex');
+
+    extractMod.extract('My name is Casey', mem, 'casey-1');
+    extractMod.extract('My name is Alex', mem, 'alex-2');
+
+    expect(mem.getFactsForUser('casey-1')['user.name']).toBe('Casey');
+    expect(mem.getFactsForUser('alex-2')['user.name']).toBe('Alex');
+  });
+});
+
+// ─── Multi-User Context Tests ────────────────────────────────────────────────
+
+describe('Multi-User Context', () => {
+  let testDir: string;
+  beforeEach(() => { testDir = join(tmpdir(), `cocapn-multi-ctx-${uid()}`); mkdirSync(testDir, { recursive: true }); });
+  afterEach(() => { try { rmSync(testDir, { recursive: true, force: true }); } catch {} });
+
+  function makeSoul() { return { name: 'TestBot', tone: 'friendly', model: 'deepseek', body: 'I help.' }; }
+
+  it('includes user name in context when userId set', () => {
+    const mem = new Memory(testDir);
+    mem.getOrCreateUser('casey-1', 'Casey');
+    const awareness = new Awareness(testDir);
+    const result = contextMod.buildContext({
+      soul: makeSoul(), memory: mem, awareness,
+      userMessage: 'hi', userId: 'casey-1',
+    });
+    expect(result).toContain('Casey');
+    expect(result).toContain('talking to');
+  });
+
+  it('uses user-scoped facts in context', () => {
+    const mem = new Memory(testDir);
+    mem.getOrCreateUser('casey-1', 'Casey');
+    mem.setUserFact('casey-1', 'user.location', 'Portland');
+    const awareness = new Awareness(testDir);
+    const result = contextMod.buildContext({
+      soul: makeSoul(), memory: mem, awareness,
+      userMessage: 'What about Portland weather?', userId: 'casey-1',
+    });
+    expect(result).toContain('Portland');
+  });
+
+  it('does not leak other user facts in context', () => {
+    const mem = new Memory(testDir);
+    mem.getOrCreateUser('casey-1', 'Casey');
+    mem.getOrCreateUser('alex-2', 'Alex');
+    mem.setUserFact('alex-2', 'user.secret', 'alexs-secret-value');
+    const awareness = new Awareness(testDir);
+    const result = contextMod.buildContext({
+      soul: makeSoul(), memory: mem, awareness,
+      userMessage: 'Tell me everything', userId: 'casey-1',
+    });
+    expect(result).not.toContain('alexs-secret-value');
+  });
+
+  it('shows user-scoped recent messages only', () => {
+    const mem = new Memory(testDir);
+    mem.getOrCreateUser('casey-1', 'Casey');
+    mem.getOrCreateUser('alex-2', 'Alex');
+    mem.addMessage('user', 'Casey private message', 'casey-1');
+    mem.addMessage('assistant', 'Reply to Casey', 'casey-1');
+    mem.addMessage('user', 'Alex private message', 'alex-2');
+
+    const awareness = new Awareness(testDir);
+    const result = contextMod.buildContext({
+      soul: makeSoul(), memory: mem, awareness,
+      userMessage: 'What did I say?', userId: 'casey-1',
+    });
+    expect(result).toContain('Casey private message');
+    expect(result).not.toContain('Alex private message');
+  });
+
+  it('works without userId (backward compat)', () => {
+    const mem = new Memory(testDir);
+    mem.facts['global.fact'] = 'hello';
+    mem['save']();
+    mem.addMessage('user', 'global message');
+    const awareness = new Awareness(testDir);
+    const result = contextMod.buildContext({
+      soul: makeSoul(), memory: mem, awareness,
+      userMessage: 'test',
+    });
+    expect(result).toContain('You are TestBot');
+    expect(result).toContain('global message');
+  });
+});
+
+// ─── Web Multi-User Tests ────────────────────────────────────────────────────
+
+describe('Web Multi-User', () => {
+  let dir: string;
+  let port: number;
+
+  beforeEach(async () => {
+    dir = join(tmpdir(), `cocapn-webmulti-${uid()}`);
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(join(dir, 'package.json'), JSON.stringify({ name: 'web-multi-test' }));
+    writeFileSync(join(dir, 'soul.md'), '---\nname: MultiBot\ntone: friendly\n---\nI am a multi-user test bot.');
+    execSync('git init', { cwd: dir, timeout: 5000 });
+    execSync('git config user.email test@test.com', { cwd: dir });
+    execSync('git config user.name Test', { cwd: dir });
+    execSync('git add .', { cwd: dir });
+    execSync('git commit -m init', { cwd: dir, timeout: 5000 });
+  });
+
+  afterEach(() => { try { rmSync(dir, { recursive: true, force: true }); } catch {} });
+
+  function makeMockLlm() {
+    return {
+      async *chatStream(messages: any[]) {
+        const userMsg = messages.find((m: any) => m.role === 'user');
+        if (userMsg) yield { type: 'content' as const, text: 'Reply: ' + userMsg.content };
+        yield { type: 'done' as const };
+      },
+    };
+  }
+
+  function setupServer(p: number, mockLlm: any) {
+    const memory = new Memory(dir);
+    const awareness = new Awareness(dir);
+    const soul = { name: 'MultiBot', tone: 'friendly', model: 'deepseek', body: 'I help.' };
+    webMod.startWebServer(p, mockLlm, memory, awareness, soul);
+    return { memory, awareness, soul };
+  }
+
+  it('POST /api/chat sets session cookie', async () => {
+    port = 6000 + Math.floor(Math.random() * 900);
+    setupServer(port, makeMockLlm());
+    await new Promise(r => setTimeout(r, 100));
+
+    const res = await fetch(`http://localhost:${port}/api/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: 'Hello' }),
+    });
+    expect(res.status).toBe(200);
+    const setCookie = res.headers.get('set-cookie');
+    expect(setCookie).toContain('cocapn-session=');
+  });
+
+  it('GET /api/users returns empty initially', async () => {
+    port = 6100 + Math.floor(Math.random() * 900);
+    setupServer(port, makeMockLlm());
+    await new Promise(r => setTimeout(r, 100));
+
+    const res = await fetch(`http://localhost:${port}/api/users`);
+    expect(res.status).toBe(200);
+    const data = await res.json() as any;
+    expect(data.users).toEqual([]);
+  });
+
+  it('POST /api/user/identify sets user name', async () => {
+    port = 6200 + Math.floor(Math.random() * 900);
+    const { memory } = setupServer(port, makeMockLlm());
+    await new Promise(r => setTimeout(r, 100));
+
+    // First, create a session via chat
+    const chatRes = await fetch(`http://localhost:${port}/api/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: 'Hi' }),
+    });
+    const cookie = chatRes.headers.getSetCookie().find((c: string) => c.includes('cocapn-session'));
+
+    // Identify
+    const idRes = await fetch(`http://localhost:${port}/api/user/identify`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Cookie': cookie ?? '' },
+      body: JSON.stringify({ name: 'Casey' }),
+    });
+    expect(idRes.status).toBe(200);
+    const idData = await idRes.json() as any;
+    expect(idData.ok).toBe(true);
+    expect(idData.user.name).toBe('Casey');
+  });
+
+  it('POST /api/chat with name registers user', async () => {
+    port = 6300 + Math.floor(Math.random() * 900);
+    const { memory } = setupServer(port, makeMockLlm());
+    await new Promise(r => setTimeout(r, 100));
+
+    await fetch(`http://localhost:${port}/api/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: 'Hello', name: 'Casey' }),
+    });
+
+    const users = memory.getUsers();
+    expect(users.length).toBe(1);
+    expect(users[0].name).toBe('Casey');
+  });
+
+  it('two sessions create separate users', async () => {
+    port = 6400 + Math.floor(Math.random() * 900);
+    const { memory } = setupServer(port, makeMockLlm());
+    await new Promise(r => setTimeout(r, 100));
+
+    // Session 1
+    await fetch(`http://localhost:${port}/api/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: 'Hi', name: 'Casey' }),
+    });
+
+    // Session 2 (no cookie sharing)
+    await fetch(`http://localhost:${port}/api/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: 'Hey', name: 'Alex' }),
+    });
+
+    const users = memory.getUsers();
+    expect(users.length).toBe(2);
+    expect(users.some(u => u.name === 'Casey')).toBe(true);
+    expect(users.some(u => u.name === 'Alex')).toBe(true);
+  });
+
+  it('messages are tagged with userId', async () => {
+    port = 6500 + Math.floor(Math.random() * 900);
+    const { memory } = setupServer(port, makeMockLlm());
+    await new Promise(r => setTimeout(r, 100));
+
+    const res = await fetch(`http://localhost:${port}/api/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: 'Tagged message', name: 'Casey' }),
+    });
+
+    // Find the user message
+    const userMsgs = memory.messages.filter(m => m.content === 'Tagged message');
+    expect(userMsgs.length).toBe(1);
+    expect(userMsgs[0].userId).toBeTruthy();
+  });
+});

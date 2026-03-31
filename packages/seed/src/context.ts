@@ -84,7 +84,7 @@ export function buildContext(opts: ContextOptions): string {
 
   // 6. Fill remaining budget with older messages (user-scoped)
   const allUserMsgs = userId
-    ? memory.recentForUser(userId, MAX_MESSAGES)
+    ? memory.recentForUser(userId, 100)
     : memory.messages;
   const remaining = MAX_CHARS - used;
   if (remaining > 200 && allUserMsgs.length > RECENT_MESSAGES) {
