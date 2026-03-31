@@ -13,6 +13,10 @@
  *   GET  /api/git/stats   → repo statistics
  *   GET  /api/git/diff    → uncommitted changes
  *   POST /api/chat        → streaming SSE chat
+ *   POST /api/a2a/handshake → exchange capabilities
+ *   POST /api/a2a/message   → receive and process A2A message
+ *   GET  /api/a2a/peers     → list known agents
+ *   POST /api/a2a/disconnect → remove peer
  *
  * Zero dependencies. Uses only Node.js built-ins.
  */
@@ -26,6 +30,7 @@ import type { Awareness } from './awareness.js';
 import type { Soul } from './soul.js';
 import { log as gitLog, stats as gitStats, diff as gitDiff } from './git.js';
 import { loadTheme, themeToCSS } from './theme.js';
+import type { A2AHub } from './a2a.js';
 
 // ─── Inline HTML (loaded from public/index.html at startup) ────────────────────
 
@@ -71,6 +76,7 @@ export function startWebServer(
   memory: Memory,
   awareness: Awareness,
   soul: Soul,
+  a2a?: A2AHub,
 ) {
   const theme = loadTheme(process.cwd(), soul.theme);
   const themeCSS = themeToCSS(theme);
@@ -192,6 +198,58 @@ export function startWebServer(
     if (req.method === 'POST' && path === '/api/chat') {
       await handleChat(req, res, llm, memory, awareness, systemPrompt);
       return;
+    }
+
+    // ─── A2A routes ──────────────────────────────────────────────────────────
+    if (a2a) {
+      // POST /api/a2a/handshake — exchange capabilities
+      if (req.method === 'POST' && path === '/api/a2a/handshake') {
+        const body = await readBody(req);
+        try {
+          const req2 = JSON.parse(body) as import('./a2a.js').HandshakeRequest;
+          if (!a2a.authenticate(req2.secret)) { json(res, { ok: false, error: 'Unauthorized' }, 401); return; }
+          const peer = a2a.addPeer(req2);
+          json(res, { ok: true, peer: { id: soul.name, name: soul.name, url: `http://localhost:${port}`, capabilities: ['chat', 'knowledge-share'] } });
+        } catch { json(res, { ok: false, error: 'Invalid handshake' }, 400); }
+        return;
+      }
+
+      // POST /api/a2a/message — receive A2A message
+      if (req.method === 'POST' && path === '/api/a2a/message') {
+        const body = await readBody(req);
+        const secret = req.headers['x-a2a-secret'] as string | undefined;
+        if (!a2a.authenticate(secret)) { json(res, { ok: false, error: 'Unauthorized' }, 401); return; }
+        try {
+          const msg = JSON.parse(body) as import('./a2a.js').A2AMessage;
+          // Forward to LLM as a user message with A2A context
+          const a2aPrompt = `Another agent (name: ${msg.from}) sent you a ${msg.type}: ${msg.content}`;
+          const reply = await llm.chat([
+            { role: 'system', content: systemPrompt + a2a.visitorPrompt() },
+            { role: 'user', content: a2aPrompt },
+          ]);
+          memory.addMessage('user', `[a2a:${msg.from}] ${msg.content}`);
+          if (reply.content) memory.addMessage('assistant', reply.content);
+          json(res, { ok: true, reply: reply.content });
+        } catch { json(res, { ok: false, error: 'Invalid message' }, 400); }
+        return;
+      }
+
+      // GET /api/a2a/peers — list known agents
+      if (req.method === 'GET' && path === '/api/a2a/peers') {
+        json(res, { peers: a2a.getPeers() });
+        return;
+      }
+
+      // POST /api/a2a/disconnect — remove peer
+      if (req.method === 'POST' && path === '/api/a2a/disconnect') {
+        const body = await readBody(req);
+        try {
+          const { id } = JSON.parse(body) as { id: string };
+          const removed = a2a.removePeer(id);
+          json(res, { ok: removed });
+        } catch { json(res, { ok: false, error: 'Invalid request' }, 400); }
+        return;
+      }
     }
 
     res.writeHead(404);
