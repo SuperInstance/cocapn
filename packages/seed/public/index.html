@@ -127,6 +127,21 @@ footer{padding:5px 16px;font-size:10px;color:var(--muted);text-align:center;back
 .file-body{flex:1;overflow:auto;padding:10px 14px;font-family:var(--mono);font-size:11.5px;line-height:1.65;white-space:pre;color:var(--text);tab-size:2}
 .install-banner{position:fixed;bottom:60px;left:50%;transform:translateX(-50%);background:var(--accent);color:#fff;padding:10px 20px;border-radius:12px;font-size:13px;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,.3);z-index:25;display:none;transition:opacity .3s}
 .install-banner.show{display:block}
+/* Gallery panel */
+.gallery-panel{position:fixed;top:0;right:-360px;width:340px;height:100%;background:var(--surface);border-left:1px solid var(--border);padding:20px;overflow-y:auto;transition:right .3s cubic-bezier(.4,0,.2,1);z-index:20}
+.gallery-panel.open{right:0}
+.gallery-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.gallery-img{width:100%;border-radius:8px;cursor:pointer;transition:transform .15s;border:1px solid var(--border)}
+.gallery-img:hover{transform:scale(1.03)}
+.gallery-empty{color:var(--muted);font-size:12px;text-align:center;padding:30px 0}
+.gen-btn{background:var(--accent);color:#fff;border:none;padding:6px 14px;border-radius:8px;font-size:11px;cursor:pointer;transition:all .15s}
+.gen-btn:hover{opacity:.85}
+.gen-sel{padding:4px 8px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:11px;outline:none}
+.img-viewer{position:fixed;inset:0;z-index:30;background:rgba(0,0,0,.85);display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.img-viewer.on{display:flex}
+.img-viewer img{max-width:90%;max-height:90%;border-radius:12px;box-shadow:0 8px 40px rgba(0,0,0,.5)}
+.img-viewer .close{position:absolute;top:16px;right:16px;background:rgba(255,255,255,.15);border:none;color:#fff;width:36px;height:36px;border-radius:50%;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.bubble img{max-width:100%;border-radius:8px;margin:8px 0}
 @media(max-width:600px){
   #messages{padding:12px 10px}
   #input-area{padding:8px 10px}
@@ -151,6 +166,7 @@ footer{padding:5px 16px;font-size:10px;color:var(--muted);text-align:center;back
     <button class="ibtn" id="files-btn" onclick="toggleRepoPanel()" title="Toggle files">📁</button>
     <button class="ibtn" id="sound-btn" onclick="toggleSound()" title="Toggle sound">🔕</button>
     <button class="ibtn" onclick="toggleMode()" title="Toggle theme">🌓</button>
+    <button class="ibtn" id="gallery-btn" onclick="toggleGallery()" title="Image gallery">🖼️</button>
     <button class="ibtn" onclick="toggleSidebar()" title="Info (Ctrl+/)">☰</button>
   </div>
 </header>
@@ -198,6 +214,8 @@ footer{padding:5px 16px;font-size:10px;color:var(--muted);text-align:center;back
     <span>/memory — show memories</span>
     <span>/git log — recent commits</span>
     <span>/analytics — usage stats</span>
+    <span>/generate &lt;prompt&gt; — generate image</span>
+    <span>/gallery — show image gallery</span>
     <span>/clear — clear chat</span>
   </div>
   <h3>Connected Agents</h3>
@@ -222,6 +240,19 @@ footer{padding:5px 16px;font-size:10px;color:var(--muted);text-align:center;back
     <span id="char-count"></span>
   </div>
   <button class="send-btn" id="send" title="Send (Enter)">↑</button>
+</div>
+<div class="gallery-panel" id="gallery-panel">
+  <button class="close" onclick="toggleGallery()" style="position:absolute;top:12px;right:12px;background:none;border:none;color:var(--muted);cursor:pointer;font-size:20px">&times;</button>
+  <h3 style="font-size:10px;color:var(--accent);text-transform:uppercase;letter-spacing:1.5px;font-weight:600;margin-bottom:12px">Image Gallery</h3>
+  <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap">
+    <select class="gen-sel" id="gen-res"><option value="512x512">Draft (512)</option><option value="1024x1024" selected>Standard (1024)</option><option value="2048x2048">High-res (2048)</option></select>
+    <select class="gen-sel" id="gen-style"><option value="">Auto</option><option value="realistic">Realistic</option><option value="pixel-art">Pixel Art</option><option value="watercolor">Watercolor</option><option value="sketch">Sketch</option><option value="fantasy illustration">Fantasy</option></select>
+  </div>
+  <div class="gallery-grid" id="gallery-grid"><div class="gallery-empty">No images yet. Use /generate to create one.</div></div>
+</div>
+<div class="img-viewer" id="img-viewer" onclick="closeImageViewer()">
+  <button class="close">&times;</button>
+  <img id="img-viewer-src" src="" alt="Generated image">
 </div>
 <footer>Powered by <strong>cocapn</strong> · the repo IS the agent</footer>
 <div class="install-banner" id="install-banner" onclick="installApp()">Install app</div>
@@ -400,6 +431,8 @@ function md(text){
   h=h.replace(/^[-*] (.+)$/gm,'<li>$1</li>');
   h=h.replace(/((?:<li>.*<\/li>\n?)+)/g,'<ul>$1</ul>');
   h=h.replace(/__BLOCK_(\d+)__/g,(_,i)=>blocks[parseInt(i)]);
+  // Render base64 images from vision API
+  h=h.replace(/!\[([^\]]*)\]\(data:image\/png;base64,([^)]+)\)/g,'<img src="data:image/png;base64,$2" alt="$1" style="max-width:100%;border-radius:8px;margin:8px 0">');
   return h;
 }
 function copyCode(btn){
@@ -432,6 +465,20 @@ setInterval(()=>{document.querySelectorAll('.ts[data-t]').forEach(el=>{el.textCo
 async function send(){
   const text=input.value.trim();if(!text||busy)return;
   input.value='';cc.textContent='';input.style.height='auto';busy=true;sendBtn.disabled=true;
+  // Handle /generate command
+  if(text.startsWith('/generate ')){
+    const prompt=text.slice(10).trim();
+    if(!prompt){addMsg('assistant','Usage: /generate <prompt>');busy=false;sendBtn.disabled=false;input.focus();return;}
+    addMsg('user',text);showTyping();
+    try{
+      const res=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt,options:{resolution:$('#gen-res').value,style:$('#gen-style').value}})});
+      hideTyping();
+      if(!res.ok){const e=await res.json().catch(()=>({}));addMsg('assistant','Error: '+(e.error||res.status));}
+      else{const d=await res.json();addMsg('assistant','![Generated image](data:image/png;base64,'+d.base64+')');loadGallery();}
+    }catch(e){hideTyping();addMsg('assistant','Error: '+e.message);}
+    updMem();busy=false;sendBtn.disabled=false;input.focus();return;
+  }
+  if(text.startsWith('/gallery')){addMsg('user',text);toggleGallery();loadGallery();busy=false;sendBtn.disabled=false;input.focus();return;}
   // Handle slash commands
   if(text.startsWith('/analytics')){
     try{
@@ -480,6 +527,21 @@ document.onkeydown=e=>{
   if(e.ctrlKey&&e.key==='/'){e.preventDefault();toggleHelp();}
   if(e.ctrlKey&&e.key==='e'){e.preventDefault();toggleRepoPanel();}
 };
+// Gallery functions
+function toggleGallery(){
+  const panel=$('#gallery-panel'),open=panel.classList.toggle('open');
+  if(open)loadGallery();
+}
+async function loadGallery(){
+  try{
+    const r=await fetch('/api/gallery');if(!r.ok)return;
+    const d=await r.json(),grid=$('#gallery-grid');
+    if(!d.images?.length){grid.innerHTML='<div class="gallery-empty">No images yet. Use /generate to create one.</div>';return;}
+    grid.innerHTML=d.images.slice(-20).reverse().map(img=>`<img class="gallery-img" src="data:image/png;base64,${img.base64}" onclick="viewImage(this.src)" alt="${esc(img.metadata?.prompt||'')}">`).join('');
+  }catch{}
+}
+function viewImage(src){$('#img-viewer-src').src=src;$('#img-viewer').classList.add('on');}
+function closeImageViewer(){$('#img-viewer').classList.remove('on');}
 </script>
 </body>
 </html>

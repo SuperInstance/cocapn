@@ -25,6 +25,7 @@ import * as pluginsMod from '../src/plugins.ts';
 import * as themeMod from '../src/theme.ts';
 import * as knowledgeMod from '../src/knowledge.ts';
 import * as learnMod from '../src/learn.ts';
+import * as visionMod from '../src/vision.ts';
 
 const { loadSoul, soulToSystemPrompt, buildFullSystemPrompt } = soulMod;
 const { Memory } = memoryMod;
@@ -3226,5 +3227,166 @@ describe('Web — Repo Map API', () => {
     const core = data.find((e: any) => e.path === 'src/core.ts');
     expect(core).toBeDefined();
     expect(core.rank).toBeGreaterThan(0);
+  });
+});
+
+// ─── Vision Tests ──────────────────────────────────────────────────────────────
+
+describe('Vision', () => {
+  it('creates Vision instance with defaults', () => {
+    const v = new visionMod.Vision();
+    expect(v).toBeDefined();
+  });
+
+  it('creates Vision instance with config', () => {
+    const v = new visionMod.Vision({ apiKey: 'test-key', defaultModel: 'gemini-2.0-flash', defaultResolution: '2048x2048' });
+    expect(v).toBeDefined();
+  });
+
+  it('gallery starts empty', () => {
+    expect(visionMod.getGallery()).toEqual([]);
+  });
+
+  it('addToGallery and getGallery work', () => {
+    const result: visionMod.GenerateResult = {
+      url: 'test-url',
+      base64: 'dGVzdA==',
+      metadata: { model: 'gemini-2.0-flash-exp', resolution: '512x512', prompt: 'test', created: new Date().toISOString() },
+    };
+    visionMod.addToGallery(result);
+    const gallery = visionMod.getGallery();
+    expect(gallery.length).toBe(1);
+    expect(gallery[0].metadata.prompt).toBe('test');
+  });
+
+  it('gallery caps at 100 entries', () => {
+    for (let i = 0; i < 105; i++) {
+      visionMod.addToGallery({
+        url: `url-${i}`, base64: `b64-${i}`,
+        metadata: { model: 'test', resolution: '512x512', prompt: `prompt-${i}`, created: new Date().toISOString() },
+      });
+    }
+    const gallery = visionMod.getGallery();
+    expect(gallery.length).toBeLessThanOrEqual(100);
+  });
+
+  it('getGallery returns last 50', () => {
+    // Gallery already has entries from previous test, just check it returns at most 50
+    const gallery = visionMod.getGallery();
+    expect(gallery.length).toBeLessThanOrEqual(50);
+  });
+
+  it('generateImage throws without valid API key', async () => {
+    const v = new visionMod.Vision({ apiKey: 'invalid-key' });
+    await expect(v.generateImage('test prompt')).rejects.toThrow();
+  });
+
+  it('upscaleImage throws without valid API key', async () => {
+    const v = new visionMod.Vision({ apiKey: 'invalid-key' });
+    await expect(v.upscaleImage('dGVzdA==')).rejects.toThrow();
+  });
+
+  it('generateSpriteSheet throws without valid API key', async () => {
+    const v = new visionMod.Vision({ apiKey: 'invalid-key' });
+    await expect(v.generateSpriteSheet('warrior')).rejects.toThrow();
+  });
+
+  it('generateScene throws without valid API key', async () => {
+    const v = new visionMod.Vision({ apiKey: 'invalid-key' });
+    await expect(v.generateScene('dark forest')).rejects.toThrow();
+  });
+});
+
+// ─── Vision Web Endpoint Tests ─────────────────────────────────────────────────
+
+describe('Vision Web Endpoints', () => {
+  let dir: string;
+  let port: number;
+
+  beforeEach(async () => {
+    dir = join(tmpdir(), `cocapn-vision-${uid()}`);
+    mkdirSync(dir, { recursive: true });
+    mkdirSync(join(dir, 'src'), { recursive: true });
+    writeFileSync(join(dir, 'package.json'), JSON.stringify({ name: 'vision-test' }));
+    writeFileSync(join(dir, 'src', 'app.ts'), 'export const app = true;\n');
+    writeFileSync(join(dir, 'soul.md'), '---\nname: VisionBot\ntone: creative\n---\nI make images.');
+    execSync('git init', { cwd: dir, timeout: 5000 });
+    execSync('git config user.email test@test.com', { cwd: dir });
+    execSync('git config user.name Test', { cwd: dir });
+    execSync('git add .', { cwd: dir });
+    execSync('git commit -m init', { cwd: dir, timeout: 5000 });
+  });
+
+  afterEach(() => { try { rmSync(dir, { recursive: true, force: true }); } catch {} });
+
+  function makeMockLlm() {
+    return {
+      async *chatStream(messages: any[]) {
+        const userMsg = messages.find((m: any) => m.role === 'user');
+        if (userMsg) yield { type: 'content' as const, text: 'Echo: ' + userMsg.content };
+        yield { type: 'done' as const };
+      },
+    };
+  }
+
+  function setupServer(p: number) {
+    const mem = new Memory(dir);
+    const aw = new Awareness(dir);
+    const soul = { name: 'VisionBot', tone: 'creative', model: 'deepseek', body: 'I make images.' };
+    webMod.startWebServer(p, makeMockLlm(), mem, aw, soul);
+  }
+
+  it('GET /api/generate/status returns vision availability', async () => {
+    port = 8000 + Math.floor(Math.random() * 900);
+    setupServer(port);
+    await new Promise(r => setTimeout(r, 100));
+
+    const res = await fetch(`http://localhost:${port}/api/generate/status`);
+    expect(res.status).toBe(200);
+    const data = await res.json() as any;
+    expect(typeof data.available).toBe('boolean');
+  });
+
+  it('POST /api/generate returns 503 without vision config', async () => {
+    port = 8100 + Math.floor(Math.random() * 900);
+    setupServer(port);
+    await new Promise(r => setTimeout(r, 100));
+
+    const res = await fetch(`http://localhost:${port}/api/generate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt: 'a dragon' }),
+    });
+    expect(res.status).toBe(503);
+    const data = await res.json() as any;
+    expect(data.error).toContain('Vision not configured');
+  });
+
+  it('POST /api/generate returns 400 without prompt', async () => {
+    port = 8200 + Math.floor(Math.random() * 900);
+    setupServer(port);
+    webMod.initVision({ apiKey: 'test-key' });
+    await new Promise(r => setTimeout(r, 100));
+
+    const res = await fetch(`http://localhost:${port}/api/generate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    });
+    expect(res.status).toBe(400);
+    const data = await res.json() as any;
+    expect(data.error).toContain('prompt is required');
+  });
+
+  it('GET /api/gallery returns empty gallery', async () => {
+    port = 8300 + Math.floor(Math.random() * 900);
+    setupServer(port);
+    await new Promise(r => setTimeout(r, 100));
+
+    const res = await fetch(`http://localhost:${port}/api/gallery`);
+    expect(res.status).toBe(200);
+    const data = await res.json() as any;
+    expect(data.images).toBeDefined();
+    expect(Array.isArray(data.images)).toBe(true);
   });
 });

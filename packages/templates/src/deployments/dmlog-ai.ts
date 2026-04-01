@@ -58,13 +58,27 @@ const dmlogAi: DeploymentTemplate = {
     },
   },
 
-  modules: ['personality', 'knowledge', 'templates', 'fleet'],
+  modules: ['personality', 'knowledge', 'templates', 'fleet', 'vision'],
 
   plugins: ['dice-roller', 'character-stats', 'npc-panel'],
 
   env: {
     DEPLOYMENT_VERTICAL: 'dmlog',
     DEPLOYMENT_DOMAIN: 'dmlog.ai',
+    GOOGLE_API_KEY: '',
+  },
+
+  vision: {
+    provider: 'google',
+    endpoints: [
+      'POST /api/generate/character',
+      'POST /api/generate/scene',
+      'POST /api/generate/monster',
+      'POST /api/generate/map',
+      'POST /api/generate/item',
+      'POST /api/generate/sprite',
+      'GET /api/gallery',
+    ],
   },
 
   web: {

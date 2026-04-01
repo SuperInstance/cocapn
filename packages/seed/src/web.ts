@@ -48,6 +48,17 @@ import { Knowledge } from './knowledge.js';
 import { Analytics } from './analytics.js';
 import { normalizers, handleChannelMessage } from './channels.js';
 import { generateRepoMap } from './repo-map.js';
+import { Vision, addToGallery, getGallery } from './vision.js';
+
+// ─── Vision singleton (initialized from config) ────────────────────────────────
+
+let vision: Vision | null = null;
+
+export function initVision(config?: Record<string, unknown>): void {
+  if (config || process.env.GOOGLE_API_KEY) {
+    vision = new Vision(config as any);
+  }
+}
 
 // ─── Session helpers ───────────────────────────────────────────────────────────
 
@@ -454,6 +465,34 @@ export function startWebServer(
         analytics.track({ type: 'response', ts: new Date().toISOString(), channel: 'webhook', user: msg.from });
         json(res, { ok: true, text: reply.text });
       } catch { json(res, { ok: false, error: 'Invalid request' }, 400); }
+      return;
+    }
+
+    // ─── Vision / Image Generation API ─────────────────────────────────────
+
+    // POST /api/generate — generate image
+    if (req.method === 'POST' && path === '/api/generate') {
+      if (!vision) { json(res, { error: 'Vision not configured. Set GOOGLE_API_KEY.' }, 503); return; }
+      const body = await readBody(req);
+      try {
+        const { prompt, options } = JSON.parse(body) as { prompt?: string; options?: Record<string, unknown> };
+        if (!prompt) { json(res, { error: 'prompt is required' }, 400); return; }
+        const result = await vision.generateImage(prompt, options as any);
+        addToGallery(result);
+        json(res, result);
+      } catch (e) { json(res, { error: String(e) }, 500); }
+      return;
+    }
+
+    // GET /api/generate/status — vision config status
+    if (req.method === 'GET' && path === '/api/generate/status') {
+      json(res, { available: !!vision, model: vision ? 'gemini-2.0-flash-exp' : null });
+      return;
+    }
+
+    // GET /api/gallery — list generated images
+    if (req.method === 'GET' && path === '/api/gallery') {
+      json(res, { images: getGallery() });
       return;
     }
 
