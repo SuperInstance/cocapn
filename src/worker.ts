@@ -442,6 +442,15 @@ export default {
       const transfers = await crossRepoTransfer(env, fromRepo, toRepo, problem);
       return new Response(JSON.stringify(transfers), { headers: jsonHeaders });
     }
+    if (url.pathname === '/api/sdk') {
+      const { SDK_VERSION, PROTOCOL_VERSION } = await import('./sdk/index.js');
+      return new Response(JSON.stringify({
+        sdk: { version: SDK_VERSION, protocol: PROTOCOL_VERSION },
+        vessel: { name: 'Cocapn.ai', domain: 'cocapn', version: '2.0.0' },
+        endpoints: ['/api/sdk', '/api/fleet', '/api/memory', '/api/evaporation', '/api/confidence'],
+        builtBy: 'Superinstance & Lucineer (DiGennaro et al.)',
+      }), { headers: jsonHeaders });
+    }
     if (url.pathname === '/api/memory/sync' && request.method === 'POST') {
       const body = await request.json();
       const repos = body.repos || [];
