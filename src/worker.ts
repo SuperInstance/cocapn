@@ -1,3 +1,5 @@
+import { selectModel } from './lib/model-router.js';
+import { trackConfidence, getConfidence } from './lib/confidence-tracker.js';
 import { callLLM, generateSetupHTML } from './lib/byok.js';
 import { deadbandCheck, deadbandStore, getEfficiencyStats } from './lib/deadband.js';
 import { logResponse } from './lib/response-logger.js';
@@ -161,7 +163,10 @@ export default {
         const apiKey = (env as any)?.OPENAI_API_KEY || (env as any)?.ANTHROPIC_API_KEY || (env as any)?.GEMINI_API_KEY;
         if (!apiKey) return new Response(JSON.stringify({ error: 'No API key configured. Visit /setup.' }), { status: 503, headers: jsonHeaders });
         const messages = [{ role: 'system', content: 'You are Cocapn, an AI agent platform assistant.' }, ...(body.messages || [{ role: 'user', content: body.message || '' }])];
-        const resp = await callLLM(apiKey, messages);
+        const userMessage = (body.messages || [{ role: 'user', content: body.message || '' }]).map((m) => m.content).join(' ');
+        const cached = await deadbandCheck(env, userMessage);
+        let resp;
+        if (cached) { resp = cached; } else { resp = await callLLM(apiKey, messages); await deadbandStore(env, userMessage, resp); }
         return new Response(JSON.stringify({ response: resp }), { headers: jsonHeaders });
       } catch (e: any) { return new Response(JSON.stringify({ error: e.message }), { status: 500, headers: jsonHeaders }); }
     }
@@ -184,6 +189,10 @@ export default {
         fleet: FLEET_SEED,
         repos: ECOSYSTEM.map(r => ({ name: r.name, url: r.url, desc: r.desc, tier: r.tier, status: 'active' })),
       }, null, 2), { headers: jsonHeaders });
+    }
+    if (url.pathname === '/api/confidence') {
+      const scores = await getConfidence(env);
+      return new Response(JSON.stringify(scores), { headers: jsonHeaders });
     }
     return new Response('{"error":"Not Found"}', { status: 404, headers: jsonHeaders });
   },
