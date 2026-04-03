@@ -147,6 +147,157 @@ body{font-family:'Inter',system-ui;background:#07060f;color:#e0e0e0;overflow-x:h
 </body></html>`;
 }
 
+function dashboardHTML(): string {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width">
+<title>Cocapn.ai — Fleet Efficiency Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',system-ui;background:#07060f;color:#e0e0e0;min-height:100vh}
+.topbar{background:linear-gradient(135deg,#7c3aed 0%,#3b82f6 100%);padding:1rem 2rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem}
+.topbar h1{font-size:1.3rem;color:#fff;font-weight:800}
+.topbar .meta{font-size:.75rem;color:#c4b5fd;display:flex;gap:1rem;align-items:center}
+.topbar .meta .live{width:8px;height:8px;border-radius:50%;background:#34d399;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.container{max-width:1200px;margin:0 auto;padding:1.5rem}
+.overview{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:.75rem;margin-bottom:2rem}
+.ov-card{background:#0d0c1a;border:1px solid #1e1b3a;border-radius:10px;padding:1.25rem}
+.ov-card .label{font-size:.7rem;color:#6b7280;text-transform:uppercase;letter-spacing:1px}
+.ov-card .value{font-size:1.8rem;font-weight:800;margin-top:.25rem;background:linear-gradient(90deg,#c4b5fd,#60a5fa);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.ov-card .sub{font-size:.7rem;color:#4b5563;margin-top:.25rem}
+.section-title{font-size:1.1rem;font-weight:700;color:#a78bfa;margin-bottom:1rem;display:flex;align-items:center;gap:.5rem}
+.repo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:.75rem;margin-bottom:2rem}
+.repo-card{background:#0d0c1a;border:1px solid #1e1b3a;border-radius:10px;padding:1.25rem;transition:border-color .3s}
+.repo-card:hover{border-color:#7c3aed}
+.repo-card.offline{opacity:.5}
+.repo-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem}
+.repo-name{font-weight:700;font-size:.95rem;color:#e0e0e0}
+.repo-domain{font-size:.7rem;color:#6b7280}
+.repo-badge{font-size:.6rem;padding:.2rem .6rem;border-radius:10px;font-weight:700}
+.tier1{background:rgba(167,139,250,.15);color:#a78bfa}
+.tier2{background:rgba(59,130,246,.15);color:#60a5fa}
+.tier3{background:rgba(107,114,128,.15);color:#6b7280}
+.online-dot{color:#34d399;font-size:.7rem}
+.offline-dot{color:#ef4444;font-size:.7rem}
+.metrics{display:flex;flex-direction:column;gap:.5rem}
+.metric-row{display:flex;align-items:center;gap:.5rem;font-size:.75rem}
+.metric-label{width:100px;color:#6b7280;flex-shrink:0}
+.metric-bar-bg{flex:1;height:6px;background:#1e1b3a;border-radius:3px;overflow:hidden}
+.metric-bar{height:100%;border-radius:3px;transition:width .8s ease}
+.bar-eff{background:linear-gradient(90deg,#7c3aed,#a78bfa)}
+.bar-cache{background:linear-gradient(90deg,#3b82f6,#60a5fa)}
+.bar-lock{background:linear-gradient(90deg,#10b981,#34d399)}
+.bar-evap{background:linear-gradient(90deg,#f59e0b,#fbbf24)}
+.metric-val{width:40px;text-align:right;color:#e0e0e0;font-weight:600;font-family:'JetBrains Mono',monospace;font-size:.7rem}
+.conf-topics{margin-top:.75rem;border-top:1px solid #1e1b3a;padding-top:.5rem}
+.conf-topics .ct-title{font-size:.65rem;color:#4b5563;text-transform:uppercase;letter-spacing:1px;margin-bottom:.3rem}
+.conf-chip{display:inline-block;font-size:.6rem;padding:.15rem .5rem;background:#16142a;border:1px solid #1e1b3a;border-radius:8px;color:#a78bfa;margin:.1rem .15rem}
+.leaderboard{margin-bottom:2rem}
+.lb-list{display:flex;flex-direction:column;gap:.5rem}
+.lb-row{display:flex;align-items:center;gap:1rem;background:#0d0c1a;border:1px solid #1e1b3a;border-radius:8px;padding:.75rem 1rem}
+.lb-rank{font-size:1.1rem;font-weight:800;width:30px;text-align:center}
+.lb-rank.gold{color:#fbbf24}.lb-rank.silver{color:#94a3b8}.lb-rank.bronze{color:#d97706}
+.lb-name{flex:1;font-weight:600;font-size:.85rem}
+.lb-phase{font-size:.7rem;padding:.2rem .5rem;border-radius:6px;font-weight:700}
+.phase4{background:rgba(52,211,153,.15);color:#34d399}
+.phase3{background:rgba(59,130,246,.15);color:#60a5fa}
+.phase2{background:rgba(245,158,11,.15);color:#f59e0b}
+.phase1{background:rgba(107,114,128,.15);color:#6b7280}
+.lb-bar-wrap{width:120px}
+.lb-bar-bg{height:6px;background:#1e1b3a;border-radius:3px;overflow:hidden}
+.lb-bar{height:100%;border-radius:3px;background:linear-gradient(90deg,#f59e0b,#34d399)}
+.lb-pct{font-size:.7rem;color:#6b7280;width:35px;text-align:right;font-family:'JetBrains Mono',monospace}
+.info-row{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:2rem}
+@media(max-width:700px){.info-row{grid-template-columns:1fr}}
+.info-card{background:#0d0c1a;border:1px solid #1e1b3a;border-radius:10px;padding:1.25rem}
+.info-card h3{font-size:.8rem;color:#a78bfa;margin-bottom:.5rem}
+.info-card p{font-size:.75rem;color:#6b7280;line-height:1.5}
+.demote-list{list-style:none;margin-top:.5rem}
+.demote-list li{font-size:.7rem;padding:.3rem 0;border-bottom:1px solid #1e1b3a;display:flex;justify-content:space-between}
+.demote-list li:last-child{border:none}
+.demote-score{color:#34d399;font-weight:600;font-family:'JetBrains Mono',monospace}
+.loading{text-align:center;padding:4rem;color:#4b5563;font-size:1rem}
+.spinner{display:inline-block;width:24px;height:24px;border:3px solid #1e1b3a;border-top-color:#7c3aed;border-radius:50%;animation:spin 1s linear infinite;margin-bottom:1rem}
+@keyframes spin{to{transform:rotate(360deg)}}
+.refresh-bar{position:fixed;top:0;left:0;height:2px;background:linear-gradient(90deg,#7c3aed,#3b82f6);z-index:100;transition:width 1s linear}
+</style></head>
+<body>
+<div class="refresh-bar" id="refreshBar"></div>
+<div class="topbar">
+  <h1>📊 Fleet Efficiency Dashboard</h1>
+  <div class="meta"><div class="live"></div><span id="lastUpdate">Loading...</span><span id="nextRefresh"></span></div>
+</div>
+<div class="container">
+  <div id="loading" class="loading"><div class="spinner"></div><br>Scanning fleet vessels...</div>
+  <div id="content" style="display:none"></div>
+</div>
+<script>
+const REFRESH_MS = 60000;
+let refreshTimer;
+function startRefreshBar(){const bar=document.getElementById('refreshBar');let w=0;const iv=setInterval(()=>{w+=100/REFRESH_MS*1000;if(w>=100)w=0;bar.style.width=w+'%'},1000);return iv}
+async function load(){
+  try{
+    const d=await fetch('/api/fleet/efficiency').then(r=>r.json());
+    render(d);
+    document.getElementById('loading').style.display='none';
+    document.getElementById('content').style.display='block';
+    const ts=new Date(d.timestamp).toLocaleTimeString();
+    document.getElementById('lastUpdate').textContent='Updated: '+ts;
+  }catch(e){document.getElementById('loading').innerHTML='<div style="color:#ef4444">Failed to load fleet data</div>'}
+}
+function render(d){
+  const tot=d.totals||{};
+  const effPct=tot.totalTokens>0?Math.round(tot.tokensSaved/tot.totalTokens*100):0;
+  const cachePct=tot.totalRequests>0?Math.round((tot.cacheHits/tot.totalRequests)*100):0;
+  let html=
+    '<div class="overview">'+
+      '<div class="ov-card"><div class="label">Total Vessels</div><div class="value">'+d.totalRepos+'</div><div class="sub">'+d.onlineRepos+' online</div></div>'+
+      '<div class="ov-card"><div class="label">Total Requests</div><div class="value">'+(tot.totalRequests||0).toLocaleString()+'</div></div>'+
+      '<div class="ov-card"><div class="label">Tokens Saved</div><div class="value">'+(tot.tokensSaved||0).toLocaleString()+'</div></div>'+
+      '<div class="ov-card"><div class="label">Global Efficiency</div><div class="value">'+effPct+'%</div><div class="sub">tokens saved / total</div></div>'+
+      '<div class="ov-card"><div class="label">Cache Coverage</div><div class="value">'+cachePct+'%</div></div>'+
+      '<div class="ov-card"><div class="label">Cross-Domain Patterns</div><div class="value">'+(d.patternCount||0)+'</div><div class="sub">'+(d.crossDomainPairs||0)+' domain pairs linked</div></div>'+
+    '</div>';
+  html+='<div class="section-title">🚀 Vessel Performance</div><div class="repo-grid">';
+  const sorted=[...(d.repos||[])].sort((a,b)=>b.tier-a.tier||(b.online-a.online));
+  sorted.forEach(r=>{
+    const eff=r.efficiency||{};
+    const eScore=eff.totalTokens>0?Math.round((eff.tokensSaved/eff.totalTokens)*100):0;
+    const cRate=eff.cacheHitRate||0;
+    const lCov=r.lockStats?.coverage||0;
+    const eCov=r.evaporation?.coverage||0;
+    const tc=r.tier===1?'tier1':r.tier===2?'tier2':'tier3';
+    const scores=r.confidence?.scores||[];
+    const topTopics=[...scores].sort((a,b)=>(b.score||0)-(a.score||0)).slice(0,4);
+    const chips=topTopics.map(t=>'<span class="conf-chip">'+(t.topic||t.pattern||'?')+' '+((t.score||0)*100).toFixed(0)+'%</span>').join('');
+    html+='<div class="repo-card '+(r.online?'':'offline')+'"><div class="repo-header"><div><div class="repo-name">'+r.name+'</div><div class="repo-domain">'+(r.desc||'')+'</div></div><span class="repo-badge '+tc+'">T'+r.tier+'</span>'+(r.online?'<span class="online-dot">●</span>':'<span class="offline-dot">●</span>')+'</div><div class="metrics"><div class="metric-row"><span class="metric-label">Efficiency</span><div class="metric-bar-bg"><div class="metric-bar bar-eff" style="width:'+eScore+'%"></div></div><span class="metric-val">'+eScore+'%</span></div><div class="metric-row"><span class="metric-label">Cache Hit</span><div class="metric-bar-bg"><div class="metric-bar bar-cache" style="width:'+cRate+'%"></div></div><span class="metric-val">'+cRate+'%</span></div><div class="metric-row"><span class="metric-label">Lock Cov</span><div class="metric-bar-bg"><div class="metric-bar bar-lock" style="width:'+lCov+'%"></div></div><span class="metric-val">'+lCov+'%</span></div><div class="metric-row"><span class="metric-label">Evap Prog</span><div class="metric-bar-bg"><div class="metric-bar bar-evap" style="width:'+eCov+'%"></div></div><span class="metric-val">'+eCov+'%</span></div></div><div class="conf-topics"><div class="ct-title">Top Confidence</div>'+(chips||'<span style="color:#333;font-size:.65rem">No data</span>')+'</div></div>';
+  });
+  html+='</div>';
+  const evapSorted=[...(d.repos||[])].filter(r=>r.online).map(r=>({name:r.name,coverage:r.evaporation?.coverage||0,tier:r.tier,hot:(r.evaporation?.hot||[]).length})).sort((a,b)=>b.coverage-a.coverage);
+  html+='<div class="section-title">🔥 Evaporation Leaderboard</div><div class="leaderboard"><div class="lb-list">';
+  evapSorted.forEach((r,i)=>{
+    const phase=r.coverage>=80?4:r.coverage>=50?3:r.coverage>=20?2:1;
+    const pClass=phase===4?'phase4':phase===3?'phase3':phase===2?'phase2':'phase1';
+    const rankClass=i===0?'gold':i===1?'silver':i===2?'bronze':'';
+    html+='<div class="lb-row"><div class="lb-rank '+rankClass+'">#'+(i+1)+'</div><div class="lb-name">'+r.name+'</div><span class="lb-phase '+pClass+'">Phase '+phase+(phase===4?' 🤖':'')+'</span><div class="lb-bar-wrap"><div class="lb-bar-bg"><div class="lb-bar" style="width:'+r.coverage+'%"></div></div></div><span class="lb-pct">'+r.coverage+'%</span></div>';
+  });
+  html+='</div></div>';
+  html+='<div class="info-row"><div class="info-card"><h3>🔗 Cross-Domain Knowledge Graph</h3><p>'+(d.patternCount||0)+' structural patterns stored across '+(d.crossDomainPairs||0)+' possible domain pairings. Patterns flow between vessels via Fleet Protocol.</p></div><div class="info-card"><h3>⬇️ Model Demotion Candidates</h3><p>Topics with ≥95% confidence can be served by smaller, cheaper models.</p><ul class="demote-list">';
+  const demotes=(d.demotionCandidates||[]).slice(0,8);
+  if(demotes.length===0) html+='<li style="color:#333">No candidates yet</li>';
+  demotes.forEach(c=>{html+='<li><span>'+c.repo+' → '+c.topic+'</span><span class="demote-score">'+(c.score*100).toFixed(1)+'%</span></li>'});
+  html+='</ul></div></div>';
+  document.getElementById('content').innerHTML=html;
+}
+load();
+refreshTimer=setInterval(load,REFRESH_MS);
+startRefreshBar();
+</script></body></html>`;
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
@@ -196,7 +347,75 @@ export default {
       const scores = await getConfidence(env);
       return new Response(JSON.stringify(scores), { headers: jsonHeaders });
     }
-    
+    if (url.pathname === '/api/efficiency') {
+      const stats = await getEfficiencyStats(env.COCAPN_KV, 'cocapn');
+      const lockStats = await getLockStats(env);
+      const evap = await getEvapReport(env, 'cocapn');
+      const conf = await getConfidence(env);
+      return new Response(JSON.stringify({ repo: 'cocapn.ai', ...stats, lockStats, evaporation: evap, confidence: conf }), { headers: jsonHeaders });
+    }
+    if (url.pathname === '/api/evaporation') {
+      const report = await getEvapReport(env, 'cocapn');
+      return new Response(JSON.stringify(report), { headers: jsonHeaders });
+    }
+
+    // ── Fleet Dashboard ──
+    if (url.pathname === '/dashboard') {
+      return new Response(dashboardHTML(), { headers });
+    }
+    if (url.pathname === '/api/fleet/efficiency') {
+      const results: any[] = [];
+      const promises = ECOSYSTEM.map(async (repo) => {
+        try {
+          const [eff, evapRes, confRes] = await Promise.allSettled([
+            fetch(`${repo.url}/api/efficiency`).then(r => r.json()),
+            fetch(`${repo.url}/api/evaporation`).then(r => r.json()),
+            fetch(`${repo.url}/api/confidence`).then(r => r.json()),
+          ]);
+          const efficiency = eff.status === 'fulfilled' ? eff.value : { totalRequests: 0, cacheHits: 0, cacheHitRate: 0, tokensSaved: 0, totalTokens: 0 };
+          const evaporation = evapRes.status === 'fulfilled' ? evapRes.value : { hot: [], warm: [], coverage: 0 };
+          const confidence = confRes.status === 'fulfilled' ? confRes.value : { scores: [] };
+          results.push({ name: repo.name, url: repo.url, desc: repo.desc, tier: repo.tier, online: eff.status === 'fulfilled', efficiency, evaporation, confidence });
+        } catch {
+          results.push({ name: repo.name, url: repo.url, desc: repo.desc, tier: repo.tier, online: false, efficiency: { totalRequests: 0, cacheHits: 0, cacheHitRate: 0, tokensSaved: 0, totalTokens: 0 }, evaporation: { hot: [], warm: [], coverage: 0 }, confidence: { scores: [] } });
+        }
+      });
+      await Promise.all(promises);
+      const totalRepos = results.length;
+      const onlineRepos = results.filter(r => r.online).length;
+      const totals = results.reduce((acc, r) => ({
+        totalRequests: acc.totalRequests + (r.efficiency.totalRequests || 0),
+        tokensSaved: acc.tokensSaved + (r.efficiency.tokensSaved || 0),
+        totalTokens: acc.totalTokens + (r.efficiency.totalTokens || 0),
+        cacheHits: acc.cacheHits + (r.efficiency.cacheHits || 0),
+      }), { totalRequests: 0, tokensSaved: 0, totalTokens: 0, cacheHits: 0 });
+      const globalEfficiency = totals.totalTokens > 0 ? Math.round(totals.tokensSaved / totals.totalTokens * 100) : 0;
+      // Cross-domain patterns
+      const patterns = await listPatterns(env);
+      const domains = new Set((patterns as any[]).map((p: any) => p.source || p.repo));
+      const crossDomainPairs = Math.floor(domains.size * (domains.size - 1) / 2);
+      // Model demotion candidates: topics with confidence >= 0.95
+      const demotionCandidates: any[] = [];
+      results.forEach(r => {
+        const scores = (r.confidence.scores || []);
+        scores.forEach((s: any) => {
+          if (s.score >= 0.95) demotionCandidates.push({ repo: r.name, topic: s.topic || s.pattern, score: s.score });
+        });
+      });
+      return new Response(JSON.stringify({ totalRepos, onlineRepos, totals, globalEfficiency, repos: results, crossDomainPairs, patternCount: (patterns as any[]).length, demotionCandidates, timestamp: Date.now() }), { headers: jsonHeaders });
+    }
+    if (url.pathname === '/api/fleet/rankings') {
+      // Reuse fleet/efficiency logic
+      const url2 = new URL(request.url);
+      url2.pathname = '/api/fleet/efficiency';
+      const res = await fetch(url2.toString());
+      const data = await res.json() as any;
+      const ranked = data.repos
+        .map((r: any) => ({ name: r.name, tier: r.tier, online: r.online, efficiencyScore: r.efficiency.totalTokens > 0 ? Math.round((r.efficiency.tokensSaved / r.efficiency.totalTokens) * 100) : 0, cacheHitRate: r.efficiency.cacheHitRate || 0, tokensSaved: r.efficiency.tokensSaved || 0, evapCoverage: r.evaporation?.coverage || 0 }))
+        .sort((a: any, b: any) => b.efficiencyScore - a.efficiencyScore);
+      return new Response(JSON.stringify({ rankings: ranked, timestamp: data.timestamp }), { headers: jsonHeaders });
+    }
+
     // ── Phase 4: Structural Memory Routes ──
     if (url.pathname === '/api/memory' && request.method === 'GET') {
       const source = url.searchParams.get('source') || undefined;
