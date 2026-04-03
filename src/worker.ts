@@ -1,3 +1,4 @@
+import { evapPipeline, getEvapReport, getLockStats } from './lib/evaporation-pipeline.js';
 import { selectModel } from './lib/model-router.js';
 import { trackConfidence, getConfidence } from './lib/confidence-tracker.js';
 import { callLLM, generateSetupHTML } from './lib/byok.js';
