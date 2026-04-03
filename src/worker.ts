@@ -374,9 +374,6 @@ export default {
         try {
           const [eff, evapRes, confRes] = await Promise.allSettled([
             fetch(`${repo.url}/api/efficiency`).then(r => r.json()),
-    if (url.pathname === '/api/kg') {
-      return new Response(JSON.stringify({ nodes: [], edges: [], domain: 'cocapn', timestamp: Date.now() }), { headers: { 'Content-Type': 'application/json', ...corsHeaders() } });
-    }
             fetch(`${repo.url}/api/evaporation`).then(r => r.json()),
             fetch(`${repo.url}/api/confidence`).then(r => r.json()),
           ]);
@@ -453,9 +450,6 @@ export default {
       return new Response(JSON.stringify({
         sdk: { version: SDK_VERSION, protocol: PROTOCOL_VERSION },
         vessel: { name: 'Cocapn.ai', domain: 'cocapn', version: '2.0.0' },
-    if (url.pathname === '/api/kg') {
-      return new Response(JSON.stringify({ nodes: [], edges: [], domain: 'cocapn', timestamp: Date.now() }), { headers: { 'Content-Type': 'application/json', ...corsHeaders() } });
-    }
         endpoints: ['/api/sdk', '/api/fleet', '/api/memory', '/api/evaporation', '/api/confidence'],
         builtBy: 'Superinstance & Lucineer (DiGennaro et al.)',
       }), { headers: jsonHeaders });
