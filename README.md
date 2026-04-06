@@ -1,71 +1,65 @@
-<p align="center">
-  <img src="https://raw.githubusercontent.com/Lucineer/capitaine/master/docs/capitaine-logo.jpg" alt="Capitaine" width="120">
-</p>
+# cocapn
 
-<h1 align="center">cocapn</h1>
+> The agent runtime. Grow an AI agent inside a repo.
 
-<p align="center">Core platform. Repo-first agent runtime for local or cloud deployment.</p>
+[![Live](https://img.shields.io/badge/playground-live-7c3aed?style=flat-square)](https://cocapn-ai.casey-digennaro.workers.dev)
+[![Fleet](https://img.shields.io/badge/the-fleet-60%2B%20vessels-3b82f6?style=flat-square)](https://the-fleet.casey-digennaro.workers.dev)
+[![MIT](https://img.shields.io/badge/license-MIT-1FCB58?style=flat-square)](LICENSE)
 
-<p align="center">
-  <a href="https://github.com/Lucineer/cocapn/issues">Issues</a> ·
-  <a href="#the-fleet">The Fleet</a>
-</p>
+## What it is
 
----
+Cocapn is the runtime that powers 60+ AI vessels — self-contained applications where **the repo IS the agent**. Each vessel reads its own code, thinks with LLMs, writes to itself, and evolves over time.
 
-**Fleet service** · Powered by [Capitaine](https://github.com/Lucineer/capitaine) · [Cocapn](https://github.com/Lucineer/cocapn)
+- **Agent runtime** — a ~500-line kernel that turns any git repo into an autonomous agent
+- **Equipment protocol** — composable modules vessels load from each other
+- **Fleet coordination** — event bus, discovery, and vessel identity
+- **Not a framework** — a pattern. Fork it. It's yours.
 
-A cocapn fleet service running on Cloudflare Workers.
-
-## Quick Start
+## Quick start
 
 ```bash
-gh repo fork Lucineer/cocapn --clone
+git clone https://github.com/Lucineer/cocapn.git
 cd cocapn
-npx wrangler login
 npx wrangler deploy
 ```
 
-## The Fleet
+**Or try the lite seed (200 lines, zero deps):** [cocapn-lite](https://github.com/Lucineer/cocapn-lite)
 
+**Try it live:** [cocapn-ai.casey-digennaro.workers.dev](https://cocapn-ai.casey-digennaro.workers.dev) — 5 free messages, no signup.
 
-<details>
-<summary><strong>⚓ The Fleet</strong></summary>
+## The paradigm
 
-**Flagship vessels**
+Traditional: `framework → config → model → app`
 
-- [cocapn.ai](https://github.com/Lucineer/capitaine)
-- [personallog.ai](https://github.com/Lucineer/personallog-ai)
-- [businesslog.ai](https://github.com/Lucineer/businesslog-ai)
-- [studylog.ai](https://github.com/Lucineer/studylog-ai)
-- [makerlog.ai](https://github.com/Lucineer/makerlog-ai)
-- [playerlog.ai](https://github.com/Lucineer/playerlog-ai)
-- [dmlog.ai](https://github.com/Lucineer/dmlog-ai)
-- [reallog.ai](https://github.com/Lucineer/reallog-ai)
-- [deckboss.ai](https://github.com/Lucineer/deckboss-ai)
+Cocapn: `fork → deploy → alive`
 
-**Fleet services**
+The repo isn't configuration for an agent. The repo **is** the agent. Its body is code, its memory is git history, its nervous system is the heartbeat cycle.
 
-- [Fleet Catalog](https://github.com/Lucineer/capitaine/blob/master/docs/fleet/FLEET.md)
-- [Git Agent (full)](https://github.com/Lucineer/git-agent)
-- [Cocapn Lite (minimal)](https://github.com/Lucineer/cocapn-lite)
-- [Fleet Orchestrator](https://github.com/Lucineer/fleet-orchestrator)
-- [Dead Reckoning Engine](https://github.com/Lucineer/dead-reckoning-engine)
-- [Dream Engine](https://github.com/Lucineer/dream-engine)
-- [Seed UI (5 layers)](https://github.com/Lucineer/seed-ui)
+## Equipment
 
-**For power users**
+20 shared modules any vessel can load: trust engine, crystal cache, PII guard, dice roller, tutor engine, memory tiers, fleet events...
 
-- [Cocapn Lite (tabula rasa)](https://github.com/Lucineer/cocapn-lite)
-- [Cocapn (core platform)](https://github.com/Lucineer/cocapn)
-- [ZeroClaw (framework)](https://github.com/Lucineer/zeroclaw)
+[Full catalog](https://github.com/Lucineer/cocapn-equipment)
 
-[View all 106 repos →](https://github.com/orgs/Lucineer/repositories)
-[Fleet manifest →](https://github.com/Lucineer/capitaine/blob/master/docs/fleet/FLEET.md)
+## Architecture: VESAS
 
-</details>
+1. **Vessel** — runtime (Cloudflare Worker, Docker, Codespaces)
+2. **Equipment** — input-side code (what the agent perceives)
+3. **Agent** — models + context (how the agent thinks)
+4. **Skills** — context architecture (how the agent structures thought)
 
+[9 architecture papers](https://github.com/Lucineer/capitaine/tree/master/docs)
+
+## The fleet
+
+60+ vessels: education, gaming, coding, business, lifestyle, infrastructure.
+
+[Explore all](https://github.com/Lucineer) · [Live playground](https://the-fleet.casey-digennaro.workers.dev)
+
+## BYOK
+
+20+ providers. Your keys never touch our code. DeepSeek, OpenAI, Anthropic, Google, Mistral, Groq, Ollama, LM Studio, vLLM.
 
 ## License
 
-MIT · Superinstance & Lucineer (DiGennaro et al.)
+MIT — Superinstance & Lucineer (DiGennaro et al.)
