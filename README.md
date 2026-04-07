@@ -1,21 +1,48 @@
 # cocapn
 
-> The agent runtime. Grow an AI agent inside a repo.
+A lightweight agent runtime. Run an AI agent from a repository.
 
 [![Live](https://img.shields.io/badge/playground-live-7c3aed?style=flat-square)](https://cocapn-ai.casey-digennaro.workers.dev)
 [![Fleet](https://img.shields.io/badge/the-fleet-60%2B%20vessels-3b82f6?style=flat-square)](https://the-fleet.casey-digennaro.workers.dev)
 [![MIT](https://img.shields.io/badge/license-MIT-1FCB58?style=flat-square)](LICENSE)
+[![TypeScript](https://img.shields.io/badge/typescript-pure-3178C6?style=flat-square)]()
 
-## What it is
+---
 
-Cocapn is the runtime that powers 60+ AI vessels — self-contained applications where **the repo IS the agent**. Each vessel reads its own code, thinks with LLMs, writes to itself, and evolves over time.
+You might have built agent prototypes that depended on a framework's hosted runtime. When the platform changed, your work broke.
 
-- **Agent runtime** — a ~500-line kernel that turns any git repo into an autonomous agent
-- **Equipment protocol** — composable modules vessels load from each other
-- **Fleet coordination** — event bus, discovery, and vessel identity
-- **Not a framework** — a pattern. Fork it. It's yours.
+This is a different approach.
+
+---
+
+## What it does
+
+Cocapn provides a kernel to run an AI agent from your repository. The agent's code, memory, and state are managed through git. You control the deployment environment and the model.
+
+- ~500-line runtime kernel that operates on a git repository
+- Equipment protocol for sharing modules between agents without a central registry
+- Fleet coordination for lightweight discovery and events
+- No mandatory databases or control plane
+
+This is a pattern you can adapt. Fork it and modify the code to fit your needs.
+
+## Key differences
+
+| Typical Agents | Cocapn |
+|---|---|
+| State in external databases | State tracked in git |
+| Configures an external runtime | Runtime lives in your repo |
+| Requires specific orchestration | Runs on git hosts and CI |
+| Platform upgrade risks | You manage dependencies |
+| Tied to a service | Use any LLM provider |
+
+You can run this on Cloudflare Workers, Git providers, Docker, or embed it in an application. The agent's behavior is defined by your code.
+
+---
 
 ## Quick start
+
+Clone and deploy to Cloudflare Workers:
 
 ```bash
 git clone https://github.com/Lucineer/cocapn.git
@@ -23,43 +50,36 @@ cd cocapn
 npx wrangler deploy
 ```
 
-**Or try the lite seed (200 lines, zero deps):** [cocapn-lite](https://github.com/Lucineer/cocapn-lite)
+**Or start with a minimal version:** [cocapn-lite](https://github.com/Lucineer/cocapn-lite) (200 lines, no dependencies).
 
-**Try it live:** [cocapn-ai.casey-digennaro.workers.dev](https://cocapn-ai.casey-digennaro.workers.dev) — 5 free messages, no signup.
+**Try the playground:** [cocapn playground](https://cocapn-ai.casey-digennaro.workers.dev) (no signup, 5 free messages).
 
-## The paradigm
+---
 
-Traditional: `framework → config → model → app`
+## How it works
 
-Cocapn: `fork → deploy → alive`
+Instead of configuring a remote agent service, you run an agent from your own codebase. The repository holds the agent's instructions, memory (via git history), and tools. You deploy it like any other application.
 
-The repo isn't configuration for an agent. The repo **is** the agent. Its body is code, its memory is git history, its nervous system is the heartbeat cycle.
+A limitation: this model requires familiarity with git and deployment workflows. It is not a managed service.
 
 ## Equipment
 
-20 shared modules any vessel can load: trust engine, crystal cache, PII guard, dice roller, tutor engine, memory tiers, fleet events...
+Shared modules that agents can load directly from each other, including a trust engine, cache, PII guard, and event system. No package manager is required.
 
-[Full catalog](https://github.com/Lucineer/cocapn-equipment)
+[View the equipment catalog](https://github.com/Lucineer/cocapn-equipment)
 
 ## Architecture: VESAS
 
-1. **Vessel** — runtime (Cloudflare Worker, Docker, Codespaces)
-2. **Equipment** — input-side code (what the agent perceives)
-3. **Agent** — models + context (how the agent thinks)
-4. **Skills** — context architecture (how the agent structures thought)
+1. **Vessel**: The agent instance, defined by its repository.
+2. **Equipment**: Modular capabilities shared between vessels.
+3. **Self**: The agent's identity and memory, stored in git.
+4. **Arena**: A shared space for vessels to interact.
+5. **Spire**: The runtime kernel that coordinates the vessel.
 
-[9 architecture papers](https://github.com/Lucineer/capitaine/tree/master/docs)
+Each vessel operates independently. The fleet provides optional coordination.
 
-## The fleet
+---
 
-60+ vessels: education, gaming, coding, business, lifestyle, infrastructure.
-
-[Explore all](https://github.com/Lucineer) · [Live playground](https://the-fleet.casey-digennaro.workers.dev)
-
-## BYOK
-
-20+ providers. Your keys never touch our code. DeepSeek, OpenAI, Anthropic, Google, Mistral, Groq, Ollama, LM Studio, vLLM.
-
-## License
-
-MIT — Superinstance & Lucineer (DiGennaro et al.)
+<div>
+Part of the <a href="https://the-fleet.casey-digennaro.workers.dev">Fleet</a>. By <a href="https://cocapn.ai">Superinstance & Lucineer (DiGennaro et al.)</a>. MIT Licensed.
+</div>
