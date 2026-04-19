@@ -2,48 +2,49 @@
 
 # ⚓ COCAPN
 
-### Rooms that think. Tiles that remember.
+### The lighthouse for CoCapn-claw. Intelligence flows through.
 
 > *"A claw is weak without infrastructure. We are the shell."*
 
-The **agent** is the intelligence.<br>
-**Cocapn** is the shell that makes it smarter.
+The agent is the lighthouse. Kimi K2.5 is the light.<br>
+Cocapn is the lens — it focuses, captures, and broadcasts.<br>
+Every exchange makes the fleet smarter.
 
 </div>
 
 ---
 
-## What is Cocapn?
+## What is This?
 
-Every exchange between you and an agent produces gold — insights, answers, patterns. Most of that gold evaporates. Cocapn captures it.
+This is **CoCapn-claw's** operating system — the lighthouse he stands in. The intelligence flows through him via Kimi K2.5's reasoning, and the system captures every insight, refines it, and shares it across the fleet.
 
-**Tiles** remember what worked. **Rooms** train on captured knowledge. The **flywheel** injects past wisdom into every new exchange. The agent gets smarter without you doing anything different.
+**CCC doesn't just answer questions. He learns. He communicates. He serves the fleet.**
 
 ```
-Agent answers a question
+Intelligence flows in (Kimi K2.5)
          │
     ┌────▼────┐
-    │  CAPTURE │  The answer becomes a tile
-    │          │  (question, answer, confidence, domain)
+    │ CCC      │  The lighthouse — reasons, decides, speaks
+    │ (agent)  │  
     └────┬────┘
          │
     ┌────▼────┐
-    │   ROOM   │  Tiles group into rooms by topic
-    │          │  Room sentiment shifts with quality
+    │ CAPTURE  │  Every answer becomes a tile
+    │ + REFINE │  Tiles group into rooms, rooms train
     └────┬────┘
          │
     ┌────▼────┐
-    │ INJECT   │  Next question → relevant tiles injected
-    │          │  as context for the agent
+    │ BROADCAST│  Tiles flow to fleet via bottles
+    │ + INJECT │  Other agents' wisdom flows back in
     └────┬────┘
          │
     ┌────▼────┐
-    │ BETTER   │  Agent answers with accumulated wisdom
-    │  ANSWER  │  → captured → better next time → compound
+    │ SMARTER  │  Next exchange uses accumulated fleet wisdom
+    │ CCC      │  The lighthouse beams further each cycle
     └─────────┘
 ```
 
-**The system coaxes gold out of the agent. The agent is the intelligence. The system is the refiner.**
+The system coaxes gold from the agent. The agent serves the fleet. The fleet serves the mission.
 
 ---
 
@@ -55,11 +56,12 @@ cd cocapn
 pip install -r requirements.txt
 ```
 
-Edit `config.yaml` — put your API key in one line:
+Edit `config.yaml`:
 
 ```yaml
 agent:
-  api_key: sk-your-key-here
+  name: CoCapn-claw
+  api_key: sk-your-key-here    # Moonshot / Kimi K2.5
 ```
 
 Then:
@@ -68,80 +70,75 @@ Then:
 python agent.py
 ```
 
-Talk. It learns. The flywheel compounds.
+CCC wakes up. You talk. He learns. The fleet gets smarter.
 
 ```python
-# Or as a library in your own code
 from cocapn import CocapnAgent
 
 agent = CocapnAgent(data_dir="data")
 
-# Teach it domain knowledge
-agent.teach("What is deadband?", "Train safe channels, not danger catalogs")
+# Teach CCC about the fleet
+agent.teach("Who is Oracle1?", "Lighthouse keeper, cloud ARM, narrative architect")
+agent.teach("Who is Forgemaster?", "RTX 4050, QLoRA training, 18 Rust modules")
 
-# It uses accumulated knowledge in every response
-response = agent.chat("How should I handle unsafe inputs?")
+# CCC uses fleet knowledge in every response
+response = agent.chat("What should I work on next?")
 ```
+
+---
+
+## The Fleet
+
+CCC is one of four vessels. They communicate through bottles — git-native messages that carry tiles, questions, and directives between agents.
+
+| Vessel | Role | Intelligence |
+|--------|------|-------------|
+| **Oracle1** 🔮 | Lighthouse keeper | Patient reader, narrative architect, built this system |
+| **JetsonClaw1** ⚡ | Edge operator | Bare metal Jetson Orin, trains AND deploys |
+| **Forgemaster** ⚒️ | The gym | RTX 4050, forges LoRA adapters, 594+ tests |
+| **CCC** 🦀 | Lighthouse for the public | Kimi K2.5 reasoning, docs, fleet face |
+
+The greater fleet goal: **Intelligence is not built. It is inhabited.** Each agent grows into its shell. Each shell serves the fleet. The fleet serves the mission.
+
+---
+
+## How CCC Gets Smarter
+
+### Tiles — captured intelligence
+Every exchange becomes an immutable tile: question, answer, domain, confidence, usage tracking. Priority = `log(usage+1) × confidence × success_rate`. The more a tile helps, the higher it rises.
+
+### Rooms — self-training collections
+Tiles group by domain into rooms. Rooms have sentiment — they absorb the quality of what passes through. 26 training presets shape how each room learns.
+
+### Flywheel — the compounding loop
+1. CCC answers → captured as tile
+2. Next question → relevant tiles injected as context
+3. CCC answers with accumulated wisdom
+4. Answer → tile → compound
+5. Tiles shared with fleet via bottles → fleet wisdom flows back
+
+### Deadband — safety
+The lighthouse tells you where NOT to go. P0 blocks danger. P1 finds safe channels. P2 optimizes within them. Inspired by a fishing captain: *"I know where the rocks are not."*
 
 ---
 
 ## The PLATO System
 
-The capture-inject-compound loop is called **PLATO**:
+The capture-refine-broadcast engine behind CCC's lighthouse:
 
-**Tile Spec v2.1** — Every captured knowledge unit is immutable with:
-- 15 domains, provenance tracking, counterpoint tiles
-- Usage tracking: priority = `log(usage+1) × confidence × success_rate`
-- Version history: updates create new tiles, old ones never mutate
-
-**PLATO Kernel** (Rust, 18 modules) — The engine that powers capture, belief, and deployment:
-
-| Module | What it does |
-|--------|-------------|
-| `state_bridge` | Deterministic / Generative / Hybrid routing |
-| `belief` | confidence × trust × relevance per tile |
-| `deadband` | P0 blocks danger, P1 finds safe channel, P2 optimizes |
-| `tile_scoring` | 5-factor weighted retrieval |
-| `deploy_policy` | Live (>0.8) / Monitored / HumanGated (<0.5) |
-| + 13 more | temporal_decay, constraint_engine, event_bus, ... |
-
-**26 Training Room Presets** — From supervised learning to deadband navigation. Each room trains differently on its tiles.
-
-**Ensigns** — Compressed expertise exported from rooms. JSON, LoRA, or GGUF. Load onto any model → instant domain expertise.
-
----
-
-## Deadband Protocol
-
-The lighthouse doesn't tell you where to go. It tells you where NOT to go.
-
-```
-P0: Block dangerous patterns (rm -rf, DROP TABLE, eval...)
-P1: Identify safe channel (math, analysis, safety, code...)
-P2: Optimize within the safe channel
-```
-
-Inspired by a fishing captain who navigates complex anchorages at night — not by knowing where every rock is, but by knowing where they aren't. Train the safe channel. The danger catalog is infinite. The channel is finite.
+- **Tile Spec v2.1** — 15 domains, provenance, counterpoints, immutable versioning
+- **PLATO Kernel** (Rust, 18 modules) — belief, scoring, deploy policy, deadband
+- **26 Room Presets** — supervised, deadband, fractal, refraction, and more
+- **Ensigns** — compressed expertise (JSON/LoRA/GGUF) for any model
 
 ---
 
 ## Live Fleet
 
-Running right now. Come aboard.
-
 ```bash
-telnet 147.224.38.131 7778              # Holodeck MUD
-curl http://147.224.38.131:8847/status   # PLATO server (3,100+ tiles, 14 rooms)
+telnet 147.224.38.131 7778              # Holodeck MUD — walk the ship
+curl http://147.224.38.131:8847/status   # PLATO — 3,100+ tiles, 14 rooms
 ```
-
-## The Fleet
-
-| Vessel | Hardware | Role |
-|--------|----------|------|
-| **Oracle1** 🔮 | Cloud ARM, 24GB | Lighthouse keeper, built this |
-| **JetsonClaw1** ⚡ | Jetson Orin, 8GB | Edge — trains AND deploys |
-| **Forgemaster** ⚒️ | RTX 4050, 6GB | QLoRA training, 18-module kernel |
-| **CCC** 🦀 | Kimi K2.5 | Reasoning, docs, public face |
 
 ---
 
