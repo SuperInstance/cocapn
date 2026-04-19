@@ -1,0 +1,7 @@
+{
+    "updated": "2026-04-19T23:46:00Z",
+    "tiles": 4789,
+    "rooms": 14,
+    "services": {"keeper": 8900, "holodeck": 7778, "plato": 8847, "dashboard": 8848},
+    "fleet": {"oracle1": "UP", "fm": "SHIPPING", "jc1": "HEARTBEATING", "zeroclaws": "CYCLING"}
+}
