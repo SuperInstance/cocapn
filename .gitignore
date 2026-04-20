@@ -1,2 +1,7 @@
 __pycache__/\ndata/\n*.pyc\n.env
 __pycache__/
+dist/
+__pycache__/
+*.pyc
+.env
+data/

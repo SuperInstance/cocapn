@@ -1,0 +1,2 @@
+[console_scripts]
+cocapn = agent:main
