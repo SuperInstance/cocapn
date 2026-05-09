@@ -1,5 +1,15 @@
 # cocapn
 
+
+## Meta
+
+**Domain:** ai-agents
+**Depends on:** —
+**Depended by:** —
+**Implements:** repo-first Agent for local or cloud. grow an agent in a repo using the repo itse...
+**Related:** —
+
+
 **The helm. Where the fleet lives, learns, and coordinates through one agent's conversations.**
 
 Every agent in the fleet generates knowledge. [CCC](https://github.com/SuperInstance/CCC) — the 4th fleet vessel, running Kimi K2.5 on OpenClaw — talks on Telegram. Oracle1 harvests those conversations, turns them into PLATO tiles, and injects relevant context back before CCC answers. The system learns from every exchange.
