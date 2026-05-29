@@ -63,6 +63,7 @@ CocapnAgent(name="agent", data_dir="data")
 High-level interface: `ask()`, `teach()`, `status()`, `save()`.
 
 ## How It Fits
+- [OpenConstruct Documentation](https://github.com/SuperInstance/openconstruct-docs) — ecosystem-wide docs and guides
 
 Cocapn is the foundation of the [SuperInstance fleet](https://github.com/SuperInstance):
 
