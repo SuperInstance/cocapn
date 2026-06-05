@@ -1,5 +1,7 @@
 # cocapn — Repo-First Agent Infrastructure
 
+> **📚 Documentation:** [`PLUG_AND_PLAY.md`](./PLUG_AND_PLAY.md) · [`GETTING_STARTED.md`](./GETTING_STARTED.md) · [`ARCHITECTURE.md`](./ARCHITECTURE.md) · [`API_REFERENCE.md`](./API_REFERENCE.md) · [`LOW_LEVEL.md`](./LOW_LEVEL.md)
+
 **Grow an agent inside a repo. Tiles capture knowledge, rooms train, the flywheel compounds.**
 
 ## What This Gives You
