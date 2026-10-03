@@ -1,0 +1,25 @@
+{
+  "v": "sxc1",
+  "seq": 1,
+  "cell": {
+    "id": "exoj-cell01-generator",
+    "kind": "generator",
+    "repo": "@superinstance/exoj",
+    "topology": "unit-table"
+  },
+  "body": {
+    "demo": "w69-bridge3",
+    "step_count": 5,
+    "die_rolls": 1,
+    "final_table_hash": "4c8ef9c177e83e9424e19f24daeadab58b1856ed5fc9938542d28aae7088da5f",
+    "final_verdict": "COMPILED",
+    "boundary_crossed": false,
+    "scar_count": 2
+  },
+  "seal": {
+    "spec_sha": "9bf3eb905f9d2c8444f5be2f04aa4d7cef61cbe64dc1948efca5b4d6395e9c84",
+    "prev": "0000000000000000000000000000000000000000000000000000000000000000",
+    "die_seed": "3d42b161151ebeb2f4d4cfe0b74e2e874535623279f5e721c972e1c9dff05707",
+    "id": "0c35e363c215945a175d83d158e49f50cab99de712f0b4e9927f41584abe562c"
+  }
+}

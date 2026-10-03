@@ -1,0 +1,22 @@
+{
+  "v": "sxc1",
+  "seq": 2,
+  "cell": {
+    "id": "cocapn",
+    "kind": "validator",
+    "repo": "cocapn",
+    "topology": "fleet-cell-exchange"
+  },
+  "body": {
+    "target": "0c35e363c215945a175d83d158e49f50cab99de712f0b4e9927f41584abe562c",
+    "verdict": "COMPILED",
+    "codes": [
+      "WAVE69-STITCH-ROUNDTRIP"
+    ]
+  },
+  "seal": {
+    "spec_sha": "1fdb40e5b9886ccc8079d80c71a1fb3350b936be7989fabb09d11a943fe523c8",
+    "prev": "0c35e363c215945a175d83d158e49f50cab99de712f0b4e9927f41584abe562c",
+    "id": "0b6cbab258db9eb8125d8807905c9e965015ddc9b6f8b62735f7db4a77f2ab27"
+  }
+}
