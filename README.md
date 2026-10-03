@@ -90,3 +90,28 @@ pip install cocapn
 ```
 
 Requires Python 3.10+. MIT license.
+
+## Wave-69 — sxc1 validator mirror
+
+cocapn is the fleet's **validator mirror** for the sxc1 cell-exchange dialect
+(byte-compatible with the exoj JS implementation). Two cell kinds, two
+disciplines: **generator** cells emit concise claims; **validator** cells
+(like cocapn) re-derive every hash, re-read the spec seal, and answer only in
+the verdict vocabulary `COMPILED | INDETERMINATE`. An envelope =
+`{v, seq, cell, body, seal}` with
+`id = sha256("sxc1:"+seq+":"+prev+":"+canonicalJSON(cell+body+seal))`,
+genesis prev 64×"0". Fail-closed named codes, in fixed order: `E_SXC_FIELD`
+(structure/vocabulary/floats) → `E_SXC_SEQ` → `E_SXC_PREV` → `E_SXC_HASH` →
+`E_SXC_SPEC`; the mirror gate adds `E_SPEC_SHA_MISSING` / `E_SPEC_SHA_MALFORMED`
+(cross-repo rule: foreign spec_sha is checked for presence + hex shape, never
+equality).
+
+```bash
+python3 -m cocapn.sxc1 ingest  from-fleet/sxc1/<file>      # verify; COMPILED <id> or INDETERMINATE <code> (exit 1)
+python3 -m cocapn.sxc1 verdict from-fleet/sxc1/<file> --verdict COMPILED --codes CODE1,CODE2
+```
+
+Pathway: exoj emits → `from-fleet/sxc1/` intake → verify → sealed verdicts in
+`for-fleet/sxc1/` (kind validator, repo cocapn, cocapn's own spec_sha);
+quilt-dba stitches the chain. cocapn never mutates another repo's state — it
+answers.
